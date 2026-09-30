@@ -39,11 +39,11 @@ async function handleApi(req, res) {
 }
 async function handler(req, res) {
  try {
-  if (process.env.VERCEL && !process.env.UPSTASH_REDIS_REST_URL) return sendJson(res, 503, {message: 'Configure persistent Redis storage before testing.'});
-  if (process.env.UPSTASH_REDIS_REST_URL) await require('./redis-store').initialize();
   const parsed = url.parse(req.url);
-  if (parsed.pathname.startsWith('/api/')) await handleApi(req, res);
-  else serveStatic(req, res);
+  if (!parsed.pathname.startsWith('/api/')) return serveStatic(req, res);
+  if (process.env.VERCEL && !process.env.UPSTASH_REDIS_REST_URL) return sendJson(res, 503, {message: '데이터 저장소가 연결되지 않았습니다. Vercel에서 Redis 환경 변수를 설정해 주세요.'});
+  if (process.env.UPSTASH_REDIS_REST_URL) await require('./redis-store').initialize();
+  await handleApi(req, res);
  } catch (error) {
   console.error(error.message);
   if (!res.headersSent) sendJson(res, 500, {message: 'Server error'});
