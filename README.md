@@ -7,7 +7,7 @@
 Node.js 24 권장. Redis 연결용 npm 의존성을 설치하세요 (`npm install`).
 
 ```bash
-ADMIN_USERNAME=admin ADMIN_PASSWORD='사용할-12자-이상-비밀번호' npm run init
+ADMIN_USERNAME=admin ADMIN_PASSWORD='사용할-8자-이상-비밀번호' npm run init
 npm start
 ```
 
@@ -28,7 +28,7 @@ Vercel에서 JSON 파일에 영구 저장하지 않습니다. Redis를 연결하
 - REDIS_URL (`redis://` 또는 TLS용 `rediss://` 연결 문자열, 별도 REST 토큰 불필요)
 - 기존 Upstash REST 연결도 지원: REDIS_URL 대신 UPSTASH_REDIS_REST_URL 및 UPSTASH_REDIS_REST_TOKEN 설정
 - ADMIN_USERNAME
-- ADMIN_PASSWORD (12자 이상)
+- ADMIN_PASSWORD (8자 이상)
 
 첫 API 요청이 초기 계정을 한 번 생성합니다. 기존 계정이 있으면 덮어쓰지 않습니다. Redis에 사용자·일지·알림·파일 정보를 저장하고 세션은 TTL로 만료합니다. 파일은 테스트용 최대 3 MB이며 Redis에 Base64로 저장합니다. 저장소 미설정 상태에서는 API가 503을 반환하여 임시 파일에 데이터가 저장되는 것을 방지합니다.
 

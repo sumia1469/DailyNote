@@ -48,7 +48,7 @@ let initializing;
 async function initialize() {
  if (!initializing) initializing=(async()=>{
   if ((await findAll('users')).length) return;
-  if (!process.env.ADMIN_USERNAME || (process.env.ADMIN_PASSWORD||'').length<12) throw new Error('Initial administrator environment variables required');
+  if (!process.env.ADMIN_USERNAME || (process.env.ADMIN_PASSWORD||'').length<8) throw new Error('Initial administrator environment variables required');
   const {makeUserRecord}=require('./auth');
   const record={...makeUserRecord(process.env.ADMIN_USERNAME,process.env.ADMIN_PASSWORD),id:1,createdAt:new Date().toISOString()};
   await command('HSETNX',prefix+'users','1',JSON.stringify(record));
