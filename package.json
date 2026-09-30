@@ -10,6 +10,8 @@
   },
   "author": "Your Company",
   "license": "MIT",
-  "dependencies": {},
+  "dependencies": {
+    "redis": "^5.0.0"
+  },
   "private": true
 }

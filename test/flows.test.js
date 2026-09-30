@@ -4,9 +4,19 @@ const fs=require('fs');const os=require('os');const path=require('path');
 const {Readable,Writable}=require('stream');
 const root=fs.mkdtempSync(path.join(os.tmpdir(),'dailynote-test-'));
 process.env.DATA_DIR=path.join(root,'data');process.env.UPLOAD_DIR=path.join(root,'uploads');
+const redisMode = Boolean(process.env.REDIS_TEST_URL);
+if (redisMode) {
+ process.env.REDIS_URL = process.env.REDIS_TEST_URL;
+ process.env.VERCEL = '1';
+ process.env.ADMIN_USERNAME = 'integration-admin';
+ process.env.ADMIN_PASSWORD = 'integration-password-123';
+}
 const ds=require('../src/datastore');const handler=require('../src/server');
 const {makeUserRecord}=require('../src/auth');
-after(()=>fs.rmSync(root,{recursive:true,force:true}));
+after(async()=>{
+ if (redisMode) await require('../src/redis-store').close();
+ fs.rmSync(root,{recursive:true,force:true});
+});
 async function request(method,url,body,token){
  const req=Readable.from(body?[JSON.stringify(body)]:[]);Object.assign(req,{method,url,headers:token?{authorization:`Bearer ${token}`}:{}});
  let chunks=[];const res=new Writable({write(c,e,cb){chunks.push(c);cb();}});
@@ -15,6 +25,10 @@ async function request(method,url,body,token){
  const text=Buffer.concat(chunks).toString();let data;try{data=JSON.parse(text);}catch{data=text;}return {status:res.status,data};
 }
 test('login, ownership, worklog CRUD, notifications, password update and file lifecycle',async()=>{
+ if (redisMode) {
+  await Promise.all([require('../src/redis-store').initialize(), require('../src/redis-store').initialize()]);
+  assert.equal((await ds.findAll('users')).filter(u=>u.username==='integration-admin').length,1);
+ }
  const user=await ds.insert('users',makeUserRecord('tester','test-password-123'));
  await ds.insert('users',makeUserRecord('other','other-password-123'));
  assert.equal((await request('GET','/api/worklogs')).status,401);
@@ -27,7 +41,8 @@ test('login, ownership, worklog CRUD, notifications, password update and file li
  assert.equal((await request('DELETE',`/api/worklogs/${id}`,null,other)).status,404);
  assert.equal((await request('PUT',`/api/worklogs/${id}`,{workDate:'2026-10-01',memo:'저장 성공'},token)).status,200);
  assert.equal((await request('GET','/api/worklogs?date=2026-10-01',null,token)).data[0].memo,'저장 성공');
- assert.equal(JSON.parse(fs.readFileSync(path.join(process.env.DATA_DIR,'work_logs.json')))[0].memo,'저장 성공');
+ if (!redisMode) assert.equal(JSON.parse(fs.readFileSync(path.join(process.env.DATA_DIR,'work_logs.json')))[0].memo,'저장 성공');
+ else assert.equal(fs.existsSync(process.env.DATA_DIR),false);
  const note=await request('POST','/api/notifications',{userId:user.id,message:'완료'},token);assert.equal(note.status,201);
  assert.equal((await request('PUT',`/api/notifications/${note.data.id}`,{},token)).status,200);
  assert.equal((await request('GET','/api/notifications',null,token)).data[0].isRead,true);
@@ -35,13 +50,15 @@ test('login, ownership, worklog CRUD, notifications, password update and file li
  assert.equal((await request('GET',`/api/upload/${file.data.id}`,null,token)).data,'파일 테스트');
  assert.equal((await request('GET',`/api/upload/${file.data.id}`,null,other)).status,404);
  assert.equal((await request('DELETE',`/api/upload/${file.data.id}`,null,token)).status,200);
- assert.equal(fs.readdirSync(process.env.UPLOAD_DIR).length,0);
+ if (!redisMode) assert.equal(fs.readdirSync(process.env.UPLOAD_DIR).length,0);
+ else assert.equal(fs.existsSync(process.env.UPLOAD_DIR),false);
  assert.equal((await request('PUT',`/api/users/${user.id}`,{password:'new-password-123'},token)).status,200);
  assert.equal((await request('POST','/api/auth/login',{username:'tester',password:'new-password-123'})).status,200);
  assert.equal((await request('DELETE',`/api/worklogs/${id}`,null,token)).status,200);
 });
 
-test('Vercel without Redis serves login and assets while API reports missing storage',async()=>{
+test('Vercel without Redis serves login and assets while API reports missing storage',async(t)=>{
+ if (redisMode) return t.skip('Run missing-storage check in local mode');
  const previous=process.env.VERCEL;process.env.VERCEL='1';
  try {
   const page=await request('GET','/');assert.equal(page.status,200);assert.match(page.data,/id="login-form"/);

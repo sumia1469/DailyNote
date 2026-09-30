@@ -2,7 +2,7 @@
 const fs = require('fs');
 const path = require('path');
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, '../data');
-if (!process.env.UPSTASH_REDIS_REST_URL) fs.mkdirSync(DATA_DIR, {recursive: true});
+if (!(process.env.REDIS_URL || process.env.UPSTASH_REDIS_REST_URL)) fs.mkdirSync(DATA_DIR, {recursive: true});
 const cache = {};
 
 function filePath(name) {
@@ -92,4 +92,4 @@ module.exports = {
   findSessionByToken, insertSession, deleteExpiredSessions
 };
 
-if (process.env.UPSTASH_REDIS_REST_URL) module.exports = require('./redis-store');
+if ((process.env.REDIS_URL || process.env.UPSTASH_REDIS_REST_URL)) module.exports = require('./redis-store');

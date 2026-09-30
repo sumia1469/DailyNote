@@ -1,6 +1,28 @@
 // Durable Redis REST storage for Vercel; JSON storage remains available locally.
 const prefix = 'dailyNote:';
+let client;
+let connecting;
+async function nativeClient() {
+ if (client?.isReady) return client;
+ if (!connecting) {
+  if (!client || !client.isOpen) {
+   const {createClient} = require('redis');
+   client = createClient({
+    url: process.env.REDIS_URL,
+    disableOfflineQueue: true,
+    socket: {connectTimeout: 5000, reconnectStrategy: false}
+   });
+   client.on('error', () => console.error('Redis connection error'));
+  }
+  connecting = client.connect().then(() => client).finally(() => {connecting = null;});
+ }
+ return connecting;
+}
 async function command(...args) {
+ if (process.env.REDIS_URL) {
+  const connection = await nativeClient();
+  return connection.sendCommand(args.map(String));
+ }
  const response = await fetch(process.env.UPSTASH_REDIS_REST_URL, {
   method:'POST', headers:{Authorization:`Bearer ${process.env.UPSTASH_REDIS_REST_TOKEN}`, 'Content-Type':'application/json'}, body:JSON.stringify(args)
  });
@@ -34,4 +56,5 @@ async function initialize() {
  })().catch(e=>{initializing=null;throw e;});
  return initializing;
 }
-module.exports={findAll,findOne,insert,update,remove,insertSession,findSessionByToken,deleteExpiredSessions:async()=>{},command,initialize};
+async function close() { if (client?.isOpen) await client.close(); client = null; }
+module.exports={close,findAll,findOne,insert,update,remove,insertSession,findSessionByToken,deleteExpiredSessions:async()=>{},command,initialize};
