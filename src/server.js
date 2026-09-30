@@ -39,6 +39,14 @@ async function handleApi(req, res) {
 }
 async function handler(req, res) {
  try {
+  // Vercel rewrites the public API URL to this single function entry point.
+  const incoming = new URL(req.url, 'http://localhost');
+  if (incoming.pathname === '/api/index' && incoming.searchParams.has('path')) {
+   const route = incoming.searchParams.get('path').replace(/^\/+/, '');
+   incoming.pathname = '/api/' + route;
+   incoming.searchParams.delete('path');
+   req.url = incoming.pathname + incoming.search;
+  }
   const parsed = url.parse(req.url);
   if (!parsed.pathname.startsWith('/api/')) return serveStatic(req, res);
   if (process.env.VERCEL && !(process.env.REDIS_URL || process.env.UPSTASH_REDIS_REST_URL)) return sendJson(res, 503, {message: '데이터 저장소가 연결되지 않았습니다. Vercel에서 Redis 환경 변수를 설정해 주세요.'});
@@ -54,4 +62,3 @@ module.exports = handler;
 if (require.main === module) {
  http.createServer(handler).listen(PORT, () => console.log(`dailyNote http://localhost:${PORT}`));
 }
-

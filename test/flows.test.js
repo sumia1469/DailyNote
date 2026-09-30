@@ -35,12 +35,18 @@ test('login, ownership, worklog CRUD, notifications, password update and file li
  assert.equal((await request('POST','/api/auth/login',{username:'tester',password:'wrong'})).status,401);
  const login=await request('POST','/api/auth/login',{username:'tester',password:'test-password-123'});assert.equal(login.status,200);const token=login.data.token;
  const other=(await request('POST','/api/auth/login',{username:'other',password:'other-password-123'})).data.token;
+ const rewritten=await request('POST','/api/index?path=auth%2Flogin',{username:'tester',password:'test-password-123'});
+ assert.equal(rewritten.status,200);assert.ok(rewritten.data.token);
+ assert.equal((await request('POST','/api/index?path=auth/login',{username:'tester',password:'wrong'})).status,401);
+ assert.equal((await request('GET','/api/index?path=worklogs')).status,401);
  const created=await request('POST','/api/worklogs',{workDate:'2026-09-30',todo:[{task:'복원 테스트',checked:false}],nextDayPlan:['배포']},token);assert.equal(created.status,201);const id=created.data.id;
  assert.equal((await request('GET','/api/worklogs',null,token)).data.length,1);
  assert.equal((await request('PUT',`/api/worklogs/${id}`,{memo:'침범'},other)).status,404);
  assert.equal((await request('DELETE',`/api/worklogs/${id}`,null,other)).status,404);
  assert.equal((await request('PUT',`/api/worklogs/${id}`,{workDate:'2026-10-01',memo:'저장 성공'},token)).status,200);
  assert.equal((await request('GET','/api/worklogs?date=2026-10-01',null,token)).data[0].memo,'저장 성공');
+ const filtered=await request('GET','/api/index?path=worklogs&date=2026-10-01',null,rewritten.data.token);
+ assert.equal(filtered.status,200);assert.equal(filtered.data[0].memo,'저장 성공');
  if (!redisMode) assert.equal(JSON.parse(fs.readFileSync(path.join(process.env.DATA_DIR,'work_logs.json')))[0].memo,'저장 성공');
  else assert.equal(fs.existsSync(process.env.DATA_DIR),false);
  const note=await request('POST','/api/notifications',{userId:user.id,message:'완료'},token);assert.equal(note.status,201);
