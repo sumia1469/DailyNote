@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>일일 업무일지 - 사용자·파일·알림</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<!-- 로그인 섹션 -->
+<section id="login-section" class="login-section">
+  <div class="login-card">
+    <div class="login-title">
+      <span class="login-icon">🗓️</span>
+      <div>
+        <h1>일일 업무일지</h1>
+        <p>업무일지 관리 시스템</p>
+      </div>
+    </div>
+    <form id="login-form">
+      <div class="form-field">
+        <label for="username">아이디</label>
+        <input type="text" id="username" name="username" placeholder="아이디를 입력하세요." autocomplete="username" required>
+      </div>
+      <div class="form-field">
+        <label for="password">비밀번호</label>
+        <input type="password" id="password" name="password" placeholder="비밀번호를 입력하세요." autocomplete="current-password" required>
+      </div>
+      <button type="submit" class="primary-btn login-btn">로그인</button>
+    </form>
+    <p id="login-msg" class="login-message"></p>
+  </div>
+</section>
+<!-- 메인 화면 (로그인 후 표시) -->
+<section id="main-section" class="main-section" style="display:none;">
+  <header class="main-header">
+    <div class="main-title">
+      <span class="main-icon">🗓️</span>
+      <div>
+        <h1>일일 업무일지</h1>
+        <p>오늘의 업무와 다음 계획을 관리합니다.</p>
+      </div>
+    </div>
+    <button type="button" class="secondary-btn" id="logout-btn">로그아웃</button>
+  </header>
+  <!-- 알림 -->
+  <section class="content-card notification-section">
+    <div class="section-header">
+      <div>
+        <h2>알림</h2>
+        <p>새로운 알림과 읽지 않은 알림을 확인합니다.</p>
+      </div>
+    </div>
+    <ul id="noti-list" class="notification-list"></ul>
+  </section>
+  <!-- 파일 업로드 -->
+  <section class="content-card upload-section">
+    <div class="section-header">
+      <div>
+        <h2>📁 파일 관리</h2>
+        <p>업무 관련 파일을 업로드하고 내려받습니다.</p>
+      </div>
+    </div>
+    <form id="upload-form" class="upload-form">
+      <div class="file-input-wrap">
+        <label for="file-input">파일선택</label>
+        <input type="file" id="file-input" required>
+      </div>
+      <button type="submit" class="primary-btn upload-btn">업로드</button>
+    </form>
+    <ul id="file-list" class="file-list"></ul>
+  </section>
+  <!-- 업무일지 UI -->
+  <section id="worklog-section" class="worklog-section">
+    <div class="worklog-header">
+      <div>
+        <h2>🖊️ 새 일지 등록</h2>
+        <p>업무 진행 상황과 다음 계획을 관리합니다.</p>
+      </div>
+      <button type="button" id="open-worklog-btn" class="primary-btn">
+        + 새 일지 등록
+      </button>
+    </div>
+    <div class="search-panel">
+      <div class="search-field">
+        <label for="filter-date">업무일자</label>
+        <input type="date" id="filter-date"/>
+      </div>
+      <div class="search-buttons">
+        <button type="button" id="filter-btn" class="primary-btn">조회</button>
+        <button type="button" id="reset-filter-btn" class="secondary-btn">전체</button>
+      </div>
+    </div>
+    <div id="worklog-list" class="worklog-list">
+      <div class="empty-state">
+        <strong>업무일지를 불러오는 중입니다.</strong>
+        <span>잠시만 기다려주세요.</span>
+      </div>
+    </div>
+  </section>
+</section>
+<!-- 업무일지 등록·수정 팝업 -->
+<div id="worklog-modal" class="modal" aria-hidden="true">
+  <div id="worklog-title"></div>
+  <div class="modal-backdrop" data-modal-close></div>
+  <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-header">
+      <div>
+        <h2 id="modal-title">새 업무일지 등록</h2>
+        <p>TO-DO는 한줄에 하나씩 입력하세요.</p>
+      </div>
+      <button type="button" id="modal-close-btn" class="icon-btn" aria-label="닫기">×</button>
+    </div>
+    <form id="worklog-form" class="worklog-form">
+      <input type="hidden" name="worklogId">
+      <div class="form-field">
+        <label for="work-date">업무일자</label>
+        <input type="date" id="work-date" name="workDate" required>
+      </div>
+      <div class="form-field">
+        <label for="todo">TODO</label>
+        <textarea id="todo" name="todo" rows="7" placeholder="예) 보고서 작성" required></textarea>
+        <small>업무 하나를 한 줄씩 입력하세요.</small>
+      </div>
+      <div class="form-field">
+        <label for="next-day-plan">익일 계획</label>
+        <textarea id="next-day-plan" name="nextDayPlan" rows="5" placeholder="예) 회의 준비"></textarea>
+        <small>계획 하나를 한 줄씩 입력하세요.</small>
+      </div>
+      <!-- 비고와 메모 -->
+      <div class="form-field">
+        <label for="remarks">비고</label>
+        <input type="text" id="remarks" name="remarks">
+      </div>
+      <div class="form-field">
+        <label for="memo">메모</label>
+        <textarea id="memo" name="memo" rows="3"></textarea>
+      </div>
+      <!-- 모달 하단버튼 -->
+      <div class="modal-actions">
+        <button type="button" id="modal-cancel-btn" class="secondary-btn">취소</button>
+        <button type="submit" id="worklog-save-btn" class="primary-btn">등록</button>
+      </div>
+    </form>
+  </div>
+</div>
+<script src="script.js"></script>
+</body>
+</html>

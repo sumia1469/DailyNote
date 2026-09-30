@@ -1,0 +1,12 @@
+const fs = require('fs');
+const path = require('path');
+const {makeUserRecord} = require('../src/auth');
+const dir = process.env.DATA_DIR || path.join(__dirname, '..', 'data');
+const username = process.env.ADMIN_USERNAME;
+const password = process.env.ADMIN_PASSWORD;
+if (!username || !password || password.length < 12) throw new Error('Set ADMIN_USERNAME and ADMIN_PASSWORD (12+ characters).');
+fs.mkdirSync(dir, {recursive:true});
+const file = path.join(dir, 'users.json');
+if (fs.existsSync(file) && JSON.parse(fs.readFileSync(file)).length) throw new Error('Existing users preserved; initialization refused.');
+fs.writeFileSync(file, JSON.stringify([{...makeUserRecord(username,password), id:1, createdAt:new Date().toISOString()}], null,2));
+console.log('Initial user created.');

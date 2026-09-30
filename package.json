@@ -1,0 +1,15 @@
+{
+  "name": "dailynote",
+  "version": "1.0.0",
+  "description": "MariaDB 없이 JSON 파일 기반 일일 업무일지",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "init": "node scripts/init.js",
+    "test": "node --test test/*.test.js"
+  },
+  "author": "Your Company",
+  "license": "MIT",
+  "dependencies": {},
+  "private": true
+}
