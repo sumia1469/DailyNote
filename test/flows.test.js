@@ -40,3 +40,12 @@ test('login, ownership, worklog CRUD, notifications, password update and file li
  assert.equal((await request('POST','/api/auth/login',{username:'tester',password:'new-password-123'})).status,200);
  assert.equal((await request('DELETE',`/api/worklogs/${id}`,null,token)).status,200);
 });
+
+test('Vercel without Redis serves login and assets while API reports missing storage',async()=>{
+ const previous=process.env.VERCEL;process.env.VERCEL='1';
+ try {
+  const page=await request('GET','/');assert.equal(page.status,200);assert.match(page.data,/id="login-form"/);
+  for (const asset of ['/style.css','/script.js']) assert.equal((await request('GET',asset)).status,200);
+  assert.equal((await request('POST','/api/auth/login',{username:'tester',password:'test-password-123'})).status,503);
+ } finally {if(previous===undefined)delete process.env.VERCEL;else process.env.VERCEL=previous;}
+});
