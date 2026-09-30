@@ -489,10 +489,13 @@ function createTodoItem(worklog, todo) {
   const text = document.createElement('span');
   text.textContent = todo.task || '';
   checkbox.addEventListener('change', async () => {
-    const previousChecked = Boolean(todo.checked)
-    todo.checked = checkbox.checked;
+    const affected = flattenTodoItems([todo]);
+    const previousStates = affected.map(item => ({item, checked: Boolean(item.checked)}));
+    affected.forEach(item => { item.checked = checkbox.checked; });
     label.classList.toggle('completed', checkbox.checked);
-    checkbox.disabled = true;
+    // Lock this card while saving so child edits cannot race with the parent update.
+    label.closest('.worklog-card').querySelectorAll('input[type="checkbox"]')
+      .forEach(input => { input.disabled = true; });
     try {
       const response = await authFetch(
         `/api/worklogs/${worklog.id}`,
@@ -510,10 +513,8 @@ function createTodoItem(worklog, todo) {
        **/
       renderWorklogs(currentWorklogs)
     } catch (error) {
-      todo.checked = previousChecked;
-      checkbox.checked = previousChecked;
-      label.classList.toggle('completed', previousChecked);
-      checkbox.disabled = false;
+      previousStates.forEach(({item, checked}) => { item.checked = checked; });
+      renderWorklogs(currentWorklogs);
       alert(error.message)
     }
   });
@@ -828,32 +829,55 @@ document.getElementById('reset-filter-btn').addEventListener('click', () => {
   loadList('');
 })
 
-/*textarea에 탭입력시 요소포커스 */
-const todoTextarea = document.getElementById('todo');
-todoTextarea.addEventListener('keydown', event => {
-  if (event.key !== 'Tab') {
-    return;
+/* Touch controls and Tab / Shift+Tab use the same line-based editor. */
+;['todo', 'next-day-plan'].forEach(id => {
+  const textarea = document.getElementById(id);
+  const toolbar = document.querySelector('[data-editor="' + id + '"]');
+  function updateButtons() {
+    ['indent', 'outdent'].forEach(action => {
+      const result = ListEditor.changeDepth(textarea.value, textarea.selectionStart,
+        textarea.selectionEnd, action === 'indent' ? 1 : -1);
+      toolbar.querySelector('[data-action="' + action + '"]').disabled = result.value === textarea.value;
+    });
   }
-  event.preventDefault();
-  const start = todoTextarea.selectionStart;
-  const end = todoTextarea.selectionEnd;
-  const value = todoTextarea.value;
-  todoTextarea.value = value.substring(0, start) + '\t' + value.substring(end);
-  todoTextarea.selectionStart = todoTextarea.selectionEnd = start + 1;
-})
-
-const nextDayPlanTextarea = document.getElementById('next-day-plan');
-nextDayPlanTextarea.addEventListener('keydown', event => {
-  if (event.key !== 'Tab') {
-    return;
+  function apply(action) {
+    const result = action === 'add'
+      ? ListEditor.addLine(textarea.value, textarea.selectionStart, textarea.selectionEnd)
+      : ListEditor.changeDepth(textarea.value, textarea.selectionStart, textarea.selectionEnd,
+        action === 'indent' ? 1 : -1);
+    textarea.value = result.value;
+    textarea.focus({preventScroll: true});
+    textarea.setSelectionRange(result.start, result.end);
+    textarea.dispatchEvent(new Event('input', {bubbles: true}));
   }
-  event.preventDefault();
-  const start = nextDayPlanTextarea.selectionStart;
-  const end = nextDayPlanTextarea.selectionEnd;
-  const value = nextDayPlanTextarea.value;
-  nextDayPlanTextarea.value = value.substring(0, start) + '\t' + value.substring(end);
-  nextDayPlanTextarea.selectionStart = nextDayPlanTextarea.selectionEnd = start + 1;
-})
+  toolbar.addEventListener('pointerdown', event => {
+    if (event.target.closest('button')) event.preventDefault();
+  });
+  toolbar.addEventListener('click', event => {
+    const button = event.target.closest('button[data-action]');
+    if (button && !button.disabled) apply(button.dataset.action);
+  });
+  textarea.addEventListener('keydown', event => {
+    if (event.key === 'Tab') {
+      event.preventDefault();
+      apply(event.shiftKey ? 'outdent' : 'indent');
+    } else if (event.key === 'Enter' && !event.isComposing) {
+      const lineStart = textarea.value.lastIndexOf('\n', textarea.selectionStart - 1) + 1;
+      const indent = textarea.value.slice(lineStart, textarea.selectionStart).match(/^\t*/)[0];
+      if (indent) {
+        event.preventDefault();
+        textarea.setRangeText('\n' + indent, textarea.selectionStart, textarea.selectionEnd, 'end');
+        textarea.dispatchEvent(new Event('input', {bubbles: true}));
+      }
+    }
+  });
+  ['input', 'click', 'keyup', 'select', 'focus'].forEach(event =>
+    textarea.addEventListener(event, updateButtons));
+  document.addEventListener('selectionchange', () => {
+    if (document.activeElement === textarea) updateButtons();
+  });
+  updateButtons();
+});
 /**
  * 최초 화면 로드
  **/

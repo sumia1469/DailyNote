@@ -831,3 +831,16 @@ body.modal-open {
   #main-section.main-section { width: calc(100% - 24px); }
   .card-body { grid-template-columns: 1fr; }
 }
+
+/* Touch-friendly hierarchy controls for worklog entry. */
+.list-editor-toolbar { display: flex; flex-wrap: wrap; gap: 8px; }
+.list-editor-toolbar button { min-height: 44px; padding: 9px 12px; touch-action: manipulation; }
+.list-editor-toolbar button:disabled { opacity: .45; cursor: default; }
+#todo, #next-day-plan { tab-size: 3; font-size: 16px; line-height: 1.6; }
+#worklog-form { width: auto; margin: 0; }
+@media (max-width: 600px) {
+  .modal { padding: 12px; }
+  .modal-dialog { max-height: calc(100dvh - 24px); }
+  #worklog-form { padding: 16px; }
+  .list-editor-toolbar button { flex: 1 1 auto; }
+}

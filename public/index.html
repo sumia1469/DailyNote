@@ -120,12 +120,22 @@
       <div class="form-field">
         <label for="todo">TODO</label>
         <textarea id="todo" name="todo" rows="7" placeholder="예) 보고서 작성" required></textarea>
-        <small>업무 하나를 한 줄씩 입력하세요.</small>
+        <div class="list-editor-toolbar" data-editor="todo" role="group" aria-label="업무 목록 편집">
+          <button type="button" class="secondary-btn" data-action="outdent" aria-controls="todo">← 상위로</button>
+          <button type="button" class="secondary-btn" data-action="indent" aria-controls="todo">→ 하위로</button>
+          <button type="button" class="secondary-btn" data-action="add" aria-controls="todo">＋ 항목 추가</button>
+        </div>
+        <small>줄을 선택한 뒤 상위로·하위로 버튼을 누르세요. PC에서는 Tab·Shift+Tab을 사용할 수 있어요.</small>
       </div>
       <div class="form-field">
         <label for="next-day-plan">익일 계획</label>
         <textarea id="next-day-plan" name="nextDayPlan" rows="5" placeholder="예) 회의 준비"></textarea>
-        <small>계획 하나를 한 줄씩 입력하세요.</small>
+        <div class="list-editor-toolbar" data-editor="next-day-plan" role="group" aria-label="계획 목록 편집">
+          <button type="button" class="secondary-btn" data-action="outdent" aria-controls="next-day-plan">← 상위로</button>
+          <button type="button" class="secondary-btn" data-action="indent" aria-controls="next-day-plan">→ 하위로</button>
+          <button type="button" class="secondary-btn" data-action="add" aria-controls="next-day-plan">＋ 항목 추가</button>
+        </div>
+        <small>줄을 선택한 뒤 상위로·하위로 버튼을 누르세요. PC에서는 Tab·Shift+Tab을 사용할 수 있어요.</small>
       </div>
       <!-- 비고와 메모 -->
       <div class="form-field">
@@ -144,6 +154,7 @@
     </form>
   </div>
 </div>
+<script src="list-editor.js"></script>
 <script src="script.js"></script>
 </body>
 </html>
