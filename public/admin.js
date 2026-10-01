@@ -65,12 +65,20 @@ function noticeRow(note){
  const date=note.createdAt?new Date(note.createdAt).toLocaleDateString('ko-KR'):'';
  const r=row(note.title||note.message,(note.shared?'공통 공지':'이전 개별 공지')+' · '+date+' · 열람 '+note.readCount+'/'+note.audienceCount+'명'+(note.updatedAt?' · 수정됨':''));
  if(note.title){const preview=document.createElement('p');preview.className='notice-preview';preview.textContent=note.message;r.div.insertBefore(preview,r.actions);}
- r.actions.append(button('수정',()=>openNotificationDialog(note)),button('삭제',async()=>{if(!confirm('이 공지 게시글을 삭제할까요?'))return;await api('/api/admin/notifications/'+note.id,'DELETE');await loadNotices(true);status('공지를 삭제했습니다.');},true));
+ r.div.classList.add('notice-admin-row');r.actions.remove();
+ const more=document.createElement('button');more.type='button';more.className='shell-icon notice-admin-more';more.dataset.icon='more';more.setAttribute('aria-label',(note.title||'공지')+' 메뉴');more.setAttribute('aria-haspopup','menu');more.setAttribute('aria-controls','notice-admin-menu');more.setAttribute('aria-expanded','false');
+ more.addEventListener('click',()=>{
+  const menu=$('notice-admin-menu');
+  const edit=button('수정',()=>{UIShell.dropdown.close();openNotificationDialog(note);});edit.dataset.icon='edit';
+  const remove=button('삭제',async()=>{UIShell.dropdown.close();if(!confirm('이 공지 게시글을 삭제할까요?'))return;await api('/api/admin/notifications/'+note.id,'DELETE');await loadNotices(true);status('공지를 삭제했습니다.');},true);remove.dataset.icon='trash';remove.classList.add('menu-danger');
+  menu.replaceChildren(edit,remove);UIShell.dropdown.open(menu,more);
+ });
+ r.div.appendChild(more);
  return r.div;
 }
 async function loadNotices(reset=false){
  if(!reset&&(noticeLoading||noticeNext===null||activePanel!=='notifications'))return;
- if(reset){noticeVersion++;noticeNext=0;noticeObserver?.disconnect();}
+ if(reset){UIShell.dropdown.close();noticeVersion++;noticeNext=0;noticeObserver?.disconnect();}
  const version=noticeVersion,offset=noticeNext;noticeLoading=true;
  const more=$('notice-load-more');if(more){more.disabled=true;more.textContent='불러오는 중…';}
  try{

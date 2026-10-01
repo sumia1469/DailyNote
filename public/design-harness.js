@@ -19,3 +19,6 @@ document.getElementById('harness-excel').addEventListener('click',()=>WorklogExc
 (function(){const select=document.getElementById('harness-license-count'),note=document.getElementById('harness-license-status');function render(){const count=Number(select.value);note.textContent='무료 사용 '+count+'/6명 · 관리자 포함. '+(count>6?'업무 기능이 차단되었습니다. 계정을 비활성화하여 6명 이하로 줄이세요.':count===6?'7번째 활성 사용자 등록·승인·재활성화에는 별도 라이선스가 필요합니다.':'활성 사용자 1명을 추가할 수 있습니다.');}select.addEventListener('change',render);render();})();
 
 
+CategoryTabs.mount(document.getElementById('harness-category-tabs'),{items:['전체','기술공유','트러블슈팅','FAQ','Q&A','미분류'].map(label=>({value:label,label})),value:'전체',onChange:value=>{document.getElementById('harness-category-state').textContent=value+' 게시글';}});
+
+

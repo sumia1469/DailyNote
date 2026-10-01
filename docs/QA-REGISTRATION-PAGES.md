@@ -8,6 +8,6 @@ UIConfig의 create 액션 9개를 점검했습니다. 업무일지, 캘린더 �
 - 게시판 생성 후 목록 갱신, 저장 실패 입력 유지, 저장 중 브라우저 뒤로가기 차단 확인.
 - 메모 뒤로가기 저장 실패 시 본문 유지, 재시도 성공 후 목록 복귀 확인.
 - 공지 저장 실패 시 입력 유지, 게시판 드롭다운과 Escape 포커스 복귀 확인.
-- npm test: 52개 통과. npm run test:ui: 7개 통과. test:writing과 test:boards 실제 브라우저 검사 통과.
+- npm test: 53개 통과. npm run test:ui: 7개 통과. test:writing과 test:boards 실제 브라우저 검사 통과.
 
 운영 데이터 대신 임시 JSON 저장소·예시 계정을 사용했습니다. 모바일은 Chromium 뷰포트 검증이며 iPhone 실기기 검증은 하지 않았습니다. 새로고침은 출발 메뉴로 복귀하며 저장하지 않은 초안은 복구하지 않습니다.

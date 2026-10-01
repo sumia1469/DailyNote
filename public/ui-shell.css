@@ -101,3 +101,11 @@ body .ui-header.ui-header-wide,body #main-section .ui-header.ui-header-wide{grid
 .board-post-row{display:flex;align-items:flex-start;gap:12px}
 .board-post-link{display:block;flex:1;min-width:0;color:inherit;text-decoration:none;overflow-wrap:anywhere}
 .board-post-more{flex-shrink:0;margin-left:auto}
+
+/* Notice rows share the anchored action dropdown; inputs stay large enough for iOS focus. */
+body #admin-notifications .notice-admin-row{position:relative;padding-right:66px}
+.notice-admin-more{position:absolute;top:12px;right:12px;width:40px;height:40px}
+body #notice-search-dialog{box-sizing:border-box;max-width:calc(100vw - 24px)}
+#notice-search-dialog .admin-card,#notice-search-dialog .notice-toolbar label{min-width:0}
+body #notice-search-dialog input,body #notice-search-dialog select{font:inherit;font-size:max(16px,var(--app-font-size,16px));max-width:100%}
+#notice-search-dialog .admin-actions{flex-wrap:wrap}
