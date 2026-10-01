@@ -43,6 +43,7 @@ async function handleApi(req, res) {
   const license = await require('./license').status();
   const recovery = /^\/api\/admin\/(users|permissions|directory)(\/|$)/.test(pathname);
   if (license.overLimit && !recovery) throw require('./license').licenseError(license.activeUserCount);
+  if (pathname === '/api/auth/profile' && req.method === 'PUT') return require('./profile').updateProfile(req,res,authInfo);
   let basicRight;
   if(pathname.startsWith('/api/calendar')) basicRight={GET:'calendarRead',POST:'calendarCreate',PUT:'calendarEdit',DELETE:'calendarDelete'}[req.method];
   if(pathname.startsWith('/api/memos')) basicRight={GET:'memoRead',POST:'memoCreate',PUT:'memoEdit',DELETE:'memoDelete'}[req.method];
@@ -87,6 +88,7 @@ module.exports = handler;
 if (require.main === module) {
  http.createServer(handler).listen(PORT, () => console.log(`dailyNote http://localhost:${PORT}`));
 }
+
 
 
 

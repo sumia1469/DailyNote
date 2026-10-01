@@ -1,0 +1,19 @@
+body .profile-trigger { width:100%; border:0; border-top:1px solid var(--line); border-radius:0; background:transparent; color:var(--text); text-align:left; cursor:pointer; padding:18px 8px 8px; margin-top:auto; box-shadow:none; }
+body .profile-trigger:hover { background:var(--line); }
+body .profile-trigger > div { flex:1; min-width:0; }
+body .profile-trigger strong { display:block; margin:0; font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+body .profile-trigger small { display:block; overflow:hidden; text-overflow:ellipsis; }
+.profile-avatar { display:inline-flex; flex:0 0 40px; width:40px; height:40px; align-items:center; justify-content:center; border-radius:50%; overflow:hidden; background:var(--line); color:var(--text); font-weight:600; }
+.profile-avatar img { width:100%; height:100%; object-fit:cover; }
+.account-settings-dialog { width:min(320px,calc(100vw - 32px)); }
+.account-settings-dialog nav { display:grid; gap:6px; }
+.account-settings-dialog nav a { display:flex; gap:12px; align-items:center; padding:14px 12px; min-height:44px; box-sizing:border-box; border-radius:12px; color:var(--text); text-decoration:none; }
+.account-settings-dialog nav a:hover { background:var(--line); }
+.account-settings-dialog nav a[hidden] { display:none; }
+.account-settings-dialog .app-icon { width:22px; height:22px; flex:none; }
+.profile-dialog { width:min(440px,calc(100vw - 32px)); }
+.profile-photo { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:12px; padding:16px 0 24px; }
+.profile-photo .profile-avatar { width:80px; height:80px; flex-basis:80px; font-size:28px; }
+.profile-photo label { cursor:pointer; padding:10px 14px; }
+.profile-dialog input { font-size:16px; max-width:100%; box-sizing:border-box; }
+.profile-dialog .journal-dialog-actions { flex-wrap:wrap; }

@@ -65,18 +65,28 @@ async function seed(){
  for(const [label,viewport] of [['pc',{width:1440,height:1000}],['mobile',{width:390,height:844}]]){
   await page.setViewportSize(viewport);await page.goto(base+'/#worklogs');await page.locator('.card-menu-trigger').first().waitFor();await settled();await journalExcel(label);
  }
+ // Profile edit, cancel, server failure and persisted display with example data.
+ for(const viewport of [{width:1440,height:1000},{width:390,height:844}]){
+  await page.setViewportSize(viewport);await page.goto(base+'/#files');await page.locator('#main-section').waitFor({state:'visible'});await settled();await page.locator('#sidebar-open').click();await page.locator('#profile-open').click();
+  await page.locator('#profile-nickname').fill('저장하지 않는 별명');await page.locator('#profile-cancel').click();assert.equal(await page.locator('#shell-account').textContent(),username);
+  await page.locator('#profile-open').click();await page.locator('#profile-nickname').fill('나의 별명');
+  await page.route('**/api/auth/profile',route=>route.fulfill({status:500,contentType:'application/json',body:JSON.stringify({message:'예시 저장 실패'})}));await page.locator('#profile-save').click();await page.locator('#profile-error').filter({hasText:'예시 저장 실패'}).waitFor();assert.equal(await page.locator('#profile-nickname').inputValue(),'나의 별명');await page.unroute('**/api/auth/profile');
+  await page.locator('#profile-file').setInputFiles({name:'avatar.png',mimeType:'image/png',buffer:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a6XcAAAAASUVORK5CYII=','base64')});await page.locator('#profile-save:enabled').waitFor();await page.locator('#profile-save').click();await page.waitForFunction(()=>!document.getElementById('profile-dialog').open);assert.equal(await page.locator('#shell-account').textContent(),'나의 별명');
+  await page.reload();await page.locator('#main-section').waitFor({state:'visible'});assert.equal(await page.locator('#shell-account').textContent(),'나의 별명');await page.locator('#sidebar-open').click();await page.locator('#profile-open').click();await page.locator('#profile-nickname').fill('');await page.locator('#profile-remove').click();await page.locator('#profile-save').click();await page.waitForFunction(()=>!document.getElementById('profile-dialog').open);
+ }
  // Account footer and password close regression, with isolated example accounts.
  for(const viewport of [{width:1440,height:1000},{width:390,height:844},{width:320,height:568},{width:844,height:390}]){
   await page.setViewportSize(viewport);await page.goto(base+'/#files');await page.locator('#main-section').waitFor({state:'visible'});await settled();await page.locator('#sidebar-open').click();
   assert.equal(await page.locator('.app-navigation #admin-page-btn,.app-navigation #logout-btn').count(),0);
-  const controls=await page.locator('.sidebar-account-actions .shell-icon').evaluateAll(nodes=>nodes.map(n=>{const r=n.getBoundingClientRect();return {y:r.y,height:r.height,right:r.right}}));assert.equal(controls.length,3);assert.ok(controls.every(r=>r.y===controls[0].y&&r.height>=44&&r.right<=viewport.width));
+  const controls=await page.locator('.sidebar-account-actions .shell-icon').evaluateAll(nodes=>nodes.map(n=>{const r=n.getBoundingClientRect();return {y:r.y,height:r.height,right:r.right}}));assert.equal(controls.length,2);assert.ok(controls.every(r=>r.y===controls[0].y&&r.height>=44&&r.right<=viewport.width));
   await page.locator('#logout-btn').scrollIntoViewIfNeeded();
   const icons=await page.locator('.sidebar-account-actions .app-icon').evaluateAll(nodes=>nodes.map(n=>{const r=n.getBoundingClientRect(),b=n.parentElement.getBoundingClientRect();return {width:r.width,height:r.height,centered:Math.abs(r.x+r.width/2-b.x-b.width/2)<1&&Math.abs(r.y+r.height/2-b.y-b.height/2)<1,bottom:b.bottom}}));
   assert.ok(icons.every(r=>r.width===22&&r.height===22&&r.centered&&r.bottom<=viewport.height-20));
   assert.equal(await page.locator('#admin-page-btn .app-icon').getAttribute('data-icon-name'),'shield');
+  await page.locator('#account-settings-open').click();
   await page.locator('#change-password-link').scrollIntoViewIfNeeded();
   await page.locator('#change-password-link').click();await page.locator('#password-change-close:enabled').waitFor();assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);await page.locator('#password-change-close').click();await page.waitForURL('**/#files');await page.locator('#main-section').waitFor({state:'visible'});
-  await page.locator('#sidebar-open').click();await page.locator('#change-password-link').click();await page.locator('#password-change-close:enabled').waitFor();await page.keyboard.press('Escape');await page.waitForURL('**/#files');
+  await page.locator('#sidebar-open').click();await page.locator('#account-settings-open').click();await page.locator('#change-password-link').click();await page.locator('#password-change-close:enabled').waitFor();await page.keyboard.press('Escape');await page.waitForURL('**/#files');
  }
  await page.goto(base+'/change-password.html?returnTo='+encodeURIComponent('https://example.com/'));await page.locator('#password-change-close:enabled').waitFor();await page.locator('#password-change-close').click();assert.equal(new URL(page.url()).origin,base);
  await page.goto(base+'/#worklogs');await page.locator('#sidebar-open').click();await page.locator('#logout-btn').click();await page.locator('#login-section').waitFor({state:'visible'});assert.equal(await page.evaluate(()=>localStorage.getItem('token')),null);
@@ -84,4 +94,5 @@ async function seed(){
  await ds.update('users',2,{mustChangePassword:true});await page.goto(base);await page.waitForURL('**/change-password.html');await page.locator('#password-change-close:enabled').waitFor();await page.locator('#password-change-close').click();await page.locator('#login-section').waitFor({state:'visible'});assert.equal(await page.evaluate(()=>localStorage.getItem('token')),null);
  assert.deepEqual(errors,[]);console.log(JSON.stringify({status:'passed',viewports:['1440x1000','390x844'],captures:22,output:out,checks:['centered titles','no overflow','notification detail reload/back','notification create/update','error preserves input','file upload','harness error/save','account footer PC/mobile','password X/Escape return','external return URL rejected','member admin hidden','logout and required-password close','no page errors']}));
 })().catch(error=>{console.error(error);process.exitCode=1;}).finally(async()=>{if(browser)await browser.close();if(server)await new Promise(resolve=>server.close(resolve));if(out.startsWith(tmp))console.log('Temporary captures: '+out);else fs.rmSync(tmp,{recursive:true,force:true});});
+
 
