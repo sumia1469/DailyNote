@@ -3,6 +3,15 @@
   const detail=document.getElementById('view-notification-detail'),back=document.getElementById('notification-back'),opener=document.getElementById('sidebar-open');
   const controls=['open-search-btn','open-worklog-btn','open-upload-btn','open-memo-btn','open-memo-search-btn'].map(id=>document.getElementById(id));
   let user=null,allowed=[],ready=false;
+  function openReference(hash){
+    history.replaceState({...history.state,referenceScroll:window.scrollY},'',location.href);
+    history.pushState({referenceReturn:location.hash},'',hash);
+    show();
+  }
+  function goBack(){
+    if(history.state?.referenceReturn){history.back();return;}
+    location.hash=location.hash.match(/^(?:#)(files|memos|worklogs)\//)?.[1]||'notifications';
+  }
   const drawer=UIShell.drawer({nav:document.getElementById('app-sidebar'),opener,closer:document.getElementById('sidebar-close'),scrim:document.getElementById('sidebar-scrim'),select:'[data-view]'});
   function show(){
     if(!ready)return;
@@ -19,12 +28,15 @@
     if(ref)window.References.loadDetail(ref[1],ref[2]);else window.References.cancelDetail();
     const canonical=ref?ref[0]:isNotice?'notifications/'+detailId:key;if(canonical&&location.hash!=='#'+canonical)history.replaceState(null,'','#'+canonical);
     window.JournalControls?.close();drawer.close();window.MemoApp?.activate(key,user);
+    if(!isDetail&&Number.isFinite(history.state?.referenceScroll)){const y=history.state.referenceScroll;requestAnimationFrame(()=>window.scrollTo(0,y));}
     if(isDetail){document.getElementById('shell-title').setAttribute('tabindex','-1');document.getElementById('shell-title').focus();}
   }
   document.querySelectorAll('[data-view]').forEach(node=>node.addEventListener('click',event=>{event.preventDefault();if(!allowed.includes(node.dataset.view))return;if(location.hash==='#'+node.dataset.view)show();else location.hash=node.dataset.view;}));
-  back.addEventListener('click',()=>{location.hash=location.hash.match(/^(?:#)(files|memos|worklogs)\//)?.[1]||'notifications';});window.addEventListener('hashchange',show);
+  back.addEventListener('click',goBack);window.addEventListener('hashchange',show);
+  window.addEventListener('popstate',event=>{if(!event.state?.referenceImage)show();});
   const list=document.getElementById('noti-list');new MutationObserver(()=>{const count=list.querySelectorAll('.notification-item.unread').length,badge=document.getElementById('notification-count');badge.textContent=count;badge.hidden=!count;}).observe(list,{childList:true,subtree:true});
-  window.AppShell={refresh:show,configure(value){user=value;window.References.configure(value);allowed=UIConfig.allowed('user',user.permissions||{}).map(menu=>menu.id);document.querySelectorAll('[data-view]').forEach(node=>node.hidden=!allowed.includes(node.dataset.view));document.getElementById('shell-account').textContent=user.username||'내 업무 공간';ready=true;show();},reset(){window.References.reset();window.MemoApp?.reset();ready=false;user=null;allowed=[];window.NotificationPage?.cancel();drawer.close();window.JournalControls?.close();}};
+  window.AppShell={refresh:show,openReference,goBack,configure(value){user=value;window.References.configure(value);allowed=UIConfig.allowed('user',user.permissions||{}).map(menu=>menu.id);document.querySelectorAll('[data-view]').forEach(node=>node.hidden=!allowed.includes(node.dataset.view));document.getElementById('shell-account').textContent=user.username||'내 업무 공간';ready=true;show();},reset(){window.References.reset();window.MemoApp?.reset();ready=false;user=null;allowed=[];window.NotificationPage?.cancel();drawer.close();window.JournalControls?.close();}};
   UIShell.dialogs();
 })();
+
 
