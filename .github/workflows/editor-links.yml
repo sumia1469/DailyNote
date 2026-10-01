@@ -27,6 +27,10 @@ jobs:
       - name: Install development browser
         run: |
           npm install --prefix "$RUNNER_TEMP/link-browser" playwright --no-audit --no-fund
-          node "$RUNNER_TEMP/link-browser/node_modules/playwright/cli.js" install --with-deps chromium
+          if command -v google-chrome >/dev/null 2>&1; then
+            echo "BROWSER_EXECUTABLE_PATH=$(command -v google-chrome)" >> "$GITHUB_ENV"
+          else
+            node "$RUNNER_TEMP/link-browser/node_modules/playwright/cli.js" install --with-deps chromium
+          fi
       - name: Verify PC and mobile link flows
         run: PLAYWRIGHT_MODULE_PATH="$RUNNER_TEMP/link-browser/node_modules/playwright" node scripts/verify-links.cjs
