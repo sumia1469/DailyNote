@@ -34,6 +34,16 @@ test('administration: rights, users, notification editing, shared appearance and
  assert.equal((await request('PUT','/api/admin/settings',{theme:'dark'},member)).status,403);
  assert.equal((await request('PUT','/api/admin/settings',{fontFamily:'serif',fontSize:18,spacing:'compact',theme:'white',background:'none'},admin)).status,200);
  const settings=(await request('GET','/api/settings')).data;assert.equal(settings.theme,'white');assert.equal(settings.fontSize,18);assert.equal(settings.fontFamily,'serif');
+ assert.equal(settings.loadingMotion,'petal');
+ for(const variant of require('../public/loading-motion').variants){
+   assert.equal((await request('PUT','/api/admin/settings',{loadingMotion:variant.id},member)).status,403);
+   assert.equal((await request('PUT','/api/admin/settings',{loadingMotion:variant.id},admin)).status,200);
+   const publicValue=(await request('GET','/api/settings')).data;
+   assert.equal(publicValue.loadingMotion,variant.id);assert.equal(publicValue.theme,'white');
+ }
+ assert.equal((await request('PUT','/api/admin/settings',{loadingMotion:'invalid'},admin)).status,400);
+ assert.equal((await request('GET','/api/settings')).data.loadingMotion,'satellite');
+ assert.equal((await request('PUT','/api/admin/settings',{loadingMotion:'petal'},admin)).status,200);
  assert.equal((await request('PUT','/api/admin/settings',{theme:'invalid'},admin)).status,400);
  const png='iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a2foAAAAASUVORK5CYII=';
  assert.equal((await request('PUT','/api/admin/settings',{background:'custom',imageData:png},admin)).status,200);

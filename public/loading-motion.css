@@ -1,0 +1,40 @@
+/* Shared loading presentation; request lifecycle stays with each caller. */
+.loading-overlay{background:rgba(242,244,247,.82);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+body[data-theme="dark"] .loading-overlay{background:rgba(23,26,31,.85)}
+.loading-panel.dn-loading,body[data-theme="dark"] .loading-panel.dn-loading{width:min(300px,100%);padding:0;background:transparent;border:0;border-radius:0;box-shadow:none;color:var(--text,#111);text-align:center}
+.dn-loading .dn-motion{position:relative;width:190px;height:154px;margin:0 auto;color:inherit}
+.dn-loading .dn-mark{position:absolute;width:74px;height:52px;left:58px;top:51px;object-fit:contain}
+.dn-loading p{margin:18px 0 8px;font-size:18px;line-height:1.5;font-weight:600}
+.dn-loading small{color:var(--muted,#687386);font-size:14px}
+.loading-motion-preview{display:grid;justify-items:center;padding:24px 12px;margin:16px 0;background:var(--background,#f5f6f8);border-radius:16px}
+.loading-motion-preview p{font-size:16px;margin:8px 0 0}
+.dn-loading .dn-dot{position:absolute;left:90px;top:72px;width:10px;height:10px;border-radius:50%;background:currentColor;animation-delay:calc(var(--i)*-.16s)}
+.dn-loading .windows .dn-dot{animation:dn-win 2.8s cubic-bezier(.42,0,.58,1) infinite;animation-delay:calc(var(--i)*-.14s)}
+@keyframes dn-win{0%{transform:rotate(-100deg) translateY(-65px) scale(.3);opacity:.15}35%{transform:rotate(80deg) translateY(-65px) scale(1.05);opacity:1}70%{transform:rotate(300deg) translateY(-65px) scale(.65);opacity:.6}100%{transform:rotate(620deg) translateY(-65px) scale(.3);opacity:.15}}
+.dn-loading .breath .dn-mark{top:25px}
+.dn-loading .breath .dn-dot{left:calc(62px + var(--i)*18px);top:117px;animation:dn-breathe 1.65s ease-in-out infinite;animation-delay:calc(var(--i)*-.22s)}
+@keyframes dn-breathe{0%,100%{transform:scale(.35);opacity:.28}50%{transform:scale(1.35);opacity:1}}
+.dn-loading .comet .dn-mark{top:24px}
+.dn-loading .comet .dn-dot{left:25px;top:120px;animation:dn-comet 2.7s cubic-bezier(.4,0,.2,1) infinite;animation-delay:calc(var(--i)*-.1s)}
+@keyframes dn-comet{0%{transform:translateX(0) scale(.2);opacity:0}20%{opacity:1}48%{transform:translateX(68px) scale(1.1)}80%{opacity:.7}100%{transform:translateX(135px) scale(.2);opacity:0}}
+.dn-loading .infinity .dn-mark{top:9px;width:59px;height:42px;left:66px}
+.dn-loading .infinity .dn-dot{left:0;top:0;offset-path:path('M 95 109 C 133 58 171 74 162 111 C 152 151 119 137 95 109 C 71 81 38 67 28 107 C 19 144 57 160 95 109');offset-rotate:0deg;animation:dn-eight 3.4s linear infinite;animation-delay:calc(var(--i)*-.2s)}
+@keyframes dn-eight{0%{offset-distance:0%;transform:scale(.45)}25%{transform:scale(1.2)}50%{transform:scale(.55)}75%{transform:scale(1.2)}100%{offset-distance:100%;transform:scale(.45)}}
+.dn-loading .drops .dn-mark{top:25px}
+.dn-loading .drops .dn-dot{left:calc(56px + var(--i)*24px);top:105px;width:13px;height:13px;animation:dn-drop 2s ease-in-out infinite;animation-delay:calc(var(--i)*-.26s)}
+@keyframes dn-drop{0%,100%{transform:translateY(-7px) scale(.3);border-radius:50%;opacity:.35}45%{transform:translateY(14px) scale(.8,1.35);border-radius:55% 55% 42% 42%;opacity:1}65%{transform:translateY(29px) scale(1.5,.55);border-radius:50%}85%{transform:translateY(5px) scale(.5,.8)}}
+.dn-loading .duet .dn-dot{width:15px;height:15px;left:87.5px;top:69.5px;animation:dn-duet 3s ease-in-out infinite;animation-delay:calc(var(--i)*-1.5s)}
+@keyframes dn-duet{0%,100%{transform:rotate(0deg) translateX(75px) scale(.55)}50%{transform:rotate(180deg) translateX(75px) scale(1.15)}}
+.dn-loading .petal .dn-dot{animation:dn-petal 2.8s ease-in-out infinite;animation-delay:calc(var(--i)*-.35s);--angle:calc(var(--i)*45deg)}
+@keyframes dn-petal{0%,100%{transform:rotate(var(--angle)) translateY(-58px) scale(.3);opacity:.25}50%{transform:rotate(calc(var(--angle) + 30deg)) translateY(-70px) scale(1.1);opacity:1}}
+.dn-loading .wave .dn-mark{top:19px}
+.dn-loading .wave .dn-dot{left:calc(38px + var(--i)*18px);top:118px;animation:dn-wave 2s ease-in-out infinite;animation-delay:calc(var(--i)*-.17s)}
+@keyframes dn-wave{0%,100%{transform:translateY(6px) scale(.45);opacity:.35}40%{transform:translateY(-12px) scale(1.25);opacity:1}70%{transform:translateY(3px) scale(.65)}}
+.dn-loading .ripple .dn-dot{width:130px;height:130px;left:30px;top:12px;background:radial-gradient(circle,transparent 62%,currentColor 65%,transparent 69%);animation:dn-ring 3s ease-out infinite;animation-delay:calc(var(--i)*-1s)}
+.dn-loading .ripple .dn-mark{animation:dn-logo-breath 3s ease-in-out infinite}
+@keyframes dn-ring{0%{transform:scale(.65);opacity:.35}100%{transform:scale(1.3);opacity:0}}
+@keyframes dn-logo-breath{0%,100%{transform:scale(.93)}50%{transform:scale(1.06)}}
+.dn-loading .satellite .dn-dot{width:13px;height:13px;left:88.5px;top:70.5px;animation:dn-satellite 3.8s ease-in-out infinite;animation-delay:calc(var(--i)*-.55s)}
+@keyframes dn-satellite{0%,100%{transform:rotate(0deg) translate(72px,0) scale(.3);opacity:.3;border-radius:50%}25%{transform:rotate(90deg) translate(62px,0) scale(1.25);opacity:1;border-radius:42% 58% 56% 44%}50%{transform:rotate(180deg) translate(72px,0) scale(.5);opacity:.5}75%{transform:rotate(270deg) translate(62px,0) scale(1.1);opacity:1;border-radius:60% 40% 48% 52%}}
+body[data-theme="dark"] .dn-loading .dn-mark{filter:invert(1)}
+@media(prefers-reduced-motion:reduce){.dn-loading .dn-dot,.dn-loading .dn-mark{animation:none!important}.dn-loading .dn-dot{transform:rotate(calc(var(--i)*55deg)) translateY(-66px);opacity:.6}.dn-loading .breath .dn-dot,.dn-loading .comet .dn-dot,.dn-loading .drops .dn-dot,.dn-loading .wave .dn-dot{transform:none}.dn-loading .infinity .dn-dot{offset-distance:calc(var(--i)*15%);transform:none}.dn-loading .ripple .dn-dot{transform:scale(1);opacity:.15}}
