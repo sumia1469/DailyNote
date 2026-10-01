@@ -22,3 +22,7 @@ document.getElementById('harness-excel').addEventListener('click',()=>WorklogExc
 CategoryTabs.mount(document.getElementById('harness-category-tabs'),{items:['전체','기술공유','트러블슈팅','FAQ','Q&A','미분류'].map(label=>({value:label,label})),value:'전체',onChange:value=>{document.getElementById('harness-category-state').textContent=value+' 게시글';}});
 
 
+
+const fileMore=document.getElementById('harness-file-more'),fileMenu=document.getElementById('harness-file-menu');
+fileMore.addEventListener('click',()=>UIShell.dropdown.open(fileMenu,fileMore));
+fileMenu.addEventListener('click',event=>{const choice=event.target.closest('button');if(!choice)return;document.getElementById('harness-file-state').textContent=choice.textContent+' 선택 예시 · 서버 데이터는 변경하지 않습니다.';UIShell.dropdown.close(true);});
