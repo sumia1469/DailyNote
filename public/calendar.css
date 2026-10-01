@@ -12,3 +12,39 @@
 .calendar-page .cal-time-event{display:block;text-align:left;text-decoration:none}
 .cal-holiday .cal-date{color:#bd3640}.cal-holiday.cal-today .cal-date{color:white}
 @media(max-width:600px){#main-section .calendar-navigation h2{font-size:18px}.cal-week{min-height:216px}}
+
+/* Compact calendar: primary navigation, month board, floating today control. */
+.calendar-page{padding:12px 20px 24px;max-width:1440px;margin:auto}
+.calendar-toolbar{display:flex;justify-content:space-between;gap:12px;margin:0 0 12px;flex-wrap:nowrap}
+.calendar-navigation{display:grid;grid-template-columns:40px minmax(0,1fr) 40px;gap:8px;flex:1;max-width:420px}
+#main-section .calendar-navigation h2{margin:0;font-size:18px;text-align:center;white-space:normal;line-height:1.4}
+.calendar-navigation #calendar-prev,.calendar-navigation #calendar-next{border:0;background:transparent;font-size:26px;padding:0;min-height:40px}
+.calendar-view-switch{flex-wrap:nowrap;border:0;border-radius:10px;background:var(--shell-sidebar,#f2f4f7);padding:3px;gap:2px;flex-shrink:0}
+.calendar-view-switch button{min-height:32px;min-width:40px;padding:4px 12px;background:transparent;font-size:14px;border-radius:7px}
+.calendar-view-switch button[aria-pressed=true]{background:var(--surface,#fff);color:#2368c8;box-shadow:0 1px 4px #0001}
+#calendar-status:empty{display:none}#calendar-status{font-size:13px;min-height:0;margin:0 0 10px;color:var(--muted,#617084)}
+.calendar-layout{grid-template-columns:minmax(0,1fr) 300px;gap:16px}.calendar-board{position:relative;min-width:0}
+.calendar-grid{border:1px solid var(--line,#e2e7ed);border-radius:14px;padding-bottom:48px;background:var(--surface,#fff)}
+.calendar-weekdays span{font-size:12px;padding:8px 0;color:var(--muted,#617084);border-color:var(--line,#e2e7ed)}.calendar-weekdays span:first-child{color:#bd3640}.calendar-weekdays span:last-child{color:#2569b7}
+.cal-week{height:112px;min-height:0}.cal-cell{padding:5px 6px;gap:1px;border-color:var(--line,#e2e7ed)}
+.cal-cell.cal-selected{box-shadow:none;background:rgba(35,104,200,.055)}
+.calendar-page .cal-date{font-size:13px;width:28px;min-height:28px;height:28px;padding:0;flex-shrink:0}.cal-selected .cal-date{box-shadow:inset 0 0 0 1px #2368c8}.cal-today .cal-date{box-shadow:none}
+.cal-holiday-name{font-size:10px;line-height:14px;min-height:14px}.cal-bars{top:50px;grid-auto-rows:20px;gap:2px 0}
+.calendar-page .cal-bars .cal-event{min-height:20px;height:20px;font-size:12px;padding:1px 5px;line-height:18px;border-left-width:2px}
+.cal-records{flex-wrap:nowrap;gap:3px;min-width:0;margin-top:auto;padding:1px 0 0;overflow:hidden}
+.calendar-page .cal-record{display:inline-flex;align-items:center;gap:2px;min-height:16px;height:16px;padding:0 2px;font-size:10px;background:transparent;color:var(--muted,#617084);flex-shrink:0}
+.cal-record .app-icon{width:11px;height:11px}.cal-record-worklogs{color:#288b66!important}.cal-record-memos{color:#8356bf!important}
+.calendar-bottom{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:center;align-items:center;height:48px;pointer-events:none;border-top:1px solid var(--line,#e2e7ed)}
+.calendar-page #calendar-today{pointer-events:auto;min-height:32px;border:1px solid var(--line,#e2e7ed);border-radius:18px;padding:4px 18px;font-size:13px;background:var(--surface,#fff);box-shadow:0 2px 8px #0001;color:#2368c8}
+.calendar-agenda{border-color:var(--line,#e2e7ed);border-radius:14px;padding:14px}.calendar-agenda h3{font-size:16px;margin-bottom:8px}.calendar-agenda h4{margin:12px 0 6px}.calendar-agenda p{font-size:13px}
+.calendar-help{font-size:12px;line-height:1.6;color:var(--muted,#617084);margin:12px 0 0}
+.calendar-search-dialog{width:min(420px,calc(100% - 24px))}.calendar-search-dialog input{font-size:16px;width:100%;box-sizing:border-box;min-width:0}.calendar-search-dialog .calendar-form-actions{margin-top:20px}
+.calendar-more-dialog{position:fixed;margin:0;width:min(280px,calc(100% - 24px));box-sizing:border-box;padding:12px;border-radius:16px;max-height:calc(100dvh - 24px);overflow:auto}
+.calendar-more-dialog::backdrop{background:#0002}.calendar-more-heading{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;font-size:14px}
+.calendar-more-dialog>button{display:flex;align-items:center;gap:10px;width:100%;padding:12px 8px;border:0;background:transparent;color:inherit;font:inherit;font-size:14px;text-align:left;cursor:pointer;border-radius:8px;min-height:44px}.calendar-more-dialog>button:hover{background:var(--shell-sidebar,#f2f4f7)}.calendar-more-dialog .app-icon{width:18px;height:18px}
+.calendar-more-dialog .calendar-filters{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;margin:8px 0 0;padding:8px 0;border:0;border-top:1px solid var(--line,#e2e7ed);font-size:13px}.calendar-filters legend{font-size:12px;color:var(--muted,#617084);padding:0 4px}.calendar-more-dialog .calendar-filters label{min-height:36px}.calendar-filters input{width:16px;height:16px}
+body #main-section .calendar-header{grid-template-columns:142px minmax(0,1fr) 142px}
+.cal-time-scroll{max-height:60vh}.calendar-page .cal-time-slot{height:60px;box-sizing:border-box;border-bottom:1px solid var(--line,#e3e8ef)}
+@media(max-width:1100px){.calendar-layout{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:600px){.calendar-page{padding:8px 12px 20px}.calendar-toolbar{display:grid;grid-template-columns:1fr;gap:8px;margin-bottom:10px}.calendar-navigation{width:100%;max-width:none}#main-section .calendar-navigation h2{font-size:17px}.calendar-view-switch{justify-self:center}.calendar-view-switch button{min-width:56px;font-size:13px;min-height:30px;padding:4px 12px}.cal-week{height:84px;min-height:0}.cal-cell{padding:4px 2px}.calendar-page .cal-date{width:26px;height:26px;min-height:26px;font-size:12px}.cal-holiday-name{font-size:9px;line-height:12px;min-height:12px}.cal-bars{top:44px}.calendar-page .cal-bars .cal-event{font-size:10px;margin:0 1px;padding:1px 2px}.cal-records{gap:0}.calendar-page .cal-record{padding:0 1px;font-size:9px;min-height:14px;height:14px;gap:1px}.cal-record .app-icon{width:9px;height:9px}.calendar-weekdays span{padding:7px 0}.calendar-agenda{padding:12px}.calendar-layout{gap:12px}body #main-section .calendar-header{grid-template-columns:134px minmax(0,1fr) 134px}body #main-section .calendar-header .ui-actions{gap:4px}.cal-time-scroll{max-height:58vh}}
+@media(max-width:360px){body #main-section .calendar-header{grid-template-columns:104px minmax(0,1fr) 104px}body #main-section .calendar-header .ui-actions .shell-icon{width:32px;height:40px}body #main-section .calendar-header .ui-title h1{font-size:16px}.calendar-page{padding-left:8px;padding-right:8px}.calendar-page .cal-record{gap:0}.cal-record .app-icon{width:8px;height:8px}}

@@ -15,5 +15,7 @@
  function layout(events,date){const start=Date.parse(date+'T00:00:00+09:00'),end=start+DAY;const items=events.filter(e=>!e.allDay&&occurs(e,date)).map(e=>({event:e,start:Math.max(start,Date.parse(e.start)),end:Math.min(end,Date.parse(e.end))})).sort((a,b)=>a.start-b.start||b.end-a.end);let group=[],until=0;
  function finish(){const lanes=[];for(const item of group){let lane=lanes.findIndex(t=>t<=item.start);if(lane<0)lane=lanes.length;lanes[lane]=item.end;item.lane=lane;}for(const item of group){item.columns=lanes.length;item.top=(item.start-start)/60000;item.minutes=(item.end-item.start)/60000;}}
  for(const item of items){if(group.length&&item.start>=until){finish();group=[];until=0;}group.push(item);until=Math.max(until,item.end);}finish();return items;}
- return {DAY,dateKey,validDate,addDays,weekday,monthMove,range,span,occurs,localTime,reminderAt,layout};
+ // Redis Lua/cjson can encode empty arrays as {}; normalize nested legacy lists.
+ function tasks(value){return (Array.isArray(value)?value:typeof value==='string'?value.split('\n'):[]).filter(Boolean).map(item=>typeof item==='string'?{task:item,checked:false,children:[]}:{task:String(item.task||''),checked:!!item.checked,children:tasks(item.children)});}
+ return {tasks,DAY,dateKey,validDate,addDays,weekday,monthMove,range,span,occurs,localTime,reminderAt,layout};
 });

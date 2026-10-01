@@ -1,7 +1,7 @@
 (function(){
   const menus=UIConfig.menus.user,panels=Object.fromEntries(menus.map(menu=>[menu.id,document.getElementById(menu.panel)]));
   const detail=document.getElementById('view-notification-detail'),back=document.getElementById('notification-back'),opener=document.getElementById('sidebar-open');
-  const controls=['open-calendar-btn','open-search-btn','open-worklog-btn','open-upload-btn','open-memo-btn','open-memo-search-btn'].map(id=>document.getElementById(id));
+  const controls=['open-calendar-search-btn','open-calendar-more-btn','open-calendar-btn','open-search-btn','open-worklog-btn','open-upload-btn','open-memo-btn','open-memo-search-btn'].map(id=>document.getElementById(id));
   let user=null,allowed=[],ready=false;
   function openReference(hash){
     history.replaceState({...history.state,referenceScroll:window.scrollY},'',location.href);
@@ -22,6 +22,7 @@
     Object.entries(panels).forEach(([id,panel])=>panel.hidden=isDetail||id!==key);detail.hidden=!isNotice;window.References.panel.hidden=!ref;back.hidden=!isDetail;opener.hidden=isDetail;
     document.querySelectorAll('[data-view]').forEach(node=>{if(node.dataset.view===key)node.setAttribute('aria-current','page');else node.removeAttribute('aria-current');});
     UIShell.title(document.getElementById('shell-title'),isDetail?(ref?'참조 상세':'공지 상세'):menus.find(menu=>menu.id===key)?.title||'DailyNote');
+    document.querySelector('.ui-header').classList.toggle('calendar-header',key==='calendar'&&!isDetail);
     UIShell.actions('user',isDetail?'detail':key,user.permissions||{},controls);
     document.getElementById('no-access').hidden=allowed.length>0;
     if(isNotice)window.NotificationPage?.load(detailId);else window.NotificationPage?.cancel();
