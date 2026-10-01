@@ -283,3 +283,8 @@ Node.js 설치 없이 포함된 runtime/node.exe를 사용하는 Windows x64 압
 
 `UIShell.dropdown.open(menu, opener)`가 버튼 좌표·화면 경계·메뉴 전환·닫기·키보드 이동·aria-expanded를 관리합니다. 기존 dialog 요소는 show()로 비모달 표시하고 메모는 에디터 내부 div를 표시합니다. … 메뉴에서는 showModal()을 사용하지 않습니다. 입력 폼·확인 dialog는 그대로 유지합니다. `test/dropdowns.test.js`는 경계 위치·닫기·포커스·어댑터 계약을 검증하고 `scripts/verify-dropdowns.cjs`는 예시 데이터로 PC/모바일 실제 화면을 확인합니다.
 
+
+
+## 공지 관리 행 메뉴와 검색 입력 (2026-10-02)
+
+공지 관리 목록은 각 카드 오른쪽 …에서 수정·삭제를 선택합니다. UIShell.dropdown을 재사용하여 버튼 근처에서 펼치고 바깥 클릭·Escape·스크롤로 닫습니다. 수정은 기존 전체 화면 작성 폼을 열며 삭제는 확인 후 반영합니다. 공지 검색 팝업은 입력·선택 글자를 최소 16px로 유지하여 iOS 입력 자동 확대를 예방하고 화면 너비 안에서 표시합니다. 브라우저 하네스 `node scripts/verify-notice-actions.cjs`는 PC 1440×1000·모바일 390×844에서 메뉴 위치, 키보드/바깥 닫기, 수정 저장, 검색 경계, 삭제 취소·확인을 검사합니다. iOS 실기기 키보드 검증은 별도 확인 대상입니다.
