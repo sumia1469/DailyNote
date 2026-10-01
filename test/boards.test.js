@@ -39,3 +39,23 @@ test('attachment grants are scoped to a shared post, references snapshot only ow
  await request('DELETE',url+'/'+p.id,null,writer);assert.equal((await request('GET',url+'/'+p.id+'/files/'+file.id,null,reader)).status,404);assert.equal((await request('GET',url+'/'+copy.data.id+'/files/'+file.id,null,reader)).status,200);
  await ds.update('users',3,{permissions:{fileDownload:false}});assert.equal((await request('GET',url+'/'+copy.data.id+'/files/'+file.id,null,reader)).status,403);
 });
+
+test('uncategorized filter combines with search and cursor while enforcing board visibility',async()=>{
+ const account=await ds.insert('users',{...makeUserRecord('filter-admin','password123'),role:'admin'});
+ const token=(await request('POST','/api/auth/login',{username:account.username,password:'password123'})).data.token;
+ const board=(await request('POST','/api/admin/boards',{name:'분류 필터',categories:['개발','미분류']},token)).data;
+ const other=(await request('POST','/api/admin/boards',{name:'다른 게시판',categories:[]},token)).data;
+ const url='/api/boards/'+board.id+'/posts';
+ for(const category of ['', '', '개발','미분류'])assert.equal((await request('POST',url,{...post,title:'필터 예시',category},token)).status,201);
+ await request('POST','/api/boards/'+other.id+'/posts',{...post,category:''},token);
+ const first=(await request('GET',url+'?uncategorized=1&q=필터&limit=1',null,token)).data;
+ assert.equal(first.total,2);assert.equal(first.items.length,1);assert.equal(first.items[0].category,'');assert.ok(first.nextCursor);
+ const next=(await request('GET',url+'?uncategorized=1&q=필터&limit=1&cursor='+first.nextCursor,null,token)).data;
+ assert.equal(next.items[0].category,'');assert.notEqual(next.items[0].id,first.items[0].id);assert.equal(next.nextCursor,null);
+ assert.equal((await request('GET',url+'?uncategorized=1&q=없는문구',null,token)).data.total,0);
+ assert.equal((await request('GET',url+'?category='+encodeURIComponent('미분류'),null,token)).data.total,1);
+ assert.equal((await request('GET',url,null,token)).data.total,4);
+ assert.equal((await request('GET',url+'?uncategorized=1')).status,401);
+ await ds.update('users',account.id,{role:'member',permissions:{boardRead:false}});
+ assert.equal((await request('GET',url+'?uncategorized=1',null,token)).status,403);
+});

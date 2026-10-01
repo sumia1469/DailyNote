@@ -5,10 +5,10 @@ const ds=require('../src/datastore'),{makeUserRecord}=require('../src/auth'),han
 (async()=>{
  await ds.insert('users',{...makeUserRecord('검토계정','local-password-123'),role:'admin',approval:'approved'});await ds.insert('site_settings',{values:{background:'none'}});await ds.insert('memos',{userId:1,title:'참조 메모',text:'선택한 내용',attachments:[]});
  server=http.createServer(handler);await new Promise(r=>server.listen(0,'127.0.0.1',r));const base='http://127.0.0.1:'+server.address().port;
- browser=await chromium.launch({headless:true,executablePath:process.env.BROWSER_EXECUTABLE_PATH,args:['--no-sandbox']});const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
+ browser=await chromium.launch({headless:true,executablePath:process.env.BROWSER_EXECUTABLE_PATH,args:['--no-sandbox']});const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[];page.on('pageerror',e=>{errors.push(e.message);console.error('Browser error:',e.message);});
  await page.goto(base);await page.locator('#username').fill('검토계정');await page.locator('#password').fill('local-password-123');await page.locator('.login-btn').click();await page.locator('#main-section').waitFor({state:'visible'});await page.waitForFunction(()=>document.getElementById('loading-overlay').hidden);
  await page.goto(base+'/admin.html#boards');await page.locator('#panel-boards').waitFor({state:'visible'});await page.locator('#admin-create').click();await page.locator('#board-manage-name').fill('개발 공유');await page.locator('#board-manage-categories').fill('개발\n자료');await page.locator('#board-manage-description').fill('코드와 자료를 공유하는 게시판입니다.');await page.locator('#board-manage-save').click();await page.locator('.board-admin-row strong').waitFor();assert.equal(await page.locator('.board-admin-row strong').textContent(),'개발 공유');
- await page.goto(base+'/#boards/1');await page.locator('#board-create').waitFor({state:'visible'});await page.locator('#board-create').click();await page.locator('#board-title').fill('코드와 이미지 공유');await page.locator('#board-category').selectOption('개발');await page.locator('#board-body').fill('본문 테스트');await page.locator('#board-undo').click();assert.equal(await page.locator('#board-body').innerText(),'');await page.locator('#board-redo').click();assert.equal(await page.locator('#board-body').innerText(),'본문 테스트');await page.locator('#board-format-toggle').click();await page.locator('[data-board-value=h2]').click();assert.equal(await page.locator('#board-body h2').innerText(),'본문 테스트');await page.locator('#board-undo').click();assert.equal(await page.locator('#board-body h2').count(),0);await page.locator('#board-format-toggle').click();await page.locator('#board-code-add').click();await page.locator('#board-code-text').fill('const value = "공유";\n// 예시 코드\nconsole.log(value);');await page.locator('#board-code-form button[type=submit]').click();
+ await page.goto(base+'/#boards/1');await page.locator('#board-category-tabs').waitFor({state:'visible'});await page.locator('#board-create').waitFor({state:'visible'});await page.locator('#board-create').click();await page.locator('#board-title').fill('코드와 이미지 공유');await page.locator('#board-editor-categories').getByRole('radio',{name:'개발',exact:true}).click();await page.locator('#board-body').fill('본문 테스트');await page.locator('#board-undo').click();assert.equal(await page.locator('#board-body').innerText(),'');await page.locator('#board-redo').click();assert.equal(await page.locator('#board-body').innerText(),'본문 테스트');await page.locator('#board-format-toggle').click();await page.locator('[data-board-value=h2]').click();assert.equal(await page.locator('#board-body h2').innerText(),'본문 테스트');await page.locator('#board-undo').click();assert.equal(await page.locator('#board-body h2').count(),0);await page.locator('#board-format-toggle').click();await page.locator('#board-code-add').click();await page.locator('#board-code-text').fill('const value = "공유";\n// 예시 코드\nconsole.log(value);');await page.locator('#board-code-form button[type=submit]').click();
  const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jZAAAAABJRU5ErkJggg==','base64');await page.locator('#board-image-input').setInputFiles({name:'테스트.png',mimeType:'image/png',buffer:png});await page.waitForFunction(()=>document.getElementById('board-attachments').textContent.includes('테스트.png')&&!document.getElementById('board-save').disabled);
  await page.locator('#board-draw-add').click();const canvas=await page.locator('#board-canvas').boundingBox();await page.mouse.move(canvas.x+30,canvas.y+30);await page.mouse.down();await page.mouse.move(canvas.x+90,canvas.y+60);await page.mouse.up();await page.locator('#board-draw-insert').click();await page.locator('#board-drawing').waitFor({state:'hidden'});await page.locator('#board-tags').fill('#코드 #공유');await page.locator('#board-reference-add').click();await page.locator('#board-picker-list button').filter({hasText:'참조 메모'}).click();await page.locator('#board-mention-add').click();await page.locator('#board-picker-list button').filter({hasText:'검토계정'}).click();await page.route('**/api/boards/1/posts',route=>route.request().method()==='POST'?route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({message:'저장 실패 검증'})}):route.continue());await page.locator('#board-save').click();await page.waitForFunction(()=>document.getElementById('board-form-error').textContent.includes('저장 실패'));assert.equal(await page.locator('#board-title').inputValue(),'코드와 이미지 공유');await page.unroute('**/api/boards/1/posts');await page.locator('#board-save').click();await page.waitForURL(/posts\/1$/);await page.locator('.board-code-view').waitFor();await page.locator('.board-inline-image img').first().waitFor();assert.ok(await page.locator('.code-keyword').count());assert.equal(await page.locator('.board-reference summary').textContent(),'참조 · 참조 메모');
  await page.locator('.board-inline-image').first().click();await page.locator('#board-image-view').waitFor({state:'visible'});await page.locator('[data-board-close=board-image-view]').click();
@@ -32,7 +32,7 @@ const ds=require('../src/datastore'),{makeUserRecord}=require('../src/auth'),han
  // Management rows stack details below the title and expose actions only via ….
  const emptyBoard=await ds.insert('boards',{name:'빈 게시판 삭제 검증',group:'공유게시판',description:'메뉴에서 삭제 테스트',categories:[],active:true,inMenu:true,order:1});
  for(const viewport of [{width:1440,height:1000},{width:390,height:844}]){
-  await page.setViewportSize(viewport);await page.goto(base+'/admin.html#boards');await page.locator('.board-admin-row').first().waitFor();
+  await page.setViewportSize(viewport);await page.goto(base+'/admin.html#boards');await page.locator('.board-admin-row').first().waitFor();await page.waitForFunction(()=>document.getElementById('admin-loading').hidden);
   const row=page.locator('.board-admin-row').filter({hasText:'개발 공유'}),more=row.locator('.board-admin-more');
   assert.equal(await row.locator('button').count(),1);assert.equal(await row.locator('a').count(),0);
   const title=await row.locator('strong').boundingBox(),meta=await row.locator('.board-admin-meta').first().boundingBox();assert.ok(meta.y>=title.y+title.height);
@@ -44,9 +44,54 @@ const ds=require('../src/datastore'),{makeUserRecord}=require('../src/auth'),han
   await page.keyboard.press('Escape');await page.waitForFunction(()=>document.activeElement.classList.contains('board-admin-more'));
   await more.click();await page.locator('.board-admin-menu-items button').filter({hasText:'설정',exact:true}).click();await page.locator('#board-manage-dialog').waitFor({state:'visible'});assert.equal(await page.locator('#board-manage-name').inputValue(),'개발 공유');await page.locator('#board-manage-close').click();
   await more.click();await page.locator('.board-admin-menu-items button').filter({hasText:'삭제',exact:true}).click();await page.locator('#board-admin-delete-dialog').waitFor({state:'visible'});await page.locator('#board-admin-delete-confirm').click();await page.locator('#board-admin-delete-error').filter({hasText:'비활성화'}).waitFor();assert.ok(await ds.findOne('boards',b=>b.id===1));await page.keyboard.press('Escape');
-  await more.click();await page.locator('.board-admin-menu-items a').click();await page.waitForURL(/boards\/1$/);await page.locator('.board-post-row').first().waitFor();
+  await more.click();await page.locator('.board-admin-menu-items a').click();await page.waitForURL(/boards\/1$/);await page.locator('.board-post-row').first().waitFor({timeout:5000}).catch(async e=>{console.error('RETURN',await page.evaluate(()=>({hash:location.hash,status:document.getElementById('board-status').textContent,content:document.getElementById('board-content').textContent,errors:window.boardXSS})));throw e;});
  }
  await page.goto(base+'/admin.html#boards');const emptyRow=page.locator('.board-admin-row').filter({hasText:'빈 게시판 삭제 검증'});await emptyRow.locator('.board-admin-more').click();await page.locator('.board-admin-menu-items button').filter({hasText:'삭제',exact:true}).click();await page.locator('#board-admin-delete-confirm').click();await emptyRow.waitFor({state:'detached'});assert.equal(await ds.findOne('boards',b=>b.id===emptyBoard.id),undefined);
- assert.deepEqual(errors,[]);console.log('PASS boards: admin create/menu, rich code, image, references, mentions, duplicate, direct URL/reload/back, search, XLSX, PC/mobile layout, missing post, management more/settings/open/delete, title/details layout, Escape/focus, nonempty deletion blocked');
+ // Category tabs share one controller across list, search, editor and harness.
+ await ds.update('boards',1,{categories:['개발','자료','기술공유','트러블슈팅','FAQ','Q&A']});
+ for(const category of ['개발','자료',''])await ds.insert('board_posts',{...seed,id:undefined,title:'분류탭 '+(category||'미분류'),category,attachments:[],references:[],mentions:[]});
+ for(const viewport of [{width:1440,height:1000},{width:390,height:844}]){
+  await page.setViewportSize(viewport);await page.goto(base+'/#boards/1');
+  await page.locator('#board-category-tabs').waitFor({state:'visible'});
+  await page.locator('#board-search').click();await page.locator('#board-query').fill('분류탭');
+  await page.locator('#board-search-categories').getByRole('radio',{name:'전체',exact:true}).click();
+  await page.locator('#board-search-form button[type=submit]').click();
+  await page.waitForFunction(()=>document.querySelectorAll('.board-post-row').length===3);
+  const tabs=page.locator('#board-category-tabs');
+  await tabs.getByRole('radio',{name:'자료',exact:true}).click();
+  await page.waitForFunction(()=>document.querySelectorAll('.board-post-row').length===1&&document.querySelector('.board-post-row strong').textContent==='분류탭 자료');
+  await page.locator('#board-search').click();assert.equal(await page.locator('#board-query').inputValue(),'분류탭');
+  assert.equal(await page.locator('#board-search-categories').getByRole('radio',{name:'자료',exact:true}).getAttribute('aria-checked'),'true');
+  await page.locator('#board-search-categories').getByRole('radio',{name:'개발',exact:true}).click();await page.keyboard.press('Escape');
+  assert.equal(await tabs.getByRole('radio',{name:'자료',exact:true}).getAttribute('aria-checked'),'true');
+  await page.locator('#board-create').click();assert.equal(await page.locator('#board-editor-categories').getByRole('radio',{name:'자료',exact:true}).getAttribute('aria-checked'),'true');
+  const editorTabs=page.locator('#board-editor-categories');await editorTabs.getByRole('radio',{name:'개발',exact:true}).click();await page.locator('#board-undo').click();assert.equal(await editorTabs.getByRole('radio',{name:'자료',exact:true}).getAttribute('aria-checked'),'true');await page.locator('#board-redo').click();assert.equal(await editorTabs.getByRole('radio',{name:'개발',exact:true}).getAttribute('aria-checked'),'true');await page.locator('[data-board-close=board-editor]').first().click();
+  await page.locator('.board-post-link').click();await page.locator('.board-detail h2').waitFor();assert.equal(await tabs.isVisible(),false);
+  await page.locator('#notification-back').click();await tabs.waitFor({state:'visible'});assert.equal(await tabs.getByRole('radio',{name:'자료',exact:true}).getAttribute('aria-checked'),'true');
+  // Keyboard selects the uncategorized tab and keeps it within the horizontal strip.
+  await tabs.getByRole('radio',{name:'자료',exact:true}).focus();await page.keyboard.press('End');
+  await page.waitForFunction(()=>document.querySelectorAll('.board-post-row').length===1&&document.querySelector('.board-post-row strong').textContent==='분류탭 미분류');
+  assert.equal(await tabs.getByRole('radio',{name:'미분류',exact:true}).getAttribute('aria-checked'),'true');
+  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+  await page.waitForFunction(()=>document.getElementById('loading-overlay').hidden);
+  if(process.env.UI_CAPTURE_DIR)await page.screenshot({path:path.join(process.env.UI_CAPTURE_DIR,'board-tabs-'+viewport.width+'.png')});
+  await page.locator('#board-search').click();await page.locator('#board-search-reset').click();
+  assert.equal(await tabs.getByRole('radio',{name:'전체',exact:true}).getAttribute('aria-checked'),'true');
+  await page.locator('#board-search').click();assert.equal(await page.locator('#board-query').inputValue(),'');await page.keyboard.press('Escape');
+ }
+ // A slow previous category response cannot replace the latest selection.
+ let releaseOld,entered;const intercepted=new Promise(resolve=>entered=resolve);
+ await page.route('**/api/boards/1/posts?**',async route=>{
+  const u=new URL(route.request().url());
+  if(u.searchParams.get('category')==='개발'){entered();await new Promise(resolve=>releaseOld=resolve);await route.fulfill({json:{items:[],total:999,nextCursor:null}});}else await route.continue();
+ });
+ await page.locator('#board-category-tabs').getByRole('radio',{name:'개발',exact:true}).click();await intercepted;
+ await page.locator('#board-category-tabs').getByRole('radio',{name:'미분류',exact:true}).click();
+ await page.waitForFunction(()=>document.querySelector('.board-post-row strong')?.textContent==='분류탭 미분류');
+ releaseOld();await page.waitForLoadState('networkidle');assert.equal(await page.locator('.board-post-row strong').textContent(),'분류탭 미분류');
+ await page.unroute('**/api/boards/1/posts?**');
+ await page.goto(base+'/design-harness.html');await page.locator('#harness-category-tabs').getByRole('radio',{name:'Q&A',exact:true}).click();assert.equal(await page.locator('#harness-category-state').textContent(),'Q&A 게시글');
+ assert.deepEqual(errors,[]);console.log('PASS boards: category tabs/list/search/editor, keyboard, reset/cancel, back/cache, stale-response guard, mobile horizontal strip, shared harness, admin create/menu, rich code, image, references, mentions, duplicate, direct URL/reload/back, search, XLSX, PC/mobile layout, missing post, management more/settings/open/delete, title/details layout, Escape/focus, nonempty deletion blocked');
 })().catch(e=>{console.error(e);process.exitCode=1;}).finally(async()=>{await browser?.close();if(server)await new Promise(r=>server.close(r));fs.rmSync(tmp,{recursive:true,force:true});});
+
 
