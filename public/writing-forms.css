@@ -39,3 +39,5 @@ body .ui-action-menu .app-icon{width:20px;height:20px;flex-shrink:0;margin:0}
 @media(max-width:600px){body .ui-writing-header,body .ui-writing-memo .memo-editor-header{height:56px;min-height:56px;grid-template-columns:114px minmax(0,1fr) 114px;padding:0 8px;gap:4px}body .ui-writing-header .shell-icon{width:36px;flex-basis:36px}body .ui-writing-header [type=submit]{padding:8px 12px}body .ui-writing-paper,body .ui-writing-memo .memo-paper{padding:18px 20px}body .ui-writing-paper #board-title,body .ui-writing-paper #notification-title{font-size:28px}body .ui-writing-paper #board-body{font-size:17px}body .ui-writing-tools{padding-left:12px;padding-right:12px}}
 
 body .ui-writing-paper #board-body:focus{outline:none}body .ui-writing-screen .calendar-form-actions{display:flex;justify-content:flex-end;gap:8px}
+
+body #board-editor.ui-writing-screen{max-width:none;margin:0;left:0}body #board-editor.ui-writing-screen:not([data-editing=true]) .editor-tools{display:none}
