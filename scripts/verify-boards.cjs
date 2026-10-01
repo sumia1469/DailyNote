@@ -50,3 +50,4 @@ const ds=require('../src/datastore'),{makeUserRecord}=require('../src/auth'),han
  assert.deepEqual(errors,[]);console.log('PASS boards: admin create/menu, rich code, image, references, mentions, duplicate, direct URL/reload/back, search, XLSX, PC/mobile layout, missing post, management more/settings/open/delete, title/details layout, Escape/focus, nonempty deletion blocked');
 })().catch(e=>{console.error(e);process.exitCode=1;}).finally(async()=>{await browser?.close();if(server)await new Promise(r=>server.close(r));fs.rmSync(tmp,{recursive:true,force:true});});
 
+

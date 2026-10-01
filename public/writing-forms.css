@@ -1,7 +1,7 @@
 /* Writing is a page: common memo-like canvas on desktop and mobile. */
 body .ui-writing-screen{position:fixed;inset:auto;left:0;top:var(--writing-top,0px);width:100%;max-width:none;height:var(--writing-height,100dvh);max-height:none;margin:0;padding:0!important;border:0;border-radius:0;box-shadow:none;background:var(--card-bg,#fff);color:var(--text,#303035);overflow:hidden;box-sizing:border-box}
 body dialog.ui-writing-screen[open]{display:flex;flex-direction:column}
-body dialog.ui-writing-screen::backdrop{background:transparent;backdrop-filter:none}
+body dialog.ui-writing-screen::backdrop{background:var(--surface,var(--card-bg,#fff));backdrop-filter:none}
 body #worklog-modal.ui-writing-screen{z-index:1200;background:var(--card-bg,#fff)}
 body #worklog-modal.ui-writing-screen .modal-backdrop{display:none}
 body #worklog-modal.ui-writing-screen .modal-dialog{position:static;transform:none;flex:1;width:100%;max-width:none;height:100%;max-height:none;margin:0;padding:0;border:0;border-radius:0;box-shadow:none;overflow:hidden;background:inherit}
@@ -54,5 +54,15 @@ body .ui-writing-paper #board-manage-name{font-size:30px;font-weight:700}
 body .ui-writing-paper .board-checkbox{display:flex;align-items:flex-start;gap:8px}
 body .ui-writing-paper .board-checkbox input{flex:0 0 auto;margin:2px 0}
 body .ui-writing-page .ui-writing-paper .file-input-wrap{width:100%;max-width:none;margin:20px 0}
+/* The legacy ID selector must not replace the common flex scroll container. */
+body .ui-writing-screen #worklog-form{display:flex;flex-direction:column;height:100%;min-height:0;padding:0;margin:0;overflow:hidden}
+body #worklog-modal.ui-writing-screen .modal-dialog{display:flex;flex-direction:column;min-height:0}
+body #worklog-modal.ui-writing-screen::before{content:"";position:fixed;inset:0;background:var(--surface,var(--card-bg,#fff));pointer-events:none}
+body .ui-writing-screen,body .ui-writing-paper,body .ui-writing-memo .memo-paper{background:var(--surface,var(--card-bg,#fff))}
+body .ui-writing-paper,body .ui-writing-memo .memo-paper{flex:1 1 0%;overflow-x:hidden;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:max(24px,env(safe-area-inset-bottom));scroll-padding-bottom:32px}
+body .ui-writing-screen .ui-writing-header{position:relative;top:auto;background:var(--surface,var(--card-bg,#fff))}
+body .ui-writing-screen .memo-toolbar,body .ui-writing-screen .memo-format{background:var(--surface,var(--card-bg,#fff));flex-shrink:0}
 body #board-editor.ui-writing-screen{max-width:none;margin:0;left:0}body #board-editor.ui-writing-screen:not([data-editing=true]) .editor-tools{display:none}
 
+
+body .ui-writing-page>form,body #worklog-modal.ui-writing-page .modal-dialog{position:relative;z-index:1}

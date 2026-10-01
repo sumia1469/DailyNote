@@ -1,7 +1,9 @@
 // Redis checks capacity and writes the account in one atomic operation across instances.
 module.exports = `
 local function seat(user)
-  return user.active ~= false and (user.approval == nil or user.approval == 'approved')
+  -- Match license.usesSeat: legacy falsy approval values mean no approval status.
+  local approval = user.approval
+  return user.active ~= false and (not approval or approval == cjson.null or approval == '' or approval == 0 or approval == 'approved')
 end
 local previous = nil
 if ARGV[1] ~= '' then

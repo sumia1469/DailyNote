@@ -7,12 +7,8 @@
     b.setAttribute('aria-label', label); b.title = label;
     return b;
   }
-  // Reuse the shell's anchored dropdown, including its nonmodal behavior.
-  const shellActionMenu = UIShell.actionMenu;
-  UIShell.actionMenu = (menu, opener) => {
-    menu.classList.add('ui-action-menu');
-    return shellActionMenu(menu, opener);
-  };
+  // Preserve the shell's common nonmodal dropdown adapter.
+  UIShell.actionMenu = (menu, opener) => { window.AppIcons?.render(menu); UIShell.dropdown.open(menu, opener); };
 
   // Registration is a navigable page, not a modal dialog. Keep adapter methods
   // so existing validation, permissions and submit handlers continue to own data.
