@@ -20,14 +20,14 @@ const ds=require('../src/datastore'),{makeUserRecord}=require('../src/auth'),han
     await page.locator(kind==='admin'?'#admin-menu-toggle':'#guide-menu-toggle').click();
     const opener=page.locator(nav+' [data-settings-open]');await opener.scrollIntoViewIfNeeded();const r=await opener.boundingBox();assert.ok(r.y>=0&&r.y+r.height<=viewport.height,'Settings footer fits');
     assert.equal(await page.locator(nav+' > .onboarding-link[href="local-start.html"]').count(),0);
-    await opener.click();const dialog=page.locator(kind==='admin'?'#account-settings-dialog':'#drawer-settings-dialog');assert.equal(await dialog.evaluate(n=>n.open),true);
-    const bounds=await dialog.boundingBox();assert.ok(bounds.x>=0&&bounds.y>=0&&bounds.x+bounds.width<=viewport.width&&bounds.y+bounds.height<=viewport.height,'Popup fits');
-    assert.equal(await dialog.getByRole('link',{name:/시작 가이드/}).getAttribute('href'),'onboarding.html');
-    assert.equal(await dialog.getByRole('link',{name:'바로가기 만들기',exact:true}).getAttribute('href'),'local-start.html');
-    await page.keyboard.press('Shift+Tab');assert.equal(await page.evaluate(()=>document.activeElement.closest('dialog')?.id),kind==='admin'?'account-settings-dialog':'drawer-settings-dialog','Focus stays in popup');
-    await page.keyboard.press('Escape');assert.equal(await dialog.evaluate(n=>n.open),false);assert.equal(await page.locator(nav).evaluate(n=>n.classList.contains('is-open')),true);assert.equal(await opener.evaluate(n=>document.activeElement===n),true);
-    await opener.click();await page.mouse.click(viewport.width-2,2);assert.equal(await dialog.evaluate(n=>n.open),false,'Backdrop closes only settings');
-    await opener.click();await dialog.getByRole('button',{name:'설정 닫기'}).click();assert.equal(await opener.getAttribute('aria-expanded'),'false');
+    await opener.click();const dialog=page.locator(kind==='admin'?'#account-settings-dialog':'#drawer-settings-dialog');assert.equal(await dialog.evaluate(n=>!n.hidden),true);
+    const bounds=await dialog.boundingBox();const anchor=await opener.boundingBox();assert.ok(bounds.y+bounds.height<=anchor.y+1,'Dropdown opens above settings');assert.equal(await dialog.evaluate(n=>n.tagName),'DIV');assert.ok(bounds.x>=0&&bounds.y>=0&&bounds.x+bounds.width<=viewport.width&&bounds.y+bounds.height<=viewport.height,'Popup fits');
+    assert.equal(await dialog.getByRole('menuitem',{name:/시작 가이드/}).getAttribute('href'),'onboarding.html');
+    assert.equal(await dialog.getByRole('menuitem',{name:'바로가기 만들기',exact:true}).getAttribute('href'),'local-start.html');
+    await page.keyboard.press('End');assert.equal(await page.evaluate(()=>document.activeElement.closest('[role=menu]')?.id),kind==='admin'?'account-settings-dialog':'drawer-settings-dialog','Arrow navigation stays in dropdown');
+    await page.keyboard.press('Escape');assert.equal(await dialog.evaluate(n=>!n.hidden),false);assert.equal(await page.locator(nav).evaluate(n=>n.classList.contains('is-open')),true);assert.equal(await opener.evaluate(n=>document.activeElement===n),true);
+    await opener.click();await page.mouse.click(275,80);assert.equal(await dialog.evaluate(n=>!n.hidden),false,'Outside click closes settings');
+    await opener.click();await opener.click();assert.equal(await opener.getAttribute('aria-expanded'),'false');
     if(viewport.width===390){await opener.click();await page.screenshot({path:path.join(tmp,kind+'-settings.png')});await page.keyboard.press('Escape');}
     if(kind==='guide'){await page.locator('[data-guide-section][href="#admin"]').click();assert.equal(await page.locator(nav).evaluate(n=>n.inert),true);assert.equal(await page.evaluate(()=>document.activeElement.id),'admin');await page.locator('#guide-menu-toggle').click();}
     await page.locator(nav+' .admin-return').click();await page.waitForURL(base+'/');
