@@ -12,13 +12,14 @@ async function loginHandler(req, res) {
   const { username, password } = await require('./utils').parseJsonBody(req);
   if (!username || !password) return sendJson(res, 400, { message: 'Missing credentials' });
   const user = await ds.findOne('users', u => u.username === username);
-  if (!user || user.active === false) return sendJson(res, 401, { message: 'Invalid user' });
+  if (!user) return sendJson(res, 401, { message: '아이디 또는 비밀번호를 확인하세요.' });
   const saltBuf = Buffer.from(user.salt, 'hex');
   const hashBuf = hashPassword(password, saltBuf);
   const storedBuf = Buffer.from(user.password, 'hex');
   if (hashBuf.length !== storedBuf.length || !crypto.timingSafeEqual(hashBuf, storedBuf)) {
     return sendJson(res, 401, { message: 'Invalid password' });
   }
+  if (user.active === false) return sendJson(res, 403, {message: user.approval === 'pending' ? '관리자 승인을 기다리고 있습니다. 승인 후 로그인해 주세요.' : user.approval === 'rejected' ? '가입신청이 반려되었습니다. 관리자에게 문의해 주세요.' : '비활성화된 계정입니다. 관리자에게 문의해 주세요.'});
   const token = crypto.randomBytes(48).toString('hex');
   const expires = new Date(Date.now() + (cfg.TOKEN_EXPIRES_HOURS || 24) * 3600 * 1000);
   await ds.insertSession({
@@ -47,4 +48,14 @@ function makeUserRecord(username, password) {
   return { username, password: hash, salt };
 }
 
-module.exports = { loginHandler, verifyToken, makeUserRecord };
+async function registerHandler(req, res) {
+  const body = await require('./utils').parseJsonBody(req);
+  const username = typeof body.username === 'string' ? body.username.trim() : '';
+  if (!/^[a-zA-Z0-9가-힣._-]{2,40}$/.test(username)) return sendJson(res,400,{message:'아이디는 2~40자의 한글·영문·숫자·점·밑줄·하이픈으로 입력하세요.'});
+  if (typeof body.password !== 'string' || body.password.length < 8 || body.password.length > 128) return sendJson(res,400,{message:'비밀번호는 8~128자로 입력하세요.'});
+  if (body.password !== body.passwordConfirmation) return sendJson(res,400,{message:'비밀번호 확인이 일치하지 않습니다.'});
+  if (await ds.findOne('users', user => user.username === username)) return sendJson(res,409,{message:'이미 등록되었거나 승인 대기 중인 아이디입니다.'});
+  await ds.insert('users',{...makeUserRecord(username,body.password),role:'member',permissions:{},active:false,approval:'pending',createdAt:new Date().toISOString()});
+  return sendJson(res,201,{message:'사용자 등록신청을 완료했습니다. 관리자 승인 후 로그인할 수 있습니다.'});
+}
+module.exports = { loginHandler, verifyToken, makeUserRecord, registerHandler };

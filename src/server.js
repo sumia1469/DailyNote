@@ -4,7 +4,7 @@ const url = require('url');
 const path = require('path');
 const cfg = require('./config');
 const {sendJson, sendFile} = require('./utils');
-const {loginHandler, verifyToken} = require('./auth');
+const {loginHandler, verifyToken, registerHandler} = require('./auth');
 const {userRouter} = require('./user.routes');
 const {notificationRouter} = require('./notification.routes');
 const {uploadRouter} = require('./upload.routes');
@@ -29,6 +29,7 @@ async function handleApi(req, res) {
   const parsed = url.parse(req.url, true);
   const pathname = parsed.pathname;
   if (pathname === '/api/auth/login' && req.method === 'POST') return loginHandler(req, res);
+  if (pathname === '/api/auth/register' && req.method === 'POST') return registerHandler(req,res);
   if (req.method === 'GET' && (pathname === '/api/settings' || pathname === '/api/background/1')) return settingsHandler(req, res);
   const authInfo = await verifyToken(req);
   if (!authInfo) return sendJson(res, 401, {message: 'Invalid or missing token'});

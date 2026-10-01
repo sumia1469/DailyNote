@@ -20,6 +20,7 @@ async function adminRouter(req,res,auth) {
   const url=new URL(req.url,'http://localhost');
   const [, , area, rawId]=url.pathname.split('/').filter(Boolean);
   const id=rawId ? Number(rawId) : null;
+  const action=url.pathname.split('/').filter(Boolean)[4];
   const right=area==='settings'?'appearance':area;
   if (area === 'directory' && req.method === 'GET' && ['notifications','files','users','permissions'].some(key => auth.permissions[key])) return sendJson(res,200,(await ds.findAll('users')).map(u=>({id:u.id,username:u.username,active:u.active!==false})));
   if (!auth.permissions[right]) return sendJson(res,403,{message:'이 관리 기능에 접근할 권한이 없습니다.'});
@@ -30,6 +31,12 @@ async function adminRouter(req,res,auth) {
     const existing=id?await ds.findOne('users',u=>u.id===id):null;
     if(id&&!existing)return sendJson(res,404,{message:'사용자를 찾을 수 없습니다.'});
     if (area==='users' && existing && roleOf(existing)==='admin' && auth.role!=='admin' && method!=='GET') return sendJson(res,403,{message:'관리자 계정은 관리자만 수정할 수 있습니다.'});
+    if (area==='users' && existing && method==='POST' && ['approve','reject'].includes(action)) {
+      if (existing.approval !== 'pending') return sendJson(res,400,{message:'승인 대기 중인 신청이 아닙니다.'});
+      const approved=action==='approve';
+      const updated=await ds.update('users',id,{approval:approved?'approved':'rejected',active:approved,reviewedAt:new Date().toISOString(),reviewedBy:auth.userId});
+      return sendJson(res,200,safeUser(updated));
+    }
     if(method==='POST'||method==='PUT') {
       const updates={};
       if(area==='users') {
@@ -42,7 +49,10 @@ async function adminRouter(req,res,auth) {
           if(typeof body.password!=='string'||body.password.length<8)return sendJson(res,400,{message:'비밀번호는 8자 이상 입력하세요.'});
           Object.assign(updates,makeUserRecord(username,body.password));
         }
-        if(body.active!==undefined)updates.active=body.active===true;
+        if(body.active!==undefined) {
+          updates.active=body.active===true;
+          if (updates.active && existing?.approval && existing.approval !== 'approved') updates.approval='approved';
+        }
       }
       if(body.role!==undefined || body.permissions!==undefined || area==='permissions') {
         if(!auth.permissions.permissions)return sendJson(res,403,{message:'권한 설정 권한이 필요합니다.'});
@@ -61,7 +71,7 @@ async function adminRouter(req,res,auth) {
         return sendJson(res,200,safeUser(await ds.update('users',id,updates)));
       }
       if(area==='permissions')return sendJson(res,400,{message:'사용자를 선택하세요.'});
-      return sendJson(res,201,safeUser(await ds.insert('users',{role:'member',permissions:{},active:true,...updates,createdAt:new Date().toISOString()})));
+      return sendJson(res,201,safeUser(await ds.insert('users',{role:'member',permissions:{},active:true,approval:'approved',...updates,createdAt:new Date().toISOString()})));
     }
   }
   if(area==='notifications') {
