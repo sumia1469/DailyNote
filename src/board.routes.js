@@ -61,8 +61,8 @@ async function boardRouter(req,res,auth){
  if(fileId){if(method!=='GET'||!post.attachments?.includes(fileId))return fail(res,404,'첨부를 찾을 수 없습니다.');if(!can(auth,'fileDownload'))return fail(res,403,'다운로드 권한이 없습니다.');const file=await ds.findOne('files',x=>x.id===fileId);if(!file)return fail(res,404,'첨부가 삭제되었습니다.');return downloadHandler(req,res,{...auth,userId:file.userId},fileId);}
  if(method==='GET'&&postId)return sendJson(res,200,await present(post));
  if(method==='GET'){
-  const limit=Math.min(30,Math.max(1,Number(url.searchParams.get('limit'))||20)),cursor=Number(url.searchParams.get('cursor'))||Infinity,q=(url.searchParams.get('q')||'').toLocaleLowerCase(),category=url.searchParams.get('category')||'';
-  const rows=(await ds.findAll('board_posts')).map(normalizePost).filter(x=>x.boardId===id&&(!category||x.category===category)&&[x.title,x.text,x.author,...(x.tags||[])].join(' ').toLocaleLowerCase().includes(q)).sort((a,b)=>b.id-a.id),page=rows.filter(x=>x.id<cursor).slice(0,limit);
+  const limit=Math.min(30,Math.max(1,Number(url.searchParams.get('limit'))||20)),cursor=Number(url.searchParams.get('cursor'))||Infinity,q=(url.searchParams.get('q')||'').toLocaleLowerCase(),category=url.searchParams.get('category')||'',uncategorized=url.searchParams.get('uncategorized')==='1';
+  const rows=(await ds.findAll('board_posts')).map(normalizePost).filter(x=>x.boardId===id&&(uncategorized?!x.category:(!category||x.category===category))&&[x.title,x.text,x.author,...(x.tags||[])].join(' ').toLocaleLowerCase().includes(q)).sort((a,b)=>b.id-a.id),page=rows.filter(x=>x.id<cursor).slice(0,limit);
   return sendJson(res,200,{items:page.map(({html,text,attachments,references,...x})=>({...x,preview:text.slice(0,160),attachmentCount:attachments.length})),total:rows.length,nextCursor:rows.some(x=>x.id<(page.at(-1)?.id||0))?page.at(-1).id:null});
  }
  const right={POST:'boardCreate',PUT:'boardEdit',DELETE:'boardDelete'}[method];if(!right||!can(auth,right))return fail(res,403,'이 작업을 사용할 권한이 없습니다.');
@@ -77,3 +77,4 @@ async function boardRouter(req,res,auth){
  return fail(res,405,'지원하지 않는 요청입니다.');
 }
 module.exports={boardRouter,boardValue,postValue};
+
