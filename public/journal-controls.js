@@ -76,11 +76,9 @@
         item('엑셀 다운로드','download',()=>WorklogExcel.download(worklog));
         item(collapsed.has(id)?'내용 펼치기':'내용 접기','journal',()=>{if(collapsed.has(id))collapsed.delete(id);else collapsed.add(id);fold(card,id);});
         if(rights.remove)item('삭제','trash',actions.remove,true);
-        AppIcons.render(items);menu.showModal();
-        const r=trigger.getBoundingClientRect();const width=menu.offsetWidth,height=menu.offsetHeight;
-        menu.style.left=Math.max(12,Math.min(innerWidth-width-12,r.right-width))+'px';
-        menu.style.top=Math.max(12,Math.min(innerHeight-height-12,r.bottom+8))+'px';
+        AppIcons.render(items);UIShell.actionMenu(menu,trigger);
       });
     }
   };
 })();
+
