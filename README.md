@@ -252,3 +252,6 @@ Node.js 설치 없이 포함된 runtime/node.exe를 사용하는 Windows x64 압
 
 검증: `npm test`, `npm run test:ui`, `npm run test:boards`, `npm run test:memos`. 게시판 하네스는 PC 1440×1000·모바일 390×844의 상단 버튼/하단 도구 경계, 제목·본문 실행 취소/다시 실행, 제목 서식 복원, 실패 후 재시도와 기존 게시판 흐름을 확인합니다. 메모 하네스는 자동 저장·실패 재시도·키보드 도구·글꼴 되돌리기·첨부를 확인합니다.
 
+
+
+사용자 수 제한은 PC·모바일과 실제 격리 Redis에서도 검증했습니다. 개발 환경에서 `npm run test:license:browser`, `npm run test:license:redis`로 재현할 수 있습니다. 실행 준비와 검증 범위는 [라이선스 검증 기록](docs/LICENSE-VERIFICATION.md)을 참고하세요.

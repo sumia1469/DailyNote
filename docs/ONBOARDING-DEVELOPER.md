@@ -263,3 +263,8 @@ Node.js 설치 없이 포함된 runtime/node.exe를 사용하는 Windows x64 압
 
 검증: `npm test`, `npm run test:ui`, `npm run test:boards`, `npm run test:memos`. 게시판 하네스는 PC 1440×1000·모바일 390×844의 상단 버튼/하단 도구 경계, 제목·본문 실행 취소/다시 실행, 제목 서식 복원, 실패 후 재시도와 기존 게시판 흐름을 확인합니다. 메모 하네스는 자동 저장·실패 재시도·키보드 도구·글꼴 되돌리기·첨부를 확인합니다.
 
+
+
+`npm run test:license:browser`는 예시 7명 설치에서 관리자 복구, PC·모바일 등록/승인/재활성화 거부, 실패 입력 유지와 빈자리 재사용을 검증합니다. `npm run test:license:redis`는 운영 연결 설정을 무시하고 임시 Redis를 직접 시작해 실제 Lua EVAL과 REST 저장 경로의 동시성을 검증합니다. 상세 실행 변수와 결과는 [라이선스 검증 기록](LICENSE-VERIFICATION.md)에 있습니다.
+
+기존 사용자 approval이 누락·null·빈 문자열·false·0이면 승인 상태가 없는 활성 계정으로 계산합니다. Redis Lua의 cjson.null도 같은 기준으로 처리하며 `verify-license-redis.cjs`의 혼합 기존 데이터가 이 호환성을 검사합니다. 승인 대기·반려는 계속 제외합니다.
