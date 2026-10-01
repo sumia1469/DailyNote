@@ -22,6 +22,7 @@ async function loginHandler(req, res) {
   if (user.active === false || (user.approval && user.approval !== 'approved')) return sendJson(res, 403, {message: user.approval === 'pending' ? '관리자 승인을 기다리고 있습니다. 승인 후 로그인해 주세요.' : user.approval === 'rejected' ? '가입신청이 반려되었습니다. 관리자에게 문의해 주세요.' : '비활성화된 계정입니다. 관리자에게 문의해 주세요.'});
   const license = await require('./license').status();
   if (license.overLimit && require('./permissions').roleOf(user) !== 'admin' && !require('./permissions').rightsOf(user).users) throw require('./license').licenseError(license.activeUserCount);
+  req.auditAuth={userId:user.id,username:user.username};
   sendJson(res, 200, await createLoginSession(user));
 }
 
@@ -81,4 +82,5 @@ async function registerHandler(req, res) {
   return sendJson(res,201,{message:'사용자 등록신청을 완료했습니다. 관리자 승인 후 로그인할 수 있습니다.'});
 }
 module.exports = { loginHandler, verifyToken, makeUserRecord, registerHandler, changePasswordHandler };
+
 

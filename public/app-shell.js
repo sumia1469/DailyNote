@@ -47,6 +47,7 @@
     if(ref)window.References.loadDetail(ref[1],ref[2]);else window.References.cancelDetail();
     const canonical=boardRoute&&key==='boards'?route:ref?ref[0]:isNotice?'notifications/'+detailId:key;if(canonical&&location.hash!=='#'+canonical)history.replaceState(null,'','#'+canonical);
     window.JournalControls?.close();drawer.close();window.MemoApp?.activate(key,user);window.CalendarApp?.activate(key,user);window.BoardApp?.activate(key,user);
+    window.DataTools?.activate();
     scroll.activate(canonical||'empty',!isDetail?history.state?.referenceScroll:undefined);
     if(isDetail){document.getElementById('shell-title').setAttribute('tabindex','-1');document.getElementById('shell-title').focus();}
   }
@@ -54,6 +55,7 @@
   back.addEventListener('click',goBack);window.addEventListener('hashchange',show);
   window.addEventListener('popstate',event=>{if(!event.state?.referenceImage)show();});
   const list=document.getElementById('noti-list');new MutationObserver(()=>{const count=list.querySelectorAll('.notification-item.unread').length,badge=document.getElementById('notification-count');badge.textContent=count;badge.hidden=!count;}).observe(list,{childList:true,subtree:true});
-  window.AppShell={scroll,get revision(){return revision;},refresh:show,openReference,goBack,configure(value){user=value;window.References.configure(value);allowed=UIConfig.allowed('user',user.permissions||{}).map(menu=>menu.id);document.querySelectorAll('[data-view]').forEach(node=>node.hidden=!allowed.includes(node.dataset.view));document.getElementById('board-nav-caption').hidden=!allowed.includes('boards');window.AccountMenu.configure(user);ready=true;show();},reset(){revision++;AppLoading.clear();window.AccountMenu.reset();scroll.reset();window.CalendarApp?.reset();window.References.reset();window.MemoApp?.reset();window.BoardApp?.reset();ready=false;user=null;allowed=[];window.NotificationPage?.cancel();drawer.close();window.JournalControls?.close();}};
+  window.AppShell={scroll,get revision(){return revision;},refresh:show,openReference,goBack,get user(){return user;},configure(value){user=value;window.DataTools?.configure(value);window.References.configure(value);allowed=UIConfig.allowed('user',user.permissions||{}).map(menu=>menu.id);document.querySelectorAll('[data-view]').forEach(node=>node.hidden=!allowed.includes(node.dataset.view));document.getElementById('board-nav-caption').hidden=!allowed.includes('boards');window.AccountMenu.configure(user);ready=true;show();},reset(){window.DataTools?.reset();revision++;AppLoading.clear();window.AccountMenu.reset();scroll.reset();window.CalendarApp?.reset();window.References.reset();window.MemoApp?.reset();window.BoardApp?.reset();ready=false;user=null;allowed=[];window.NotificationPage?.cancel();drawer.close();window.JournalControls?.close();}};
   UIShell.dialogs();
 })();
+

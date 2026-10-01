@@ -37,7 +37,7 @@ async function chunkUpload(body,res,auth){
 }
 async function uploadHandler(req, res, auth) {
   const body = await parseJsonBody(req);
-  if(body.phase)return chunkUpload(body,res,auth);
+  if(body.phase){req.auditSkip=body.phase==='part';return chunkUpload(body,res,auth);}
   const file = parseBase64Upload(body);
   if (!file) return sendJson(res, 400, {message: 'Invalid upload payload'});
   file.filename = path.basename(file.filename.replace(/\\/g, '/'));
@@ -98,4 +98,5 @@ async function uploadRouter(req, res, auth) {
   sendJson(res, 404, {message: 'Upload API not found'});
 }
 module.exports = {uploadRouter,downloadHandler,removeStored};
+
 

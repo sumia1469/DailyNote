@@ -9,6 +9,8 @@
       {id:'boards',title:'공유게시판',icon:'notice',panel:'view-boards',read:['boardRead'],actions:[{id:'board-search',kind:'search',label:'게시판 검색',permission:'boardRead',dialog:'board-search-dialog'},{id:'board-more',kind:'more',label:'게시판 메뉴',permission:'boardRead'},{id:'board-create',kind:'create',label:'글 작성',permission:'boardCreate',page:'board-editor'}]}
     ],
     admin:[
+      {id:'backups',title:'백업·복원',icon:'files',panel:'panel-backups',read:['backups'],actions:[]},
+      {id:'logs',title:'로그 관리',icon:'journal',panel:'panel-logs',read:['logs'],actions:[{id:'admin-search',kind:'search',label:'로그 검색',permission:'logs',dialog:'log-search-dialog'}]},
       {id:'notifications',title:'공지 관리',icon:'notice',panel:'panel-notifications',read:['notifications'],actions:[{id:'admin-create',kind:'create',label:'공지 등록',permission:'notifications',page:'notification-dialog'},{id:'admin-search',kind:'search',label:'공지 검색',permission:'notifications',dialog:'notice-search-dialog'}]},
       {id:'boards',title:'게시판 관리',icon:'notice',panel:'panel-boards',read:['boards'],actions:[{id:'admin-create',kind:'create',label:'게시판 만들기',permission:'boards',page:'board-manage-dialog'}]},
       {id:'files',title:'파일 관리',icon:'files',panel:'panel-files',read:['files'],actions:[{id:'admin-create',kind:'create',label:'파일 등록',permission:'files',page:'admin-upload-dialog',extraPermission:'fileUpload'}]},
@@ -23,5 +25,6 @@
   function boardMenus(records=[]){return records.filter(board=>board.inMenu&&board.active!==false).slice().sort((a,b)=>(Number(a.order)||0)-(Number(b.order)||0)||Number(a.id)-Number(b.id));}
   return {menus,allowed,actions,boardMenus};
 });
+
 
 

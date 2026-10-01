@@ -1,0 +1,96 @@
+const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),os=require('node:os'),path=require('node:path'),http=require('node:http'),crypto=require('node:crypto');
+const tmp=fs.mkdtempSync(path.join(os.tmpdir(),'dailynote-backup-test-'));
+process.env.DATA_DIR=path.join(tmp,'data');process.env.UPLOAD_DIR=path.join(tmp,'uploads');delete process.env.REDIS_URL;delete process.env.UPSTASH_REDIS_REST_URL;delete process.env.VERCEL;
+const ds=require('../src/datastore'),{makeUserRecord}=require('../src/auth'),handler=require('../src/server'),storage=require('../src/file-storage'),core=require('../public/backup-core');
+test('backup/restore enforces ownership, stages safely, restores bytes, links and management, and prevents duplicates',async()=>{
+ const password=crypto.randomBytes(20).toString('hex');
+ await ds.insert('users',{...makeUserRecord('관리자',password),role:'admin',active:true});
+ await ds.insert('users',{...makeUserRecord('사용자',password),role:'member',active:true});
+ await ds.insert('users',{...makeUserRecord('다른사용자',password),role:'member',active:true});
+ await ds.insert('work_logs',{userId:2,workDate:'2026-10-01',todo:['초기 문자열 항목'],nextDayPlan:[],memo:'원본',remarks:''});
+ await ds.insert('work_logs',{userId:3,workDate:'2026-10-01',todo:['다른 사람 비공개'],nextDayPlan:[]});
+ const server=http.createServer(handler);await new Promise(r=>server.listen(0,'127.0.0.1',r));const base='http://127.0.0.1:'+server.address().port;
+ async function call(route,token,body){const r=await fetch(base+route,{method:body?'POST':'GET',headers:{...(token?{Authorization:'Bearer '+token}:{}),...(body?{'Content-Type':'application/json'}:{})},...(body?{body:JSON.stringify(body)}:{})});return {status:r.status,data:await r.json()};}
+ try{
+  const login=async username=>(await call('/api/auth/login',null,{username,password})).data.token;
+  const admin=await login('관리자'),member=await login('사용자'),other=await login('다른사용자');
+  assert.equal((await call('/api/backup/export?scope=all',member)).status,403);
+  assert.equal((await call('/api/backup/export?scope=management',member)).status,403);
+  assert.equal((await call('/api/backup/export?scope=worklogs',null)).status,401);
+  const snapshot=(await call('/api/backup/export?scope=worklogs',member)).data;assert.deepEqual(snapshot.index.work_logs,[1]);
+  assert.equal((await call('/api/backup/record?scope=worklogs&kind=work_logs&id=2',member)).status,404);
+  assert.equal((await call('/api/backup/record?scope=worklogs&kind=users&id=1',member)).status,403);
+  const start=(await call('/api/backup/import',member,{phase:'start',scope:'worklogs',archiveId:'legacy-backup-123',counts:{work_logs:1}})).data;
+  assert.equal((await call('/api/backup/import',other,{phase:'cancel',jobId:start.jobId})).status,404);
+  assert.equal((await call('/api/backup/import',member,{phase:'record',jobId:start.jobId,kind:'users',record:{id:1}})).status,403);
+  assert.equal((await call('/api/backup/import',member,{phase:'commit',jobId:start.jobId})).status,400);assert.equal((await ds.findAll('work_logs')).length,2);
+  await call('/api/backup/import',member,{phase:'record',jobId:start.jobId,kind:'work_logs',record:{id:50,userId:3,workDate:'2026-10-01',todo:['이전 항목'],nextDayPlan:[{task:'다음',checked:true}],remarks:'비고',memo:'메모'}});
+  const committed=await call('/api/backup/import',member,{phase:'commit',jobId:start.jobId});assert.equal(committed.status,200);
+  const imported=(await ds.findAll('work_logs')).at(-1);assert.equal(imported.userId,2);assert.equal(imported.todo[0].task,'이전 항목');assert.equal(imported.nextDayPlan[0].checked,true);
+  assert.equal((await call('/api/backup/import',member,{phase:'start',scope:'worklogs',archiveId:'legacy-backup-123',counts:{work_logs:1}})).data.duplicate,true);
+  await ds.update('users',2,{permissions:{worklogCreate:false}});assert.equal((await call('/api/backup/import',member,{phase:'start',scope:'worklogs',archiveId:'denied-123',counts:{}})).status,403);
+  const archiveId='all-backup-123';const full=(await call('/api/backup/import',admin,{phase:'start',scope:'all',archiveId,applyManagement:true,counts:{users:2,work_logs:1,memos:1,files:1,calendar_events:1,site_settings:1,notification_history:1}})).data;
+  const send=(kind,record)=>call('/api/backup/import',admin,{phase:'record',jobId:full.jobId,kind,record});
+  const existing=await ds.findOne('users',x=>x.id===2);
+  await send('users',{...existing,id:70,permissions:{fileDelete:false},active:true});
+  await send('users',{id:71,...makeUserRecord('복원사용자',password),role:'member',active:true});
+  await send('files',{id:91,userId:71,originalName:'한글.txt',sizeBytes:5,mimeType:'text/plain'});
+  await send('memos',{id:92,userId:71,title:'복원 메모',text:'첨부 포함',html:'첨부 포함',folder:'',font:'sans-serif',color:'white',attachments:[{kind:'audio',name:'녹음',data:'data:audio/wav;base64,YWJj'}]});
+  await send('work_logs',{id:93,userId:71,workDate:'2026-10-01',todo:[{task:'@[자료](files:91) @[메모](memos:92)',checked:false,children:[{task:'손자 보존',checked:true}]}],nextDayPlan:[],memo:'@[누락 대상](memos:999)',remarks:''});
+  await send('calendar_events',{id:94,userId:71,title:'기간 일정',description:'',kind:'schedule',allDay:false,color:'blue',reminderMinutes:10,start:'2026-10-01T10:00:00+09:00',end:'2026-10-02T11:00:00+09:00',reminders:[10]});
+  await send('site_settings',{id:1,values:{fontFamily:'system',fontSize:18,spacing:'normal',theme:'white',background:'none'}});
+  await send('notification_history',{id:1,userId:71,releaseId:'deleted-release'});
+  assert.equal((await call('/api/backup/import',admin,{phase:'file',jobId:full.jobId,sourceId:91,index:0,data:Buffer.from('bad').toString('base64')})).status,400);
+  assert.equal((await call('/api/backup/import',admin,{phase:'commit',jobId:full.jobId})).status,400);assert.equal((await ds.findAll('files')).length,0);
+  await call('/api/backup/import',admin,{phase:'file',jobId:full.jobId,sourceId:91,index:0,data:Buffer.from('hello').toString('base64')});
+  assert.equal((await call('/api/backup/import',admin,{phase:'commit',jobId:full.jobId})).status,200);
+  const owner=await ds.findOne('users',x=>x.username==='복원사용자'),file=(await ds.findAll('files'))[0],memo=(await ds.findAll('memos'))[0],log=(await ds.findAll('work_logs')).at(-1);
+  assert.equal(file.userId,owner.id);assert.equal((await storage.read(file.storedName+'.0')).toString(),'hello');assert.equal(memo.attachments.length,1);
+  assert.equal(log.todo[0].task,`@[자료](files:${file.id}) @[메모](memos:${memo.id})`);assert.equal(log.memo,'누락 대상');assert.equal(log.todo[0].children[0].checked,true);
+  assert.equal((await ds.findOne('users',x=>x.id===2)).password,existing.password);assert.equal((await ds.findOne('users',x=>x.id===2)).permissions.fileDelete,false);
+  assert.equal((await ds.findOne('site_settings',x=>x.id===1)).values.fontSize,18);
+  assert.ok((await ds.notificationHistory()).some(x=>x.releaseId==='deleted-release'&&x.userId===owner.id));
+  assert.equal((await call('/api/admin/logs',member)).status,403);
+  const logs=(await call('/api/admin/logs',admin)).data.items;
+  assert.ok(logs.some(x=>x.category==='backup'&&x.path==='/api/backup/import'));
+  assert.ok(logs.some(x=>x.category==='access'));
+  assert.ok(!JSON.stringify(logs).includes(password));assert.ok(!JSON.stringify(logs).includes(admin));
+  const board=(await ds.insert('boards',{userId:owner.id,name:'복원 게시판',group:'공유게시판',description:'',categories:['분류'],inMenu:true,active:true,order:8}));
+  const boardJob=(await call('/api/backup/import',admin,{phase:'start',scope:'all',archiveId:'boards-check-123',counts:{users:1,boards:1,board_posts:1,notification_reads:1,notifications:1}})).data;
+  const part=(kind,record)=>call('/api/backup/import',admin,{phase:'record',jobId:boardJob.jobId,kind,record});
+  await part('users',{...owner,id:888});await part('boards',{...board,id:999,userId:888});
+  await part('board_posts',{id:777,userId:888,boardId:999,title:'게시글',text:'본문',html:'<p>본문</p>',attachments:[],references:[],tags:['태그'],mentions:[],category:'분류'});
+  await part('notifications',{id:666,userId:0,shared:true,title:'공통',message:'본문',revision:'revision-1'});
+  await part('notification_reads',{id:555,userId:888,releaseId:'post:666:revision-1',readAt:new Date().toISOString()});
+  assert.equal((await call('/api/backup/import',admin,{phase:'commit',jobId:boardJob.jobId})).status,200);
+  const restoredBoard=(await ds.findAll('boards')).at(-1),restoredPost=(await ds.findAll('board_posts')).at(-1);
+  assert.equal(restoredPost.boardId,restoredBoard.id);assert.equal(restoredPost.userId,owner.id);
+  const shared=(await ds.findAll('notifications')).at(-1);assert.equal(shared.userId,0);assert.equal(shared.shared,true);
+  assert.equal((await ds.findAll('notification_reads')).at(-1).releaseId,'post:'+shared.id+':revision-1');
+  for(let i=0;i<2;i++)await ds.insert('users',{...makeUserRecord('seat-'+i,password),role:'member',active:true});
+  const capJob=(await call('/api/backup/import',admin,{phase:'start',scope:'all',archiveId:'cap-check-123',counts:{users:1}})).data;
+  await call('/api/backup/import',admin,{phase:'record',jobId:capJob.jobId,kind:'users',record:{id:999,...makeUserRecord('overflow',password),role:'member',active:true}});
+  assert.equal((await call('/api/backup/import',admin,{phase:'commit',jobId:capJob.jobId})).status,403);assert.equal(await ds.findOne('users',x=>x.username==='overflow'),undefined);
+  assert.equal((await call('/api/admin/backups?name=../../users.json',admin)).status,400);
+  const exported=(await call(`/api/backup/record?scope=all&kind=files&id=${file.id}`,admin)).data;assert.equal(exported.storedName,undefined);
+  const archive=(await call('/api/backup/export?scope=all',admin)).data;assert.equal(archive.index.sessions,undefined);
+  const snapshotBytes=await fetch(base+`/api/backup/file?scope=all&id=${file.id}&part=0`,{headers:{Authorization:'Bearer '+admin}});assert.equal(await snapshotBytes.text(),'hello');
+ }finally{await new Promise(r=>server.close(r));fs.rmSync(tmp,{recursive:true,force:true});}
+});
+test('initial data JSON names and snake case map to current format without evaluating markup',()=>{
+ assert.equal(core.parseJSON(Buffer.concat([Buffer.from([255,254]),Buffer.from('{"text":"초기 한글"}','utf16le')])).text,'초기 한글');
+ assert.equal(core.parseJSON(Buffer.concat([Buffer.from([239,187,191]),Buffer.from('{"text":"이전 자료"}')])).text,'이전 자료');
+ const result=core.legacy([{name:'data/work_logs.json',value:[{id:'8',user_id:'2',work_date:'2026-10-01',todo:['초기 일정'],next_day_plan:'첫 계획\n둘째 계획',memo:'<script>literal</script>'}]},{name:'data/memos.json',value:[{id:9,title:'이전 메모',content:'한글\n둘째줄'}]}],'all');
+ assert.equal(result.work_logs[0].id,8);assert.equal(result.work_logs[0].userId,2);assert.deepEqual(result.work_logs[0].nextDayPlan,['첫 계획','둘째 계획']);assert.equal(result.work_logs[0].memo,'<script>literal</script>');assert.equal(result.memos[0].text,'한글\n둘째줄');assert.equal(result.memos[0].font,'sans-serif');
+ assert.equal(core.legacy([{name:'backup.json',value:{workLogs:[{id:1,workDate:'2026-10-01',todo:[]}],files:[]}}],'worklogs').work_logs.length,1);
+ assert.throws(()=>core.legacy([{name:'config.json',value:{PORT:3000}}],'all'),/복원할 자료가 없습니다/);
+});
+test('interrupted local restore completes its journal before serving collections after restart',()=>{
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'dailynote-backup-recovery-'));
+ try{
+  fs.writeFileSync(path.join(dir,'work_logs.json'),'[]');
+  fs.writeFileSync(path.join(dir,'backup-transaction.json'),JSON.stringify({work_logs:[{id:8,userId:1,workDate:'2026-10-01',todo:['復元']}],backup_receipts:[{key:'restore-8'}]}));
+  const result=require('node:child_process').spawnSync(process.execPath,['-e',"const ds=require('./src/datastore');Promise.all([ds.findAll('work_logs'),ds.findAll('backup_receipts')]).then(data=>console.log('RESULT:'+JSON.stringify(data)));"],{cwd:path.join(__dirname,'..'),env:{...process.env,DATA_DIR:dir,REDIS_URL:'',UPSTASH_REDIS_REST_URL:''},encoding:'utf8'});
+  assert.equal(result.status,0);const line=result.stdout.split('\n').find(x=>x.startsWith('RESULT:')),data=JSON.parse(line.slice(7));assert.equal(data[0][0].id,8);assert.equal(data[1][0].key,'restore-8');assert.equal(fs.existsSync(path.join(dir,'backup-transaction.json')),false);
+ }finally{fs.rmSync(dir,{recursive:true,force:true});}
+});

@@ -14,7 +14,7 @@
 <link rel="stylesheet" href="list-scroll.css"><link rel="stylesheet" href="pull-refresh.css"><link rel="apple-touch-icon" href="images/dailynote-192.png"><link rel="icon" href="brand/app-icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="brand/apple-touch-icon.png"><link rel="stylesheet" href="brand/brand.css"><link rel="stylesheet" href="boards.css">
 <link rel="stylesheet" href="category-tabs.css">
 <link rel="stylesheet" href="loading-motion.css"><link rel="stylesheet" href="loading.css">
-<link rel="stylesheet" href="writing-forms.css"></head>
+<link rel="stylesheet" href="writing-forms.css"><link rel="stylesheet" href="backup.css"></head>
 <body>
 <!-- 로그인 섹션 -->
 <section id="login-section" class="login-section">
@@ -65,7 +65,7 @@
   <header class="main-header ui-header">
     <button type="button" class="shell-icon mobile-menu" id="sidebar-open" aria-label="메뉴 열기" aria-expanded="false" aria-controls="app-sidebar" data-icon="menu"></button>
     <div class="main-title ui-title"><h1 id="shell-title">일일리스트</h1><small>DailyNote</small></div>
-    <div class="main-actions ui-actions"><button id="board-search" type="button" class="shell-icon" data-icon="search" aria-label="게시판 검색" hidden></button><button id="board-more" type="button" class="shell-icon" data-icon="more" aria-label="게시판 메뉴" aria-haspopup="menu" aria-controls="board-menu" aria-expanded="false" hidden></button><button id="board-create" type="button" class="shell-icon" data-icon="plus" aria-label="글 작성" hidden></button>
+    <div class="main-actions ui-actions"><button type="button" id="menu-tools" class="shell-icon" data-icon="more" aria-label="백업·복원 메뉴" aria-haspopup="menu" hidden></button><button id="board-search" type="button" class="shell-icon" data-icon="search" aria-label="게시판 검색" hidden></button><button id="board-more" type="button" class="shell-icon" data-icon="more" aria-label="게시판 메뉴" aria-haspopup="menu" aria-controls="board-menu" aria-expanded="false" hidden></button><button id="board-create" type="button" class="shell-icon" data-icon="plus" aria-label="글 작성" hidden></button>
       <button type="button" id="open-calendar-search-btn" class="shell-icon" aria-label="캘린더 조회" title="캘린더 조회" data-icon="search" hidden></button>
       <button type="button" id="open-calendar-more-btn" class="shell-icon" aria-label="캘린더 메뉴" title="캘린더 메뉴" data-icon="more" aria-haspopup="menu" aria-expanded="false" hidden></button>
       <button type="button" id="open-calendar-btn" class="shell-icon" aria-label="일정 추가" title="일정 추가" data-icon="plus" hidden></button>
@@ -317,8 +317,9 @@
 <script src="editor-core.js"></script><script src="memo.js"></script><script src="category-tabs.js"></script><script src="boards.js"></script>
 <script src="text-import-core.js"></script>
 <script src="text-import.js"></script><script src="editor-add-menu.js"></script>
-</body>
+<script src="backup-core.js"></script><script src="backup.js"></script></body>
 </html>
+
 
 
 
