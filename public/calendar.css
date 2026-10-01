@@ -48,3 +48,18 @@ body #main-section .calendar-header{grid-template-columns:142px minmax(0,1fr) 14
 @media(max-width:1100px){.calendar-layout{grid-template-columns:minmax(0,1fr)}}
 @media(max-width:600px){.calendar-page{padding:8px 12px 20px}.calendar-toolbar{display:grid;grid-template-columns:1fr;gap:8px;margin-bottom:10px}.calendar-navigation{width:100%;max-width:none}#main-section .calendar-navigation h2{font-size:17px}.calendar-view-switch{justify-self:center}.calendar-view-switch button{min-width:56px;font-size:13px;min-height:30px;padding:4px 12px}.cal-week{height:84px;min-height:0}.cal-cell{padding:4px 2px}.calendar-page .cal-date{width:26px;height:26px;min-height:26px;font-size:12px}.cal-holiday-name{font-size:9px;line-height:12px;min-height:12px}.cal-bars{top:44px}.calendar-page .cal-bars .cal-event{font-size:10px;margin:0 1px;padding:1px 2px}.cal-records{gap:0}.calendar-page .cal-record{padding:0 1px;font-size:9px;min-height:14px;height:14px;gap:1px}.cal-record .app-icon{width:9px;height:9px}.calendar-weekdays span{padding:7px 0}.calendar-agenda{padding:12px}.calendar-layout{gap:12px}body #main-section .calendar-header{grid-template-columns:134px minmax(0,1fr) 134px}body #main-section .calendar-header .ui-actions{gap:4px}.cal-time-scroll{max-height:58vh}}
 @media(max-width:360px){body #main-section .calendar-header{grid-template-columns:104px minmax(0,1fr) 104px}body #main-section .calendar-header .ui-actions .shell-icon{width:32px;height:40px}body #main-section .calendar-header .ui-title h1{font-size:16px}.calendar-page{padding-left:8px;padding-right:8px}.calendar-page .cal-record{gap:0}.cal-record .app-icon{width:8px;height:8px}}
+
+/* iOS native date fields must shrink inside the dialog's grid tracks. */
+.calendar-event-dialog .calendar-form-row{grid-template-columns:repeat(2,minmax(0,1fr))}
+.calendar-event-dialog .form-field,.calendar-search-dialog .form-field{min-width:0;max-width:100%}
+.calendar-event-dialog input[type=date],.calendar-event-dialog input[type=datetime-local],.calendar-search-dialog input[type=date]{display:block;-webkit-appearance:none;appearance:none;box-sizing:border-box;width:100%;inline-size:100%;min-width:0;min-inline-size:0;max-width:100%;max-inline-size:100%;min-height:46px;margin:0;padding:10px 12px;background:var(--surface,#fff);color:var(--text,#263342);font-size:16px;text-align:left}
+.calendar-event-dialog input::-webkit-date-and-time-value,.calendar-search-dialog input::-webkit-date-and-time-value{min-width:0;max-width:100%;text-align:left}
+.calendar-event-dialog input::-webkit-datetime-edit,.calendar-search-dialog input::-webkit-datetime-edit{padding:0;min-width:0}
+@media(max-width:600px){.calendar-event-dialog .calendar-form-row{grid-template-columns:minmax(0,1fr)}}
+
+.calendar-event-dialog .calendar-form-actions button{min-width:0;white-space:nowrap;flex-shrink:0}
+@media(max-width:600px){
+ .calendar-event-dialog .calendar-form-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ .calendar-event-dialog .calendar-form-actions button{width:100%;margin:0;padding:10px 8px;min-height:44px;font-size:16px}
+ .calendar-event-dialog #calendar-event-delete:not([hidden]){grid-column:1/-1;margin:0}
+}
