@@ -23,7 +23,7 @@ async function adminRouter(req,res,auth) {
   const id=rawId ? Number(rawId) : null;
   const action=url.pathname.split('/').filter(Boolean)[4];
   const right=area==='settings'?'appearance':area;
-  if (area === 'directory' && req.method === 'GET' && ['notifications','files','users','permissions'].some(key => auth.permissions[key])) return sendJson(res,200,(await ds.findAll('users')).map(u=>({id:u.id,username:u.username,active:u.active!==false})));
+  if (area === 'directory' && req.method === 'GET' && ['notifications','files','users','permissions'].some(key => auth.permissions[key])) return sendJson(res,200,(await ds.findAll('users')).map(u=>({id:u.id,username:u.username,active:u.active!==false,approval:u.approval})));
   if (!auth.permissions[right]) return sendJson(res,403,{message:'이 관리 기능에 접근할 권한이 없습니다.'});
   const method=req.method;
   const body=['POST','PUT'].includes(method)?await parseJsonBody(req):{};
@@ -91,16 +91,25 @@ async function adminRouter(req,res,auth) {
       return sendJson(res,200,await ds.findAll('notifications'));
     }
     if(method==='POST'||method==='PUT') {
-      const message=String(body.message||'').trim(),userId=Number(body.userId);
-      if(!message||message.length>2000)return sendJson(res,400,{message:'알림 내용을 1~2000자로 입력하세요.'});
-      if(!await ds.findOne('users',u=>u.id===userId&&u.active!==false))return sendJson(res,400,{message:'알림을 받을 사용자를 선택하세요.'});
-      if(method==='PUT') {
-        const updated=await ds.update('notifications',id,{userId,message,isRead:false});
-        return sendJson(res,updated?200:404,updated||{message:'알림을 찾을 수 없습니다.'});
+      const message=String(body.message||'').trim(),title=String(body.title||'').trim(),userId=Number(body.userId);
+      if(title.length>120)return sendJson(res,400,{message:'공지 제목은 120자 이내로 입력하세요.'});
+      if(method==='POST'&&body.userId==='all'){
+        if(!message||message.length>2000)return sendJson(res,400,{message:'공지 내용을 1~2000자로 입력하세요.'});
+        const targets=(await ds.findAll('users')).filter(u=>u.active!==false&&(!u.approval||u.approval==='approved'));
+        if(!targets.length)return sendJson(res,400,{message:'게시할 활성 사용자가 없습니다.'});
+        const createdAt=new Date().toISOString(),records=[];
+        for(const target of targets)records.push(await ds.insert('notifications',{userId:target.id,title,message,isRead:false,createdAt}));
+        return sendJson(res,201,{count:records.length,ids:records.map(n=>n.id)});
       }
-      return sendJson(res,201,await ds.insert('notifications',{userId,message,isRead:false,createdAt:new Date().toISOString()}));
+      if(!message||message.length>2000)return sendJson(res,400,{message:'공지 내용을 1~2000자로 입력하세요.'});
+      if(!await ds.findOne('users',u=>u.id===userId&&u.active!==false&&(!u.approval||u.approval==='approved')))return sendJson(res,400,{message:'공지을 받을 사용자를 선택하세요.'});
+      if(method==='PUT') {
+        const updated=await ds.update('notifications',id,{userId,title,message,isRead:false,updatedAt:new Date().toISOString()});
+        return sendJson(res,updated?200:404,updated||{message:'공지을 찾을 수 없습니다.'});
+      }
+      return sendJson(res,201,await ds.insert('notifications',{userId,title,message,isRead:false,createdAt:new Date().toISOString()}));
     }
-    if(method==='DELETE'&&id){const ok=await ds.remove('notifications',id);return sendJson(res,ok?200:404,{message:ok?'알림을 삭제했습니다.':'알림을 찾을 수 없습니다.'});}
+    if(method==='DELETE'&&id){const ok=await ds.remove('notifications',id);return sendJson(res,ok?200:404,{message:ok?'공지을 삭제했습니다.':'공지을 찾을 수 없습니다.'});}
   }
   if(area==='files') {
     if(method==='GET'&&!id)return sendJson(res,200,await ds.findAll('files'));
