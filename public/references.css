@@ -48,3 +48,21 @@
 body.todo-drag-active {user-select:none;-webkit-user-select:none;cursor:grabbing}
 
 body.todo-drag-active .todo-list,body.todo-drag-active .todo-item,body.todo-drag-active .todo-text-btn,body.todo-drag-active .reference-link {-webkit-user-select:none!important;user-select:none!important;-webkit-touch-callout:none;-webkit-user-drag:none}
+
+
+/* Shared image preview and full viewport viewer, using local styles only. */
+.reference-image-preview{width:min(660px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:auto;box-sizing:border-box}
+.reference-image-preview [hidden]{display:none!important}
+.reference-image-preview h2{overflow-wrap:anywhere}
+.reference-image-open{display:block;width:100%;padding:0;border:0;background:transparent;cursor:zoom-in}
+.reference-image-open img{display:block;margin:auto;max-width:100%;max-height:60dvh;object-fit:contain}
+.reference-image-viewer{position:fixed;inset:0;width:100%;height:100dvh;max-width:none;max-height:none;margin:0;padding:0;border:0;background:#111827;color:#fff;box-sizing:border-box}
+.reference-image-viewer::backdrop{background:#111827}
+.reference-image-toolbar{height:64px;padding:8px 12px;box-sizing:border-box;display:flex;justify-content:space-between;align-items:center;padding-top:max(8px,env(safe-area-inset-top))}
+.reference-image-toolbar .shell-icon{color:#fff;min-width:44px;min-height:44px}
+.reference-image-stage{height:calc(100% - 64px);overflow:auto;display:flex;align-items:center;justify-content:center;touch-action:pan-x pan-y pinch-zoom;padding-bottom:env(safe-area-inset-bottom);box-sizing:border-box}
+.reference-image-stage img{max-width:100%;max-height:100%;object-fit:contain}
+.reference-image-viewer.is-original .reference-image-stage{display:block}
+.reference-image-viewer.is-original img{max-width:none;max-height:none;display:block;margin:auto}
+#reference-detail-content img{cursor:zoom-in}
+@media(max-width:480px){.reference-image-preview{padding:16px}}
