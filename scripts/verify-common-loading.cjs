@@ -28,7 +28,7 @@ async function cli(args){await new Promise((resolve,reject)=>{const child=spawn(
    await page.evaluate(key=>{location.hash=key;},menu);
    await page.waitForFunction(()=>!document.getElementById('loading-overlay').hidden);
    assert.equal(await page.locator('#main-section').getAttribute('aria-busy'),'true');
-   assert.equal(await page.locator('#loading-overlay').evaluate(el=>getComputedStyle(el).pointerEvents),'none');
+   assert.equal(await page.locator('#loading-overlay').evaluate(el=>getComputedStyle(el).pointerEvents),'auto');
    if(menu==='calendar')await page.screenshot({path:path.join(tmp,'loading-calendar-'+label+'.png')});
    await settled();
   }
@@ -48,16 +48,18 @@ async function cli(args){await new Promise((resolve,reject)=>{const child=spawn(
  await page.goto(base);await settled();
  await page.evaluate(()=>{window.bodyRead=fetch('/api/loading-body').then(r=>r.json());});
  await wait(500);assert.equal(await page.locator('#loading-overlay').isVisible(),true);await page.evaluate(()=>window.bodyRead);await settled();
- // Loading stays visible above native dialogs and does not move keyboard focus.
+ // Loading blocks dialogs and returns focus when complete.
  await page.evaluate(()=>{location.hash='calendar';});await settled();
  await page.locator('#open-calendar-btn').click();
  await page.waitForFunction(()=>document.getElementById('calendar-event-dialog').open && document.activeElement.id==='calendar-title');
  const focused=await page.evaluate(()=>document.activeElement.id);
  await page.evaluate(()=>{window.finishModal=AppLoading.begin('팝업 처리 중입니다…');});
  assert.equal(await page.locator('#loading-overlay').isVisible(),true);
- assert.equal(await page.evaluate(()=>document.activeElement.id),focused);
+ assert.equal(await page.evaluate(()=>AppLoading.blocking),true);
+ assert.equal(await page.evaluate(()=>document.activeElement.id),'loading-overlay');
+ await page.keyboard.press('Escape');assert.equal(await page.evaluate(()=>AppLoading.blocking),true);
  assert.equal(await page.locator('#loading-overlay').evaluate(el=>typeof el.showPopover!=='function'||el.matches(':popover-open')),true);
- await page.evaluate(()=>finishModal());await settled();await page.keyboard.press('Escape');
+ await page.evaluate(()=>finishModal());await settled();assert.equal(await page.evaluate(()=>document.activeElement.id),focused);await page.keyboard.press('Escape');
  // A completed request must not hide an independent pending request.
  await page.evaluate(()=>{window.finishA=AppLoading.begin('첫 요청');window.finishB=AppLoading.begin('두 번째 요청');finishA();});
  await wait(450);assert.equal(await page.locator('#loading-overlay').isVisible(),true);await page.evaluate(()=>finishB());await settled();
@@ -69,9 +71,16 @@ async function cli(args){await new Promise((resolve,reject)=>{const child=spawn(
  await page.evaluate(()=>AppShell.refresh());await page.getByRole('button',{name:'다시 불러오기',exact:true}).waitFor();await settled();
  await page.route('**/api/loading-abort',async route=>{await wait(600);await route.abort().catch(()=>{});});
  await page.evaluate(async()=>{const c=new AbortController(),p=fetch('/api/loading-abort',{signal:c.signal}).catch(()=>{});c.abort();await p;});await settled();
+ // Background page reads must leave UI input and scrolling available.
+ await page.evaluate(()=>{window.endBackground=AppLoading.begin('목록 추가',{mode:'background'});});
+ assert.equal(await page.evaluate(()=>AppLoading.blocking),false);
+ assert.equal(await page.locator('#main-section').evaluate(el=>el.inert),false);
+ assert.equal(await page.locator('#loading-overlay').isVisible(),false);
+ await page.evaluate(()=>endBackground());
  // Silent reminder polling never creates an overlay.
  await page.evaluate(()=>fetch('/api/calendar?start=2026-10-01&end=2026-10-02&reminders=1').then(r=>r.json()).catch(()=>{}));assert.equal(await page.locator('#loading-overlay').isVisible(),false);
  // A body that starts reading after headers must be tracked again.
  await page.evaluate(async()=>{const r=await fetch('/api/auth/me');await new Promise(resolve=>setTimeout(resolve,500));await r.json();});await settled();
  assert.deepEqual(errors,[]);console.log('PASS common loading: all user/admin menus, PC/mobile, navigation, concurrent requests, body reads, error, abort, quiet polling. Captures: '+tmp);
 })().catch(e=>{console.error(e);process.exitCode=1;}).finally(async()=>{await browser?.close();if(server)await new Promise(resolve=>server.close(resolve));});
+

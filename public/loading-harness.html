@@ -1,9 +1,12 @@
 <!DOCTYPE html>
-<html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>DailyNote 로딩 하네스</title><link rel="stylesheet" href="style.css"><link rel="stylesheet" href="screen-settings.css"><link rel="stylesheet" href="loading-motion.css"></head>
-<body><main style="max-width:520px;margin:32px auto;padding:16px"><h1>로딩 모션</h1><label for="loading-motion">모션 선택</label><select id="loading-motion"></select><div class="loading-motion-preview dn-loading"><div data-loading-motion="petal"></div><p>불러오는 중이에요</p><small>잠시만 기다려 주세요.</small></div><button type="button" id="preview-overlay">전체 로딩 보기</button><p>전체 로딩은 3초 후 닫힙니다. 이 화면은 서버 설정을 저장하지 않습니다.</p></main>
-<div class="loading-overlay" id="harness-loading" hidden><div class="loading-panel dn-loading" role="status"><div class="orbit-spinner"></div><p>불러오는 중이에요</p><small>잠시만 기다려 주세요.</small></div></div>
-<script src="loading-motion.js"></script><script>
+<html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>DailyNote 로딩 하네스</title><link rel="stylesheet" href="style.css"><link rel="stylesheet" href="screen-settings.css"><link rel="stylesheet" href="loading-motion.css"><link rel="stylesheet" href="loading.css"></head>
+<body><main style="max-width:520px;margin:32px auto;padding:16px"><h1>로딩 모션</h1><label for="loading-motion">모션 선택</label><select id="loading-motion"></select><div class="loading-motion-preview dn-loading"><div data-loading-motion="petal"></div><p>불러오는 중이에요</p><small>잠시만 기다려 주세요.</small></div><button type="button" id="preview-overlay">전체 로딩 보기</button><p>전체 로딩은 3초 후 닫힙니다. 이 화면은 서버 설정을 저장하지 않습니다.</p><button type="button" id="preview-background">추가 로딩 보기</button><button type="button" id="interaction-check">클릭 확인</button><p id="interaction-status" role="status">클릭 0회</p><p>전체 로딩 중에는 조작이 차단됩니다. 추가 로딩 중에는 버튼과 스크롤을 사용할 수 있습니다.</p></main>
+<div class="loading-overlay" id="loading-overlay" hidden><div class="loading-panel dn-loading" role="status"><div class="orbit-spinner"></div><p>불러오는 중이에요</p><small>잠시만 기다려 주세요.</small></div></div>
+<script src="loading-motion.js"></script><script src="loading.js"></script><script>
 const select=document.getElementById('loading-motion');select.value=LoadingMotion.defaultId;
 select.addEventListener('change',()=>LoadingMotion.apply(select.value));
-document.getElementById('preview-overlay').addEventListener('click',()=>{document.getElementById('harness-loading').hidden=false;setTimeout(()=>document.getElementById('harness-loading').hidden=true,3000);});
+document.getElementById('preview-overlay').addEventListener('click',()=>{const finish=AppLoading.begin('전체 화면 처리 중입니다…');setTimeout(finish,3000);});
+let clicks=0;document.getElementById('interaction-check').addEventListener('click',()=>document.getElementById('interaction-status').textContent='클릭 '+(++clicks)+'회');
+document.getElementById('preview-background').addEventListener('click',()=>{const finish=AppLoading.begin('추가 로딩',{mode:'background'});document.getElementById('interaction-status').textContent='목록 추가 로딩 중…';setTimeout(()=>{finish();document.getElementById('interaction-status').textContent='추가 로딩 완료';},3000);});
 </script></body></html>
+

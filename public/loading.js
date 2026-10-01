@@ -2,7 +2,38 @@
   'use strict';
   if (window.AppLoading) return;
   const nativeFetch = window.fetch.bind(window), tasks = new Map();
-  let sequence = 0, epoch = 0, timer, shownAt = 0, overlay;
+  let sequence = 0, epoch = 0, timer, shownAt = 0, overlay, locked = false, savedFocus, observer;
+  const inertBefore = new Map();
+  let bodyOverflow;
+  const blockingTasks = () => Array.from(tasks.values()).filter(task => task.blocking);
+  function lockNode(node) {
+    if (node === overlay || !(node instanceof HTMLElement) || inertBefore.has(node)) return;
+    inertBefore.set(node, node.inert); node.inert = true;
+  }
+  function lock() {
+    if (locked) return;
+    locked = true; savedFocus = document.activeElement;
+    bodyOverflow = document.body.style.overflow; document.body.style.overflow = 'hidden';
+    Array.from(document.body.children).forEach(lockNode);
+    observer = new MutationObserver(records => records.forEach(record => Array.from(record.addedNodes).forEach(lockNode)));
+    observer.observe(document.body, {childList:true});
+    overlay.focus({preventScroll:true});
+  }
+  function unlock() {
+    if (!locked) return;
+    locked = false; observer?.disconnect();
+    inertBefore.forEach((value,node) => { node.inert = value; }); inertBefore.clear();
+    document.body.style.overflow = bodyOverflow;
+    if (savedFocus?.isConnected && !savedFocus.closest('[inert]')) savedFocus.focus({preventScroll:true});
+    savedFocus = null;
+  }
+  // Capture before application handlers, including browsers without native inert.
+  function blockInput(event) {
+    if (!locked) return;
+    if (event.type === 'focusin') { if (event.target !== overlay) overlay.focus({preventScroll:true}); return; }
+    event.preventDefault(); event.stopImmediatePropagation();
+  }
+  ['click','dblclick','pointerdown','pointerup','mousedown','mouseup','touchstart','touchmove','wheel','keydown','keyup','submit','cancel','focusin'].forEach(type => window.addEventListener(type, blockInput, {capture:true,passive:false}));
   function mount() {
     if (overlay) return overlay;
     overlay = document.getElementById('loading-overlay') || document.getElementById('admin-loading');
@@ -19,7 +50,8 @@
       }
     }
     overlay.classList.add('app-loading');
-    // A manual popover can appear above native modal dialogs without stealing focus.
+    overlay.tabIndex = -1; overlay.setAttribute('aria-label', '처리 중입니다. 잠시만 기다려 주세요.');
+    // A manual popover keeps the blocker above dialogs and writing pages.
     if (typeof overlay.showPopover === 'function') overlay.setAttribute('popover', 'manual');
     return overlay;
   }
@@ -30,26 +62,30 @@
   }
   function hide() {
     if (overlay) { if (typeof overlay.hidePopover === 'function' && overlay.matches(':popover-open')) overlay.hidePopover(); overlay.hidden = true; }
-    busy(false);
+    unlock(); busy(false);
   }
-  function begin(message = '불러오는 중입니다…') {
-    clearTimeout(timer);
-    const node = mount(), id = ++sequence;
-    tasks.set(id, message);
-    if (node.hidden) shownAt = Date.now();
-    node.hidden = false;
-    node.querySelector('p').textContent = message;
-    if (node.hasAttribute('popover') && !node.matches(':popover-open')) node.showPopover();
-    busy(true);
+  function begin(message = '불러오는 중입니다…', options = {}) {
+    const blocking = options.mode !== 'background' && options.mode !== 'silent';
+    const id = ++sequence;
+    tasks.set(id, {message,blocking});
+    if (blocking) {
+      clearTimeout(timer);
+      const node = mount();
+      if (node.hidden) shownAt = Date.now();
+      node.hidden = false; node.querySelector('p').textContent = message;
+      if (node.hasAttribute('popover') && !node.matches(':popover-open')) node.showPopover();
+      busy(true); lock();
+    }
     let ended = false;
     return () => {
       if (ended) return; ended = true;
-      if (!tasks.delete(id)) return;
-      if (tasks.size) { node.querySelector('p').textContent = Array.from(tasks.values()).pop(); return; }
-      timer = setTimeout(() => { if (!tasks.size) hide(); }, Math.max(100, 360 - (Date.now() - shownAt)));
+      if (!tasks.delete(id) || !blocking) return;
+      const remaining = blockingTasks();
+      if (remaining.length) { overlay.querySelector('p').textContent = remaining.at(-1).message; return; }
+      timer = setTimeout(() => { if (!blockingTasks().length) hide(); }, Math.max(100, 360 - (Date.now() - shownAt)));
     };
   }
-  async function run(message, action) { const finish = begin(message); try { return await action(); } finally { finish(); } }
+  async function run(message, action, options = {}) { const finish = begin(message, options); try { return await action(); } finally { finish(); } }
   function clear() { epoch++; tasks.clear(); clearTimeout(timer); hide(); }
   function messageFor(url, method) {
     if (url.includes('/auth/login')) return '로그인 중입니다…';
@@ -64,10 +100,12 @@
     try { url = new URL(typeof input === 'string' || input instanceof URL ? input : input.url, location.href); } catch { return nativeFetch(input, options); }
     const method = String(options.method || input?.method || 'GET').toUpperCase();
     // Polling and editor autosaves keep their existing inline status indicators.
-    if (url.origin !== location.origin || !url.pathname.startsWith('/api/') || url.searchParams.get('reminders') === '1' || (url.pathname.startsWith('/api/memos') && ['POST','PUT','PATCH'].includes(method))) return nativeFetch(input, options);
-    const requestEpoch = epoch, message = messageFor(url.pathname, method), finish = begin(message);
+    if (url.origin !== location.origin || !url.pathname.startsWith('/api/') || (method === 'GET' && url.searchParams.get('reminders') === '1') || (url.pathname.startsWith('/api/memos') && ['POST','PUT','PATCH'].includes(method))) return nativeFetch(input, options);
+    const {appLoading = 'blocking', ...fetchOptions} = options;
+    const mode = method === 'GET' ? appLoading : 'blocking';
+    const requestEpoch = epoch, message = messageFor(url.pathname, method), finish = begin(message, {mode});
     try {
-      const response = await nativeFetch(input, options);
+      const response = await nativeFetch(input, fetchOptions);
       // Headers can arrive before a large JSON/file body. Hold the indicator through body reads.
       let reading = false;
       const release = setTimeout(() => { if (!reading) finish(); }, 0);
@@ -75,14 +113,15 @@
         const consume = response[key].bind(response);
         response[key] = async (...args) => {
           reading = true; clearTimeout(release);
-          const bodyFinish = requestEpoch === epoch ? begin(message) : () => {};
+          const bodyFinish = requestEpoch === epoch ? begin(message, {mode}) : () => {};
           try { return await consume(...args); } finally { finish(); bodyFinish(); }
         };
       }
       return response;
     } catch (error) { finish(); throw error; }
   }
-  window.AppLoading = {begin, run, clear, fetch:trackedFetch, get pending() { return tasks.size; }};
+  window.AppLoading = {begin, run, clear, fetch:trackedFetch, get pending() { return tasks.size; }, get blocking() { return locked; }};
   window.fetch = trackedFetch;
   window.addEventListener('pagehide', clear);
 })();
+
