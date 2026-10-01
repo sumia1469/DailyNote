@@ -1095,3 +1095,19 @@ button:focus-visible { outline: 3px solid #93c5fd; outline-offset: 3px; }
 #notification-detail-date { color:var(--muted); }
 #notification-detail-message { white-space:pre-wrap; overflow-wrap:anywhere; color:var(--text); line-height:1.7; margin:18px 0 0; }
 body[data-theme="dark"] .register-link { color:#f3bc88; }
+
+/* Shared flat SVG icons; labels remain visible and accessible. */
+.app-icon { width:20px; height:20px; display:inline-block; flex:none; vertical-align:middle; pointer-events:none; }
+.has-app-icon > .app-icon { margin-right:8px; }
+button.has-app-icon, a.has-app-icon { display:inline-flex; align-items:center; justify-content:center; gap:8px; }
+button.has-app-icon > .app-icon, a.has-app-icon > .app-icon { margin-right:0; }
+h2.has-app-icon > .app-icon { width:24px; height:24px; color:#526f65; vertical-align:-4px; }
+.login-icon.has-app-icon, .main-icon.has-app-icon { color:#526f65; --icon-tile:#e7eee9; background:var(--icon-tile); }
+.login-icon > .app-icon, .main-icon > .app-icon { width:28px; height:28px; margin:0; }
+.icon-btn.has-app-icon > .app-icon { margin:0; }
+.login-btn.has-app-icon { display:flex; }
+body[data-theme="dark"] h2.has-app-icon > .app-icon,
+body[data-theme="dark"] .login-icon.has-app-icon,
+body[data-theme="dark"] .main-icon.has-app-icon { color:var(--accent); --icon-tile:#35413c; }
+.register-link.has-app-icon { display:flex; }
+@media(max-width:600px){button.has-app-icon,a.has-app-icon{gap:6px}button.has-app-icon>.app-icon,a.has-app-icon>.app-icon{width:18px;height:18px}.list-editor-toolbar button.has-app-icon{padding-inline:6px}}

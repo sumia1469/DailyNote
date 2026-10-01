@@ -12,7 +12,7 @@
 <section id="login-section" class="login-section">
   <div class="login-card">
     <div class="login-title">
-      <span class="login-icon" aria-hidden="true">🗓️</span>
+      <span class="login-icon" aria-hidden="true" data-icon="journal"></span>
       <div>
         <h1>일일 업무일지</h1>
         <p>오늘의 업무를 기록하고, 내일을 준비하세요.</p>
@@ -37,7 +37,7 @@
 <section id="main-section" class="main-section" style="display:none;">
   <header class="main-header">
     <div class="main-title">
-      <span class="main-icon">🗓️</span>
+      <span class="main-icon" data-icon="journal" aria-hidden="true"></span>
       <div>
         <h1>일일 업무일지</h1>
         <p>오늘의 업무와 다음 계획을 관리합니다.</p>
@@ -52,7 +52,7 @@
   <section class="content-card notification-section">
     <div class="section-header">
       <div>
-        <h2>알림</h2>
+        <h2 data-icon="bell">알림</h2>
         <p>새로운 알림과 읽지 않은 알림을 확인합니다.</p>
       </div>
       <button type="button" class="card-toggle" aria-label="알림 접기" aria-expanded="true" aria-controls="notification-body" data-card-title="알림">
@@ -67,7 +67,7 @@
   <section class="content-card upload-section">
     <div class="section-header">
       <div>
-        <h2>📁 파일 관리</h2>
+        <h2 data-icon="files">파일 관리</h2>
         <p>업무 관련 파일을 업로드하고 내려받습니다.</p>
       </div>
       <button type="button" class="card-toggle" aria-label="파일관리 접기" aria-expanded="true" aria-controls="upload-body" data-card-title="파일관리">
@@ -89,12 +89,12 @@
   <section id="worklog-section" class="worklog-section">
     <div class="worklog-header">
       <div>
-        <h2>🖊️ 새 일지 등록</h2>
+        <h2 data-icon="new">새 일지 등록</h2>
         <p>업무 진행 상황과 다음 계획을 관리합니다.</p>
       </div>
       <div class="worklog-header-actions">
         <button type="button" id="duplicate-worklog-btn" class="secondary-btn" disabled>선택 일지 복제</button>
-        <button type="button" id="open-worklog-btn" class="primary-btn">+ 새 일지 등록</button>
+        <button type="button" id="open-worklog-btn" class="primary-btn" data-icon="new">새 일지 등록</button>
       </div>
     </div>
     <p id="worklog-action-msg" class="worklog-action-msg" role="status" aria-live="polite"></p>
@@ -125,7 +125,7 @@
         <h2 id="modal-title">새 업무일지 등록</h2>
         <p>TO-DO는 한줄에 하나씩 입력하세요.</p>
       </div>
-      <button type="button" id="modal-close-btn" class="icon-btn" aria-label="닫기">×</button>
+      <button type="button" id="modal-close-btn" class="icon-btn" aria-label="닫기" data-icon="close"></button>
     </div>
     <form id="worklog-form" class="worklog-form">
       <input type="hidden" name="worklogId">
@@ -137,9 +137,9 @@
         <label for="todo">TODO</label>
         <textarea id="todo" name="todo" rows="7" placeholder="예) 보고서 작성" required></textarea>
         <div class="list-editor-toolbar" data-editor="todo" role="group" aria-label="업무 목록 편집">
-          <button type="button" class="secondary-btn" data-action="outdent" aria-controls="todo">← 상위로</button>
-          <button type="button" class="secondary-btn" data-action="indent" aria-controls="todo">→ 하위로</button>
-          <button type="button" class="secondary-btn" data-action="add" aria-controls="todo">＋ 항목 추가</button>
+          <button type="button" class="secondary-btn" data-action="outdent" aria-controls="todo" data-icon="outdent">상위로</button>
+          <button type="button" class="secondary-btn" data-action="indent" aria-controls="todo" data-icon="indent">하위로</button>
+          <button type="button" class="secondary-btn" data-action="add" aria-controls="todo" data-icon="plus">항목 추가</button>
         </div>
         <small>줄을 선택한 뒤 상위로·하위로 버튼을 누르세요. PC에서는 Tab·Shift+Tab을 사용할 수 있어요.</small>
       </div>
@@ -147,9 +147,9 @@
         <label for="next-day-plan">익일 계획</label>
         <textarea id="next-day-plan" name="nextDayPlan" rows="5" placeholder="예) 회의 준비"></textarea>
         <div class="list-editor-toolbar" data-editor="next-day-plan" role="group" aria-label="계획 목록 편집">
-          <button type="button" class="secondary-btn" data-action="outdent" aria-controls="next-day-plan">← 상위로</button>
-          <button type="button" class="secondary-btn" data-action="indent" aria-controls="next-day-plan">→ 하위로</button>
-          <button type="button" class="secondary-btn" data-action="add" aria-controls="next-day-plan">＋ 항목 추가</button>
+          <button type="button" class="secondary-btn" data-action="outdent" aria-controls="next-day-plan" data-icon="outdent">상위로</button>
+          <button type="button" class="secondary-btn" data-action="indent" aria-controls="next-day-plan" data-icon="indent">하위로</button>
+          <button type="button" class="secondary-btn" data-action="add" aria-controls="next-day-plan" data-icon="plus">항목 추가</button>
         </div>
         <small>줄을 선택한 뒤 상위로·하위로 버튼을 누르세요. PC에서는 Tab·Shift+Tab을 사용할 수 있어요.</small>
       </div>
@@ -162,9 +162,9 @@
         <label for="memo">메모</label>
         <textarea id="memo" name="memo" rows="3"></textarea>
         <div class="list-editor-toolbar" data-editor="memo" role="group" aria-label="메모 목록 편집">
-          <button type="button" class="secondary-btn" data-action="outdent" aria-controls="memo">← 상위로</button>
-          <button type="button" class="secondary-btn" data-action="indent" aria-controls="memo">→ 하위로</button>
-          <button type="button" class="secondary-btn" data-action="add" aria-controls="memo">＋ 항목 추가</button>
+          <button type="button" class="secondary-btn" data-action="outdent" aria-controls="memo" data-icon="outdent">상위로</button>
+          <button type="button" class="secondary-btn" data-action="indent" aria-controls="memo" data-icon="indent">하위로</button>
+          <button type="button" class="secondary-btn" data-action="add" aria-controls="memo" data-icon="plus">항목 추가</button>
         </div>
         <small>줄을 선택한 뒤 상위로·하위로 버튼을 누르세요. PC에서는 Tab·Shift+Tab을 사용할 수 있어요.</small>
       </div>
@@ -186,7 +186,7 @@
   </div>
 </dialog>
 <dialog id="notification-detail-dialog" class="copy-confirm-dialog notification-detail-dialog" aria-labelledby="notification-detail-title">
-  <div class="notification-detail-header"><h2 id="notification-detail-title">알림 내용</h2><button type="button" id="notification-detail-close" class="icon-btn" aria-label="알림 닫기">×</button></div>
+  <div class="notification-detail-header"><h2 id="notification-detail-title">알림 내용</h2><button type="button" id="notification-detail-close" class="icon-btn" aria-label="알림 닫기" data-icon="close"></button></div>
   <small id="notification-detail-date"></small>
   <p id="notification-detail-message"></p>
 </dialog>
@@ -208,6 +208,7 @@
 </div>
 <script src="list-editor.js"></script>
 <script src="worklog-copy.js"></script>
+<script src="icons.js"></script>
 <script src="screen-settings.js"></script>
 <script src="script.js"></script>
 </body>
