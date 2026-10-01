@@ -22,6 +22,23 @@
     resetter.addEventListener('click',reset);
     return {open,reset,get value(){return {...applied};}};
   }
-  window.UIShell={title,actions,drawer,dialogs,searchDialog};
+  // Compact action menus share viewport placement and keyboard navigation.
+  function anchoredMenu({dialog,opener,items}){
+    function position(){const r=opener.getBoundingClientRect(),w=dialog.offsetWidth,h=dialog.offsetHeight;
+      dialog.style.left=Math.max(12,Math.min(innerWidth-w-12,r.right-w))+'px';
+      dialog.style.top=Math.max(12,Math.min(innerHeight-h-12,r.bottom+8))+'px';}
+    dialog.addEventListener('close',()=>{opener.setAttribute('aria-expanded','false');});
+    dialog.addEventListener('keydown',event=>{
+      const buttons=Array.from(items.querySelectorAll('button:not(:disabled)'));
+      const index=buttons.indexOf(document.activeElement);let next;
+      if(event.key==='ArrowDown')next=(index+1)%buttons.length;
+      if(event.key==='ArrowUp')next=(index+buttons.length-1)%buttons.length;
+      if(event.key==='Home')next=0;if(event.key==='End')next=buttons.length-1;
+      if(next!==undefined){event.preventDefault();buttons[next]?.focus();}
+      if(event.key==='Tab'){event.preventDefault();dialog.close();opener.focus();}
+    });
+    window.addEventListener('resize',()=>{if(dialog.open)position();});
+    return {open(){dialog.showModal();opener.setAttribute('aria-expanded','true');position();items.querySelector('button:not(:disabled)')?.focus();}};
+  }
+  window.UIShell={title,actions,drawer,dialogs,searchDialog,anchoredMenu};
 })();
-
