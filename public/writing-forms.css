@@ -40,4 +40,19 @@ body .ui-action-menu .app-icon{width:20px;height:20px;flex-shrink:0;margin:0}
 
 body .ui-writing-paper #board-body:focus{outline:none}body .ui-writing-screen .calendar-form-actions{display:flex;justify-content:flex-end;gap:8px}
 
+
+/* Pages use normal document sections; no dialog backdrop or modal top layer. */
+body .ui-writing-page:not([open]){display:none!important}
+body .ui-writing-page[open]{display:flex;flex-direction:column;z-index:1000}
+body.ui-writing-open{overflow:hidden}
+body.ui-writing-open .ui-writing-covered{visibility:hidden}
+body .ui-writing-page[open]>.admin-card{display:flex;flex-direction:column;flex:1;min-height:0;width:100%;max-width:none;margin:0;padding:0;border:0;border-radius:0;box-shadow:none;background:inherit}
+body .ui-writing-page .admin-card>form{display:flex;flex-direction:column;height:100%;min-height:0;margin:0;padding:0;max-width:none;overflow:hidden}
+body .ui-writing-paper>label{display:block;margin:20px 0}
+body .ui-writing-paper>label input:not([type=checkbox]),body .ui-writing-paper>label select{display:block;width:100%;margin-top:8px;border:0;border-bottom:1px solid var(--border-color,#eee);border-radius:0;padding:12px 0}
+body .ui-writing-paper #board-manage-name{font-size:30px;font-weight:700}
+body .ui-writing-paper .board-checkbox{display:flex;align-items:flex-start;gap:8px}
+body .ui-writing-paper .board-checkbox input{flex:0 0 auto;margin:2px 0}
+body .ui-writing-page .ui-writing-paper .file-input-wrap{width:100%;max-width:none;margin:20px 0}
 body #board-editor.ui-writing-screen{max-width:none;margin:0;left:0}body #board-editor.ui-writing-screen:not([data-editing=true]) .editor-tools{display:none}
+
