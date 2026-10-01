@@ -1,5 +1,5 @@
 const adminKeys = ['notifications', 'files', 'appearance', 'users', 'permissions'];
-const basicKeys = ['worklogRead','worklogCreate','worklogEdit','worklogDelete','fileRead','fileUpload','fileDownload','fileDelete','notificationRead'];
+const basicKeys = ['worklogRead','worklogCreate','worklogEdit','worklogDelete','fileRead','fileUpload','fileDownload','fileDelete','notificationRead','memoRead','memoCreate','memoEdit','memoDelete'];
 const keys = [...adminKeys,...basicKeys];
 function roleOf(user) { return user.role || (Number(user.id) === 1 ? 'admin' : 'member'); }
 function rightsOf(user) {
@@ -10,3 +10,4 @@ function safeUser(user) {
     permissions:rightsOf(user), approval:user.approval || 'approved', mustChangePassword:user.mustChangePassword===true, createdAt:user.createdAt};
 }
 module.exports = {keys, adminKeys, basicKeys, roleOf, rightsOf, safeUser};
+

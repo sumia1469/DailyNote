@@ -2,7 +2,7 @@ const adminToken=localStorage.getItem('token');
 let me, directory=[], users=[], appearance={}, backgroundData=null, activePanel;
 let pending=0, notices=[];
 const rights=['notifications','files','appearance','users','permissions'];
-const permissionKeys=[...rights,'worklogRead','worklogCreate','worklogEdit','worklogDelete','fileRead','fileUpload','fileDownload','fileDelete','notificationRead'];
+const permissionKeys=[...rights,'worklogRead','worklogCreate','worklogEdit','worklogDelete','fileRead','fileUpload','fileDownload','fileDelete','notificationRead','memoRead','memoCreate','memoEdit','memoDelete'];
 const $=id=>document.getElementById(id);
 function status(message,error=false){$('admin-status').textContent=message;$('admin-status').classList.toggle('error',error);}
 async function busy(action){pending++;$('admin-loading').hidden=false;try{return await action();}finally{pending--;$('admin-loading').hidden=pending===0;}}

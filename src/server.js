@@ -10,6 +10,7 @@ const {notificationRouter} = require('./notification.routes');
 const {uploadRouter} = require('./upload.routes');
 const {worklogRouter} = require('./worklog.routes');
 const {adminRouter, settingsHandler} = require('./admin.routes');
+const {memoRouter} = require('./memo.routes');
 const PORT = cfg.PORT || 3000;
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
 function serveStatic(req, res) {
@@ -37,6 +38,7 @@ async function handleApi(req, res) {
   if (pathname === '/api/auth/change-password' && req.method === 'POST') return changePasswordHandler(req,res,authInfo);
   if (authInfo.mustChangePassword) return sendJson(res,403,{code:'PASSWORD_CHANGE_REQUIRED',message:'비밀번호를 변경한 후 이용해 주세요.'});
   let basicRight;
+  if(pathname.startsWith('/api/memos')) basicRight={GET:'memoRead',POST:'memoCreate',PUT:'memoEdit',DELETE:'memoDelete'}[req.method];
   if(pathname.startsWith('/api/worklogs')) basicRight={GET:'worklogRead',POST:'worklogCreate',PUT:'worklogEdit',DELETE:'worklogDelete'}[req.method];
   if(pathname.startsWith('/api/files')||pathname.startsWith('/api/upload')) basicRight=req.method==='GET'?(pathname.split('/').filter(Boolean)[2]?'fileDownload':'fileRead'):{POST:'fileUpload',DELETE:'fileDelete'}[req.method];
   if(pathname.startsWith('/api/notifications')&&['GET','PUT'].includes(req.method)) basicRight='notificationRead';
@@ -46,6 +48,7 @@ async function handleApi(req, res) {
   if (pathname.startsWith('/api/notifications')) return notificationRouter(req, res, authInfo);
   if (pathname.startsWith('/api/upload')) return uploadRouter(req, res, authInfo);
   if (pathname.startsWith('/api/files')) return uploadRouter(req, res, authInfo);
+  if (pathname === '/api/memos' || pathname.startsWith('/api/memos/')) return memoRouter(req,res,authInfo);
   if (pathname.startsWith('/api/worklogs')) return worklogRouter(req, res, authInfo);
   sendJson(res, 404, {message: 'API endpoint not found'});
 }
@@ -74,3 +77,4 @@ module.exports = handler;
 if (require.main === module) {
  http.createServer(handler).listen(PORT, () => console.log(`dailyNote http://localhost:${PORT}`));
 }
+
