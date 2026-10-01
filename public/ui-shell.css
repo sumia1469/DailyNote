@@ -46,3 +46,6 @@ body .sidebar-account strong { white-space:nowrap; }
 .notice-toolbar{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,1fr);gap:12px}.notice-toolbar label{display:grid;gap:8px;font-size:13px}.notice-toolbar input,.notice-toolbar select{width:100%;min-width:0;box-sizing:border-box}.notice-preview{margin:0 0 12px;color:var(--muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}#notice-summary{color:var(--muted);font-size:13px}#notification-page-title{font-size:22px;overflow-wrap:anywhere}#notice-target-hint{display:block;margin-top:8px;color:var(--muted)}@media(max-width:767px){.notice-toolbar{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.notice-toolbar label:first-child{grid-column:1/-1}}
 
 .notice-toolbar input,.notice-toolbar select{min-height:44px;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--surface);color:var(--text)}
+
+/* Shared search popup: filters belong to the modal, never the menu body. */
+.ui-search-dialog .form-field{margin:16px 0}.ui-search-dialog input,.ui-search-dialog select{width:100%;box-sizing:border-box;padding:12px;border:1px solid var(--border-color,#ddd);border-radius:12px;background:var(--card-bg,#fff);color:inherit}
