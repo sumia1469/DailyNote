@@ -185,6 +185,11 @@
     <button type="button" class="secondary-btn" id="copy-cancel-btn">취소</button>
   </div>
 </dialog>
+<dialog id="notification-detail-dialog" class="copy-confirm-dialog notification-detail-dialog" aria-labelledby="notification-detail-title">
+  <div class="notification-detail-header"><h2 id="notification-detail-title">알림 내용</h2><button type="button" id="notification-detail-close" class="icon-btn" aria-label="알림 닫기">×</button></div>
+  <small id="notification-detail-date"></small>
+  <p id="notification-detail-message"></p>
+</dialog>
 <div id="loading-overlay" class="loading-overlay" hidden>
   <div class="loading-panel" role="status" aria-live="polite" aria-atomic="true">
     <div class="orbit-spinner" aria-hidden="true">

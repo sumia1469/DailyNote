@@ -177,15 +177,22 @@ async function loadNoti() {
       if (!notification.isRead) {
         item.classList.add('unread');
       }
-      const content = document.createElement('div');
+      const content = document.createElement('button');
+      content.type = 'button';
       content.className = 'notification-content';
+      content.setAttribute('aria-haspopup', 'dialog');
+      content.addEventListener('click', () => {
+        document.getElementById('notification-detail-message').textContent = notification.message || '';
+        document.getElementById('notification-detail-date').textContent = notification.createdAt ? new Date(notification.createdAt).toLocaleString('ko-KR') : '';
+        document.getElementById('notification-detail-dialog').showModal();
+      });
       const message = document.createElement('span');
       message.className = 'notification-message';
       message.textContent = notification.message || '';
       const createdAt = document.createElement('small');
       createdAt.className = 'notification-date';
       createdAt.textContent = notification.createdAt
-        ? new Date(notification.createdAt).toLocaleString()
+        ? new Date(notification.createdAt).toLocaleDateString('ko-KR', {month:'numeric',day:'numeric'})
         : '';
       content.appendChild(message);
       content.appendChild(createdAt);
@@ -219,6 +226,14 @@ async function loadNoti() {
     notificationList.appendChild(errorItem);
   }
 }
+
+const notificationDialog = document.getElementById('notification-detail-dialog');
+document.getElementById('notification-detail-close').addEventListener('click', () => notificationDialog.close());
+notificationDialog.addEventListener('click', event => {
+  if (event.target !== notificationDialog) return;
+  const bounds = notificationDialog.getBoundingClientRect();
+  if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) notificationDialog.close();
+});
 
 /* 파일 업로드 — POST /api/upload (base64) */
 document.getElementById('upload-form').addEventListener('submit', async e => {
