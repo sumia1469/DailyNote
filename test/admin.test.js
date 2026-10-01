@@ -93,6 +93,17 @@ test('administrator password reset validates input and revokes existing sessions
  assert.equal((await request('GET','/api/auth/me',null,oldSession)).status,401);
  assert.equal((await request('POST','/api/auth/login',{username:'new-user',password:'new-password-123'})).status,401);
  const login=await request('POST','/api/auth/login',{username:'new-user',password:body.password});assert.equal(login.status,200);
- assert.equal((await request('GET','/api/auth/me',null,login.data.token)).status,200);
+ assert.equal((await request('GET','/api/auth/me',null,login.data.token)).data.mustChangePassword,true);
+ for(const path of ['/api/worklogs','/api/notifications','/api/files','/api/admin/users']) {const blocked=await request('GET',path,null,login.data.token);assert.equal(blocked.status,403);assert.equal(blocked.data.code,'PASSWORD_CHANGE_REQUIRED');}
+ const change={currentPassword:body.password,password:'my-personal-password',passwordConfirmation:'my-personal-password'};
+ assert.equal((await request('POST','/api/auth/change-password',{...change,currentPassword:'wrong'},login.data.token)).status,400);
+ assert.equal((await request('POST','/api/auth/change-password',{...change,passwordConfirmation:'mismatch'},login.data.token)).status,400);
+ assert.equal((await request('POST','/api/auth/change-password',{...change,password:body.password,passwordConfirmation:body.password},login.data.token)).status,400);
+ assert.equal((await request('PUT','/api/users/'+user.id,{password:'bypass-password'},login.data.token)).status,403);
+ const changed=await request('POST','/api/index?path=auth/change-password',change,login.data.token);assert.equal(changed.status,200);assert.equal(changed.data.mustChangePassword,false);assert.notEqual(changed.data.token,login.data.token);
+ assert.equal((await request('GET','/api/auth/me',null,login.data.token)).status,401);
+ assert.equal((await request('GET','/api/worklogs',null,changed.data.token)).status,200);
+ assert.equal((await request('POST','/api/auth/login',{username:'new-user',password:body.password})).status,401);
+ const personalLogin=await request('POST','/api/auth/login',{username:'new-user',password:change.password});assert.equal(personalLogin.status,200);assert.equal(personalLogin.data.mustChangePassword,false);
  const stored=await ds.findOne('users',u=>u.id===user.id);assert.notEqual(stored.password,body.password);assert.equal(stored.role,'member');assert.equal(stored.active,true);
 });

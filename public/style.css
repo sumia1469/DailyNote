@@ -902,9 +902,9 @@ body.modal-open {
 }
 .login-title h1 { margin: 0 0 10px; font-size: 28px; letter-spacing: -1px; }
 .login-title p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.6; }
-#login-form, #register-form { width: 100%; margin: 0; }
-#login-form .form-field, #register-form .form-field { margin-bottom: 20px; }
-#login-form input, #register-form input { min-height: 50px; padding: 13px 14px; background: #f8fafc; border-radius: 12px; }
+#login-form, #register-form, #change-password-form { width: 100%; margin: 0; }
+#login-form .form-field, #register-form .form-field, #change-password-form .form-field { margin-bottom: 20px; }
+#login-form input, #register-form input, #change-password-form input { min-height: 50px; padding: 13px 14px; background: #f8fafc; border-radius: 12px; }
 .login-btn { width: 100%; min-height: 50px; margin-top: 4px; border-radius: 12px; font-size: 16px; }
 .login-message { margin: 18px 0 0; padding: 12px 14px; color: #b91c1c; background: #fef2f2; border-radius: 10px; font-size: 14px; line-height: 1.5; overflow-wrap: anywhere; }
 .login-message:empty { display: none; }
@@ -995,7 +995,7 @@ button:focus-visible { outline: 3px solid #93c5fd; outline-offset: 3px; }
 .login-icon { background: #fff3df; }
 .login-btn { background: #99501d; }
 .login-btn:hover { background: #7c3e13; }
-#login-form input:focus, #register-form input:focus { border-color: #99501d; outline-color: rgba(153, 80, 29, .16); }
+#login-form input:focus, #register-form input:focus, #change-password-form input:focus { border-color: #99501d; outline-color: rgba(153, 80, 29, .16); }
 @media (max-width: 600px) {
   .login-section {
     background-image: linear-gradient(rgba(255, 248, 235, .18), rgba(45, 30, 17, .12)), url("images/login-autumn-mobile.webp");

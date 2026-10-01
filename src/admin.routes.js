@@ -35,8 +35,8 @@ async function adminRouter(req,res,auth) {
       if(auth.role!=='admin')return sendJson(res,403,{message:'비밀번호 초기화는 관리자만 할 수 있습니다.'});
       if(typeof body.password!=='string'||body.password.length<8||body.password.length>128)return sendJson(res,400,{message:'새 비밀번호는 8~128자로 입력하세요.'});
       if(body.password!==body.passwordConfirmation)return sendJson(res,400,{message:'비밀번호 확인이 일치하지 않습니다.'});
-      await ds.update('users',id,{...makeUserRecord(existing.username,body.password),passwordResetAt:new Date().toISOString()});
-      return sendJson(res,200,{message:'비밀번호를 초기화했습니다. 새 비밀번호로 다시 로그인해 주세요.'});
+      await ds.update('users',id,{...makeUserRecord(existing.username,body.password),mustChangePassword:true,passwordResetAt:new Date().toISOString()});
+      return sendJson(res,200,{message:'임시 비밀번호를 설정했습니다. 사용자는 로그인 후 본인 비밀번호를 변경해야 합니다.'});
     }
     if (area==='users' && existing && method==='POST' && ['approve','reject'].includes(action)) {
       if (existing.approval !== 'pending') return sendJson(res,400,{message:'승인 대기 중인 신청이 아닙니다.'});

@@ -4,7 +4,7 @@ const url = require('url');
 const path = require('path');
 const cfg = require('./config');
 const {sendJson, sendFile} = require('./utils');
-const {loginHandler, verifyToken, registerHandler} = require('./auth');
+const {loginHandler, verifyToken, registerHandler, changePasswordHandler} = require('./auth');
 const {userRouter} = require('./user.routes');
 const {notificationRouter} = require('./notification.routes');
 const {uploadRouter} = require('./upload.routes');
@@ -34,6 +34,8 @@ async function handleApi(req, res) {
   const authInfo = await verifyToken(req);
   if (!authInfo) return sendJson(res, 401, {message: 'Invalid or missing token'});
   if (pathname === '/api/auth/me' && req.method === 'GET') return sendJson(res, 200, authInfo);
+  if (pathname === '/api/auth/change-password' && req.method === 'POST') return changePasswordHandler(req,res,authInfo);
+  if (authInfo.mustChangePassword) return sendJson(res,403,{code:'PASSWORD_CHANGE_REQUIRED',message:'비밀번호를 변경한 후 이용해 주세요.'});
   if (pathname.startsWith('/api/admin/')) return adminRouter(req, res, authInfo);
   if (pathname.startsWith('/api/users')) return userRouter(req, res, authInfo);
   if (pathname.startsWith('/api/notifications')) return notificationRouter(req, res, authInfo);

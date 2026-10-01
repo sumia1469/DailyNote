@@ -84,14 +84,18 @@ function showLoginScreen() {
   }
 }
 
-function showMainScreen() {
+async function showMainScreen() {
+  const response = await authFetch('/api/auth/me');
+  if (!response.ok) return false;
+  const user = await response.json();
+  if (user.mustChangePassword) {
+    location.replace('/change-password.html');
+    return false;
+  }
   document.getElementById('login-section').style.display = 'none';
   document.getElementById('main-section').style.display = 'grid';
-  authFetch('/api/auth/me').then(async response => {
-    if (!response.ok) return;
-    const user = await response.json();
-    document.getElementById('admin-page-btn').hidden = !Object.values(user.permissions || {}).some(Boolean);
-  }).catch(() => { document.getElementById('admin-page-btn').hidden = true; });
+  document.getElementById('admin-page-btn').hidden = !Object.values(user.permissions || {}).some(Boolean);
+  return true;
 }
 
 /* 로그인 — 성공 시 토큰 저장 → UI 전환 */
@@ -125,7 +129,8 @@ document
       }
       token = data.token;
       localStorage.setItem('token', token);
-      showMainScreen();
+      if (data.mustChangePassword) { location.replace('/change-password.html'); return; }
+      if (!await showMainScreen()) return;
       await Promise.all([
         loadNoti(),
         loadFiles(),
@@ -987,12 +992,11 @@ document.getElementById('reset-filter-btn').addEventListener('click', () => {
  * 최초 화면 로드
  **/
 if (token) {
-  showMainScreen();
-  Promise.all([
+  showMainScreen().then(ready => ready && Promise.all([
     loadNoti(),
     loadFiles(),
     loadList()
-  ]);
+  ])).catch(() => { showLoginScreen(); document.getElementById('login-msg').textContent='접속을 확인하지 못했습니다. 다시 로그인해 주세요.'; });
 } else {
   showLoginScreen();
 }
