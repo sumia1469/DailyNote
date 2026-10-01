@@ -512,7 +512,10 @@ button {
 .modal-dialog {
   position: relative;
   z-index: 1;
-  width: min(680px, 100%);
+  width: 100%;
+  max-width: 840px;
+  flex: 0 1 840px;
+  box-sizing: border-box;
   min-width: 0;
   max-height: calc(100vh - 40px);
   max-height: calc(100dvh - 40px);
@@ -850,11 +853,12 @@ body.modal-open {
 .list-editor-toolbar button:disabled { opacity: .45; cursor: default; }
 #todo, #next-day-plan { tab-size: 3; font-size: 16px; line-height: 1.6; }
 @media (max-width: 600px) {
-  .modal { padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)); }
+  .modal { padding: max(12px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left)); }
   .modal-dialog { max-height: calc(100vh - 24px); max-height: calc(100dvh - max(12px, env(safe-area-inset-top)) - max(12px, env(safe-area-inset-bottom))); }
-  .modal-header { padding: 16px; }
+  .modal-dialog { border-radius: 14px; }
+  .modal-header { padding: 16px 14px; }
   .modal-header h2 { font-size: 20px; }
-  #worklog-form { padding: 16px; }
+  #worklog-form { padding: 16px 14px; }
   .list-editor-toolbar { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
   .list-editor-toolbar button { padding: 9px 4px; font-size: 13px; }
   #todo { min-height: 160px; }
