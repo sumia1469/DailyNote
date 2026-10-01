@@ -39,21 +39,23 @@
   <button class="sidebar-scrim" id="sidebar-scrim" type="button" aria-label="메뉴 닫기" hidden></button>
   <aside class="app-sidebar" id="app-sidebar" aria-label="주 메뉴">
     <div class="sidebar-brand"><span data-icon="journal" aria-hidden="true"></span><strong>DailyNote</strong><button type="button" class="shell-icon sidebar-close" id="sidebar-close" aria-label="메뉴 닫기" data-icon="close"></button></div>
-    <button type="button" class="sidebar-new" id="sidebar-new" data-icon="edit">새 일지</button>
+
     <p class="nav-caption">업무 공간</p>
     <nav class="app-navigation">
       <a href="#worklogs" data-view="worklogs" data-icon="journal">일일리스트</a>
       <a href="#notifications" data-view="notifications" data-icon="bell">알림 <span class="nav-badge" id="notification-count" hidden></span></a>
       <a href="#files" data-view="files" data-icon="files">파일관리</a>
+      <a href="admin.html" id="admin-page-btn" data-icon="appearance" hidden>관리자</a>
+      <button type="button" id="logout-btn" data-icon="logout">로그아웃</button>
     </nav>
     <div class="sidebar-account"><span class="account-avatar" data-icon="users" aria-hidden="true"></span><div><strong id="shell-account">내 업무 공간</strong><small>DailyNote</small></div><a href="change-password.html" class="shell-icon" title="비밀번호 변경" aria-label="비밀번호 변경" data-icon="password"></a></div>
   </aside>
   <header class="main-header">
     <div class="main-title"><button type="button" class="shell-icon mobile-menu" id="sidebar-open" aria-label="메뉴 열기" aria-expanded="false" aria-controls="app-sidebar" data-icon="menu"></button><h1 id="shell-title">일일리스트</h1></div>
     <div class="main-actions">
-      <button type="button" data-view="notifications" class="shell-icon" aria-label="알림" title="알림" data-icon="bell"></button>
-      <a href="admin.html" id="admin-page-btn" class="shell-icon" aria-label="관리자" title="관리자" data-icon="appearance" hidden></a>
-      <button type="button" class="shell-icon" id="logout-btn" aria-label="로그아웃" title="로그아웃" data-icon="logout"></button>
+      <button type="button" id="open-search-btn" class="shell-icon" aria-label="일지 검색" title="일지 검색" data-icon="search"></button>
+      <button type="button" id="open-upload-btn" class="shell-icon" aria-label="파일 등록" title="파일 등록" data-icon="plus" hidden></button>
+      <button type="button" id="open-worklog-btn" class="shell-icon" aria-label="새 일지 등록" title="새 일지 등록" data-icon="plus"></button>
     </div>
   </header>
   <p id="no-access" class="empty-state" hidden>사용 가능한 메뉴가 없습니다. 관리자에게 권한을 요청해 주세요.</p>
@@ -74,16 +76,24 @@
   </section>
   <!-- 파일 업로드 -->
   <section id="view-files" class="content-card upload-section" hidden>
-    <div class="section-header">
-      <div>
-        <h2 data-icon="files">파일 관리</h2>
-        <p>업무 관련 파일을 업로드하고 내려받습니다.</p>
-      </div>
-      <button type="button" class="card-toggle" aria-label="파일관리 접기" aria-expanded="true" aria-controls="upload-body" data-card-title="파일관리">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 15 6-6 6 6"/></svg>
-      </button>
-    </div>
     <div id="upload-body" class="collapsible-card-body">
+    <ul id="file-list" class="file-list"></ul>
+    </div>
+  </section>
+  <!-- 업무일지 UI -->
+  <section id="worklog-section" class="worklog-section">
+    <button type="button" id="duplicate-worklog-btn" hidden disabled>선택 일지 복제</button>
+    <p id="active-filter" class="active-filter" hidden></p>
+    <p id="worklog-action-msg" class="worklog-action-msg" role="status" aria-live="polite"></p>
+    <div id="worklog-list" class="worklog-list">
+      <div class="empty-state">
+        <strong>업무일지를 불러오는 중입니다.</strong>
+        <span>잠시만 기다려주세요.</span>
+      </div>
+    </div>
+  </section>
+</section>
+<dialog id="upload-dialog" class="journal-dialog" aria-labelledby="upload-dialog-title"><div class="journal-dialog-header"><h2 id="upload-dialog-title">파일 등록</h2><button id="upload-close" class="shell-icon" type="button" aria-label="파일 등록 닫기" data-icon="close"></button></div>
     <form id="upload-form" class="upload-form">
       <div class="file-input-wrap">
         <label for="file-input">파일선택</label>
@@ -91,22 +101,10 @@
       </div>
       <button type="submit" class="primary-btn upload-btn">업로드</button>
     </form>
-    <ul id="file-list" class="file-list"></ul>
-    </div>
-  </section>
-  <!-- 업무일지 UI -->
-  <section id="worklog-section" class="worklog-section">
-    <div class="worklog-header">
-      <div>
-        <h2>일일리스트</h2>
-        <p>업무 진행 상황과 다음 계획을 관리합니다.</p>
-      </div>
-      <div class="worklog-header-actions">
-        <button type="button" id="duplicate-worklog-btn" class="secondary-btn" disabled>선택 일지 복제</button>
-        <button type="button" id="open-worklog-btn" class="primary-btn" data-icon="new">새 일지 등록</button>
-      </div>
-    </div>
-    <p id="worklog-action-msg" class="worklog-action-msg" role="status" aria-live="polite"></p>
+</dialog>
+<dialog id="search-dialog" class="journal-dialog" aria-labelledby="search-dialog-title">
+  <div class="journal-dialog-header"><h2 id="search-dialog-title">일지 검색</h2><button type="button" id="search-close" class="shell-icon" aria-label="검색 닫기" data-icon="close"></button></div>
+  <p>업무일자를 선택해 일지를 조회하세요.</p>
     <div class="search-panel">
       <div class="search-field">
         <label for="filter-date">업무일자</label>
@@ -117,14 +115,9 @@
         <button type="button" id="reset-filter-btn" class="secondary-btn">전체</button>
       </div>
     </div>
-    <div id="worklog-list" class="worklog-list">
-      <div class="empty-state">
-        <strong>업무일지를 불러오는 중입니다.</strong>
-        <span>잠시만 기다려주세요.</span>
-      </div>
-    </div>
-  </section>
-</section>
+</dialog>
+<dialog id="card-menu-dialog" class="card-menu-dialog" aria-labelledby="card-menu-title"><p id="card-menu-title"></p><div id="card-menu-items"></div></dialog>
+<dialog id="delete-journal-dialog" class="journal-dialog" aria-labelledby="delete-journal-title"><h2 id="delete-journal-title">일지를 삭제할까요?</h2><p id="delete-journal-message"></p><div class="journal-dialog-actions"><button type="button" id="delete-journal-cancel" class="secondary-btn">취소</button><button type="button" id="delete-journal-confirm" class="danger-btn">삭제</button></div></dialog>
 <!-- 업무일지 등록·수정 팝업 -->
 <div id="worklog-modal" class="modal" aria-hidden="true">
   <div class="modal-backdrop" data-modal-close></div>
@@ -221,6 +214,7 @@
 <script src="icons.js"></script>
 <script src="screen-settings.js"></script>
 <script src="app-shell.js"></script>
+<script src="journal-controls.js"></script>
 <script src="script.js"></script>
 </body>
 </html>

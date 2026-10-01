@@ -7,7 +7,7 @@
   const opener = document.getElementById('sidebar-open');
   function closeMenu(restoreFocus = false) {
     sidebar.classList.remove('is-open'); scrim.hidden = true; opener.setAttribute('aria-expanded','false');
-    sidebar.inert = matchMedia('(max-width: 767px)').matches;
+    sidebar.inert = true;
     if (restoreFocus) opener.focus();
   }
   function show(view) {
@@ -18,6 +18,9 @@
     document.getElementById('shell-title').textContent = titles[view] || 'DailyNote';
     document.title = (titles[view] || 'DailyNote') + ' · DailyNote';
     document.getElementById('no-access').hidden = allowed.length > 0;
+    document.getElementById('open-search-btn').hidden = view !== 'worklogs' || !allowed.includes('worklogs') || document.getElementById('worklog-list').hidden;
+    document.getElementById('open-worklog-btn').hidden = view !== 'worklogs' || !window.AppShell.canCreate;
+    document.getElementById('open-upload-btn').hidden = view !== 'files' || !window.AppShell.canUpload;
     if (view && location.hash !== '#'+view) history.replaceState(null,'','#'+view);
     closeMenu();
   }
@@ -40,8 +43,7 @@
       else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
     }
   });
-  matchMedia('(max-width: 767px)').addEventListener('change', () => closeMenu());
-  document.getElementById('sidebar-new').addEventListener('click', () => { show('worklogs'); document.getElementById('open-worklog-btn').click(); });
+
   const list = document.getElementById('noti-list');
   new MutationObserver(() => {
     const count = list.querySelectorAll('.notification-item.unread').length;
@@ -52,11 +54,13 @@
       const p = user.permissions || {}, can = key => p[key] !== false;
       allowed = Object.keys(views).filter(key => key === 'worklogs' ? can('worklogRead') || can('worklogCreate') : key === 'files' ? can('fileRead') || can('fileUpload') : can('notificationRead'));
       document.querySelectorAll('[data-view]').forEach(node => { node.hidden = !allowed.includes(node.dataset.view); });
-      document.getElementById('sidebar-new').hidden = !can('worklogCreate');
+      document.getElementById('open-search-btn').hidden = !can('worklogRead');
       document.getElementById('shell-account').textContent = user.username || '내 업무 공간';
+      window.AppShell.canCreate = can('worklogCreate');
+      window.AppShell.canUpload = can('fileUpload');
       ready = true; show(location.hash.slice(1));
     },
-    reset() { ready = false; allowed = []; closeMenu(); }
+    reset() { ready = false; allowed = []; closeMenu(); window.JournalControls?.close(); }
   };
   closeMenu();
 })();

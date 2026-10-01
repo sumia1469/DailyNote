@@ -109,7 +109,7 @@ async function showMainScreen() {
   if(!canUse('worklogRead')){currentWorklogs=[];selectedWorklogIds.clear();document.getElementById('worklog-list').replaceChildren();}
   if(!canUse('fileRead'))document.getElementById('file-list').replaceChildren();
   document.getElementById('open-worklog-btn').hidden=!canUse('worklogCreate');
-  document.getElementById('duplicate-worklog-btn').hidden=!canUse('worklogCreate')||!canUse('worklogRead');
+  document.getElementById('duplicate-worklog-btn').hidden=true;
   updateCopyButton();
   window.AppShell?.configure(user);
   return true;
@@ -284,6 +284,7 @@ document.getElementById('upload-form').addEventListener('submit', async e => {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || '파일을 업로드하지 못했습니다.');
       document.getElementById('file-input').value = '';
+      document.getElementById('upload-dialog').close();
       await loadFiles();
     });
   } catch (error) {
@@ -354,6 +355,12 @@ async function loadFiles() {
       // link.target = '_blank';
       // link.rel = 'noopener noreferrer';
       fileInfo.appendChild(link);
+      const date = document.createElement('time');
+      date.className = 'file-registration-date';
+      const uploaded = new Date(file.uploadedAt || file.createdAt || '');
+      date.textContent = Number.isNaN(uploaded.getTime()) ? '등록일 —' : '등록일 ' + uploaded.toLocaleDateString('ko-KR');
+      if(!Number.isNaN(uploaded.getTime()))date.dateTime=uploaded.toISOString();
+      fileInfo.appendChild(date);
       const deleteButton = document.createElement('button');
       deleteButton.type = 'button';
       deleteButton.textContent = '삭제';
@@ -813,22 +820,6 @@ function renderWorklogs(worklogs) {
     cardHeader.className = 'card-header';
     const dateWrap = document.createElement('div');
     dateWrap.className = 'card-date-wrap';
-    const selectLabel = document.createElement('label');
-    selectLabel.className = 'worklog-select';
-    const selectBox = document.createElement('input');
-    selectBox.type = 'checkbox';
-    selectBox.checked = selectedWorklogIds.has(String(worklog.id));
-    selectBox.setAttribute('aria-label', `${worklog.workDate} 일지 선택`);
-    const selectText = document.createElement('span');
-    selectText.textContent = '선택';
-    selectBox.addEventListener('change', () => {
-      if (selectBox.checked) selectedWorklogIds.add(String(worklog.id));
-      else selectedWorklogIds.delete(String(worklog.id));
-      card.classList.toggle('is-selected', selectBox.checked);
-      updateCopyButton();
-    });
-    selectLabel.append(selectBox, selectText);
-    dateWrap.appendChild(selectLabel);
     const workDate = document.createElement('div');
     workDate.className = 'card-date';
     workDate.textContent = worklog.workDate || '-';
@@ -846,7 +837,7 @@ function renderWorklogs(worklogs) {
       openWorklogModal(worklog);
     });
     const deleteButton = createButton('삭제', 'danger-btn', async () => {
-      const confirmed = confirm(`${worklog.workDate} 업무일지를 삭제하시겠습니까?`);
+      const confirmed = await JournalControls.confirmDelete(worklog.workDate);
       if (!confirmed) {
         return;
       }
@@ -867,8 +858,7 @@ function renderWorklogs(worklogs) {
       }
     });
 
-    if(canUse('worklogEdit'))cardActions.appendChild(editButton);
-    if(canUse('worklogDelete'))cardActions.appendChild(deleteButton);
+
     cardHeader.appendChild(dateWrap);
     cardHeader.appendChild(cardActions);
     /* 카드 본문 */
@@ -921,6 +911,7 @@ function renderWorklogs(worklogs) {
     card.appendChild(cardHeader);
     card.appendChild(cardBody);
     card.appendChild(cardFooter);
+    JournalControls.addCardMenu(card, worklog, {duplicate:()=>duplicateWorklogs([worklog]),edit:()=>editButton.click(),remove:()=>deleteButton.click()}, {create:canUse('worklogCreate'),edit:canUse('worklogEdit'),remove:canUse('worklogDelete')});
     container.appendChild(card);
   })
 }
@@ -931,6 +922,7 @@ function renderWorklogs(worklogs) {
 async function loadList(date = '') {
   if(!canUse('worklogRead'))return;
   currentFilterDate = date;
+  JournalControls.updateFilter(date);
   const container = document.getElementById('worklog-list');
   container.innerHTML = `
     <div class="empty-state">
@@ -965,15 +957,17 @@ async function loadList(date = '') {
 /**
  * 날짜 조회
  **/
-document.getElementById('filter-btn').addEventListener('click', () => {
+document.getElementById('filter-btn').addEventListener('click', async () => {
   const date = document.getElementById('filter-date').value;
-  loadList(date);
+  document.getElementById('search-dialog').close();
+  await loadList(date);
 })
 /**
  * 전체 조회
  **/
 document.getElementById('reset-filter-btn').addEventListener('click', () => {
   const date = document.getElementById('filter-date').value = '';
+  document.getElementById('search-dialog').close();
   loadList('');
 })
 
@@ -1063,9 +1057,8 @@ function askCopyMode() {
   });
 }
 /* Duplicate only the selected journal cards using today's date. */
-document.getElementById('duplicate-worklog-btn').addEventListener('click', async () => {
-  if (duplicatingWorklogs) return;
-  const sources = currentWorklogs.filter(item => selectedWorklogIds.has(String(item.id)));
+async function duplicateWorklogs(sources) {
+  if (duplicatingWorklogs || !canUse('worklogCreate')) return;
   if (!sources.length) return;
   duplicatingWorklogs = true;
   updateCopyButton();
@@ -1099,5 +1092,5 @@ document.getElementById('duplicate-worklog-btn').addEventListener('click', async
     duplicatingWorklogs = false;
     updateCopyButton();
   }
-});
-
+}
+document.getElementById('duplicate-worklog-btn').addEventListener('click', () => duplicateWorklogs(currentWorklogs.filter(item => selectedWorklogIds.has(String(item.id)))));

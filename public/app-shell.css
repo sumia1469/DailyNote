@@ -79,3 +79,55 @@ button.admin-mobile-menu { display:none; }
   .admin-header { padding:0 0 20px; }
 }
 @media(prefers-reduced-motion:reduce) { .app-sidebar,.admin-nav { transition:none; } }
+/* Full-width journals and a drawer on every screen size. */
+#main-section.main-section { margin:0; padding:76px 24px 32px; }
+#main-section .main-header { left:0; padding:10px 20px; }
+#main-section .worklog-section { max-width:none; margin:0; }
+#main-section .worklog-list { gap:20px; }
+button.mobile-menu,button.sidebar-close { display:inline-flex; }
+.sidebar-close { margin-left:auto; }
+.app-sidebar { transform:translateX(-100%); transition:transform .18s ease; width:min(280px,85vw); box-shadow:8px 0 40px rgba(0,0,0,.08); }
+.app-sidebar.is-open { transform:translateX(0); }
+.sidebar-scrim:not([hidden]) { display:block; position:fixed; inset:0; border:0; background:rgba(0,0,0,.3); backdrop-filter:blur(3px); z-index:35; }
+.app-navigation button { display:flex; justify-content:flex-start; align-items:center; gap:12px; padding:12px; border:0; border-radius:9px; color:var(--text); background:transparent; font:inherit; font-size:14px; cursor:pointer; }
+.app-navigation button:hover { background:var(--line); }
+#main-section .main-actions { gap:8px; }
+#main-section .main-actions .shell-icon { width:42px; height:42px; border-radius:50%; background:var(--shell-sidebar); }
+#main-section .main-actions #open-worklog-btn .app-icon { width:27px; height:27px; }
+#main-section .card-header { justify-content:space-between; }
+#main-section .card-date-wrap { flex-wrap:wrap; min-width:0; gap:10px; }
+#main-section .card-actions { flex:none; margin-left:auto; }
+#main-section .card-menu-trigger { width:36px; height:36px; }
+#main-section .worklog-action-msg:empty { display:none; }
+.active-filter { margin:0 0 16px; color:var(--muted); font-size:13px; }
+.journal-dialog { box-sizing:border-box; width:min(440px,calc(100vw - 32px)); max-height:calc(100dvh - 32px); overflow:auto; border:1px solid var(--line); border-radius:24px; padding:24px; background:var(--surface); color:var(--text); box-shadow:0 20px 80px rgba(0,0,0,.12); }
+.journal-dialog::backdrop,.card-menu-dialog::backdrop { background:rgba(0,0,0,.16); backdrop-filter:blur(2px); }
+.journal-dialog-header { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.journal-dialog h2 { margin:0; font-size:22px; }
+.journal-dialog > p { color:var(--muted); line-height:1.6; }
+.journal-dialog .search-panel { display:flex; flex-direction:column; align-items:stretch; padding:0; border:0; background:transparent; margin:20px 0 0; gap:20px; }
+.journal-dialog .search-field { width:100%; }
+.journal-dialog .search-buttons { justify-content:flex-end; }
+.journal-dialog-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:24px; }
+.card-menu-dialog { position:fixed; inset:auto; margin:0; box-sizing:border-box; width:min(250px,calc(100vw - 24px)); max-height:calc(100dvh - 24px); overflow:auto; border:1px solid var(--line); border-radius:22px; padding:10px; background:var(--surface); color:var(--text); box-shadow:0 12px 48px rgba(0,0,0,.16); }
+#card-menu-title { color:var(--muted); margin:8px 12px 12px; font-size:13px; }
+#card-menu-items { display:grid; gap:2px; }
+#card-menu-items button { display:flex; justify-content:flex-start; align-items:center; gap:12px; border:0; background:transparent; color:var(--text); font:inherit; padding:12px; border-radius:12px; cursor:pointer; text-align:left; }
+#card-menu-items button:hover { background:var(--shell-sidebar); }
+#card-menu-items button.menu-danger { color:var(--danger); border-top:1px solid var(--line); margin-top:4px; }
+#card-menu-items .app-icon { width:21px; height:21px; flex:none; }
+@media(max-width:767px){
+ #main-section.main-section { padding:74px 12px 24px; }
+ #main-section .main-header { padding:10px 12px; }
+ #main-section .main-title h1 { font-size:17px; }
+ #main-section .card-header { flex-direction:row; align-items:center; padding:14px 16px; }
+ #main-section .main-actions { gap:4px; }
+}
+@media(prefers-reduced-motion:reduce){.app-sidebar{transition:none;}}
+#main-section #view-files { max-width:none; margin:0; }
+#main-section .file-item { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:18px 8px; background:transparent; border:0; border-bottom:1px solid var(--line); border-radius:0; }
+#main-section .file-info { flex:1; min-width:0; }
+#main-section .file-info a { color:var(--text); text-decoration:none; }
+.file-registration-date { display:block; font-size:12px; color:var(--muted); margin-top:6px; }
+#main-section .file-delete-btn { flex:none; border:0; background:transparent; color:var(--danger); padding:8px; }
+#upload-dialog .upload-form { flex-direction:column; align-items:stretch; margin:24px 0 0; gap:20px; }
