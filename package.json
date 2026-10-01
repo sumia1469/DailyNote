@@ -15,7 +15,8 @@
     "test:references": "node scripts/verify-references.cjs",
     "test:calendar": "node scripts/verify-calendar.cjs",
     "test:sections": "node scripts/verify-sections.cjs",
-    "test:notices": "node scripts/verify-notice-pagination.cjs"
+    "test:notices": "node scripts/verify-notice-pagination.cjs",
+    "test:boards": "node scripts/verify-boards.cjs"
   },
   "author": "Your Company",
   "license": "MIT",

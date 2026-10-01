@@ -37,3 +37,10 @@ test('structured remarks and memo preserve their own hierarchy and completion',(
  assert.equal(sheet.A7.v,'메모');assert.equal(sheet.E7.v,'메모 항목');assert.equal(sheet.D7.v,'완료');
  assert.equal(Excel.rowsFor({remarks:'obsolete',remarksItems:[],memoItems:[]}).length,4);
 });
+
+
+test('shared board XLSX table keeps seven columns and formula-like text without merged headers',()=>{
+ const rows=[['제목','분류','작성자','등록일','수정일','태그','내용'],['코드','개발','작성자','2026-10-02','2026-10-02','코드','=SUM(1,2)']];
+ const sheet=XLSX.read(Excel.buildTable(rows),{type:'array'}).Sheets['일정 카드'];
+ assert.equal(sheet.G1.v,'내용');assert.equal(sheet.G2.v,'=SUM(1,2)');assert.equal(sheet.G2.f,undefined);assert.equal(sheet['!autofilter'].ref,'A1:G2');assert.equal(sheet['!merges'],undefined);
+});

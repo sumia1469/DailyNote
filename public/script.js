@@ -98,7 +98,7 @@ async function showMainScreen() {
   document.getElementById('login-section').style.display = 'none';
   document.getElementById('main-section').style.display = 'block';
   currentPermissions=user.permissions||{};
-  document.getElementById('admin-page-btn').hidden = !['notifications','files','appearance','users','permissions'].some(key=>currentPermissions[key]);
+  document.getElementById('admin-page-btn').hidden = !['boards','notifications','files','appearance','users','permissions'].some(key=>currentPermissions[key]);
   document.querySelector('.notification-section').hidden=!canUse('notificationRead');
   document.querySelector('.upload-section').hidden=!canUse('fileRead')&&!canUse('fileUpload');
   document.querySelector('.worklog-section').hidden=!canUse('worklogRead')&&!canUse('worklogCreate');
@@ -1053,6 +1053,7 @@ async function duplicateWorklogs(sources) {
   }
 }
 document.getElementById('duplicate-worklog-btn').addEventListener('click', () => duplicateWorklogs(currentWorklogs.filter(item => selectedWorklogIds.has(String(item.id)))));
+
 
 
 

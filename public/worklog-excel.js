@@ -33,7 +33,7 @@
     return rows;
   }
   function worksheet(worklog) {
-    const rows = rowsFor(worklog), date = dateValue(worklog.workDate);
+    const rows = worklog.exportRows || rowsFor(worklog), date = dateValue(worklog.workDate);
     const body = rows.map((row, i) => {
       const height = i === 0 ? 30 : i === 3 ? 26 : Math.min(409, Math.max(24, ...row.map(v => 18 * String(v).split('\n').reduce((n, line) => n + Math.max(1, Math.ceil(line.length / 40)), 0))));
       return `<row r="${i + 1}" ht="${height}" customHeight="1">` + row.map((value, j) => {
@@ -46,6 +46,10 @@
       }).join('') + '</row>';
     }).join('');
     if (rows.length > 1048576) throw Error('엑셀 행 한도를 넘었습니다.');
+    if (worklog.exportRows) {
+      const last=String.fromCharCode(64+Math.max(...rows.map(r=>r.length)));
+      return `<?xml version="1.0" encoding="UTF-8"?><worksheet xmlns="${ns}"><dimension ref="A1:${last}${rows.length}"/><sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" state="frozen"/></sheetView></sheetViews><cols><col min="1" max="${Math.max(...rows.map(r=>r.length))}" width="28" customWidth="1"/></cols><sheetData>${body}</sheetData><autoFilter ref="A1:${last}${rows.length}"/></worksheet>`;
+    }
     return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="${ns}"><dimension ref="A1:E${rows.length}"/><sheetViews><sheetView workbookViewId="0"><pane ySplit="4" topLeftCell="A5" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><cols><col min="1" max="1" width="16" customWidth="1"/><col min="2" max="2" width="18" customWidth="1"/><col min="3" max="3" width="10" customWidth="1"/><col min="4" max="4" width="14" customWidth="1"/><col min="5" max="5" width="85" customWidth="1"/></cols><sheetData>${body}</sheetData><autoFilter ref="A4:E${rows.length}"/><mergeCells count="1"><mergeCell ref="A1:E1"/></mergeCells></worksheet>`;
   }
   const styles = `<?xml version="1.0" encoding="UTF-8"?><styleSheet xmlns="${ns}"><numFmts count="1"><numFmt numFmtId="164" formatCode="yyyy-mm-dd"/></numFmts><fonts count="2"><font><sz val="11"/><name val="맑은 고딕"/></font><font><b/><sz val="12"/><name val="맑은 고딕"/></font></fonts><fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FFE8EDF3"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="4"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0" applyAlignment="1"><alignment vertical="top" wrapText="1"/></xf><xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/><xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFill="1" applyFont="1"/><xf numFmtId="164" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`;
@@ -89,6 +93,7 @@
       if (message) message.textContent = '엑셀 다운로드를 시작했습니다.';
     } catch (error) { if (message) message.textContent = '엑셀 다운로드 실패: ' + error.message; }
   }
-  const api = {rowsFor, build, filename, download};
+  const api = {rowsFor, build, filename, download, buildTable:rows=>build({exportRows:rows})};
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.WorklogExcel = api;
 })(typeof window !== 'undefined' ? window : globalThis);
+
