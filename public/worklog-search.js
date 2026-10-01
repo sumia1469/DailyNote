@@ -12,7 +12,7 @@
   if(!matches.length){active=-1;update();return;}
   active=(index+matches.length)%matches.length;const mark=matches[active];mark.classList.add('search-current');
   const card=mark.closest('.worklog-card');card?.querySelectorAll('.card-body,.card-footer').forEach(node=>node.hidden=false);
-  if(scroll)mark.scrollIntoView({behavior:'smooth',block:'center'});update();
+  update();if(scroll)mark.scrollIntoView({behavior:'smooth',block:'start'});
  }
  function refresh(){
   unmark();matches=[];if(!term){nav.hidden=true;return;}
@@ -48,4 +48,5 @@
  document.getElementById('logout-btn')?.addEventListener('click',clear);
  window.WorklogSearch={run,refresh,clear};
 })();
+
 

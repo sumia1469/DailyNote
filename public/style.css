@@ -1138,10 +1138,21 @@ body[data-theme="dark"] .todo-inline-message { color:var(--danger); }
 .todo-inline-tools button[aria-pressed="true"] { background:var(--primary); color:white; }
 .todo-inline-draft { display:grid; grid-template-columns:1fr auto; gap:6px; font-size:13px; margin-top:10px; }
 .todo-inline-draft textarea { grid-column:1; }
-.worklog-search-nav { position:sticky; top:84px; z-index:8; display:flex; flex-wrap:wrap; align-items:center; gap:8px; padding:12px; margin-bottom:12px; border:1px solid var(--line); border-radius:14px; background:var(--surface); }
+/* Search navigation belongs to the fixed header, outside the list scroll flow. */
+.worklog-search-nav {
+ position:fixed; top:var(--ui-header-height,76px); left:24px; right:24px;
+ z-index:24; display:flex; flex-wrap:nowrap; align-items:center; gap:6px;
+ height:52px; box-sizing:border-box; padding:4px 8px; margin:0;
+ border:1px solid var(--line); border-radius:0 0 12px 12px; background:var(--surface);
+}
 .worklog-search-nav[hidden] { display:none; }
-.worklog-search-nav span { flex:1 1 180px; overflow-wrap:anywhere; }
-.worklog-search-nav button { min-height:40px; padding:6px 10px; border:1px solid var(--line); border-radius:10px; background:var(--surface); color:var(--text); }
-mark[data-worklog-match] { background:#ffed8a; color:#202020; border-radius:3px; scroll-margin:160px 0; }
+.worklog-search-nav span { flex:1 1 0; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:14px; }
+.worklog-search-nav button { flex:none; min-width:44px; min-height:44px; padding:6px; border:0; border-radius:8px; background:var(--surface); color:var(--text); font-size:18px; }
+.worklog-search-nav button:disabled { opacity:.4; }
+#view-worklogs:has(.worklog-search-nav:not([hidden])) { padding-top:52px; }
+body #main-section.ui-list-viewport:has(#view-worklogs:not([hidden]) .worklog-search-nav:not([hidden])) { scroll-padding-top:calc(var(--ui-header-height,76px) + 52px + 16px); }
+mark[data-worklog-match] { background:#ffed8a; color:#202020; border-radius:3px; scroll-margin:12px 0; }
+@media(max-width:767px) { .worklog-search-nav { left:12px; right:12px; } }
 mark.search-current { background:#ffc04a; outline:2px solid #9b5a00; }
 #worklog-query { display:block; width:100%; min-width:0; margin:8px 0; padding:12px; border:1px solid var(--line); border-radius:10px; font-size:16px; }
+
