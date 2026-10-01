@@ -1,0 +1,27 @@
+.reference-link {color:#2563eb;text-decoration:underline;text-underline-offset:3px;overflow-wrap:anywhere;cursor:pointer}
+.reference-hint {font-size:13px;color:#64748b;margin:8px 0}
+.reference-dialog {width:min(620px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:auto;box-sizing:border-box}
+.reference-dialog [hidden] {display:none!important}
+.reference-dialog input,.reference-dialog select {font-size:16px;width:100%;box-sizing:border-box;min-height:44px}
+.reference-search-controls {display:grid;grid-template-columns:120px 1fr;gap:8px}
+.reference-results {max-height:40dvh;overflow:auto;display:grid;gap:6px;margin-top:12px}
+.reference-result {text-align:left;min-height:44px;padding:12px;border:1px solid #e2e8f0;border-radius:12px;background:#fff;color:#1e293b;overflow-wrap:anywhere}
+.reference-result[aria-selected=true] {outline:2px solid #2563eb;outline-offset:-2px}
+.reference-result small {display:block;color:#64748b;margin-top:4px}
+.reference-detail {max-width:960px;margin:0 auto;padding:20px;overflow-wrap:anywhere}
+.reference-detail-content {white-space:pre-wrap;line-height:1.7}
+.reference-detail-content ul {white-space:normal}
+.reference-detail-content img {max-width:100%;height:auto}
+.reference-detail-content audio {max-width:100%}
+.todo-text-btn:not(button) {display:block;white-space:pre-wrap;flex:1;min-width:0;border:0;background:none;color:inherit;text-align:left;font:inherit;padding:8px 0;cursor:text}
+.todo-edit-trigger {flex:none;min-height:44px;padding:8px 10px;border:1px solid #e2e8f0;border-radius:12px;background:transparent;color:inherit}
+@media(max-width:480px){.reference-dialog{padding:18px}.reference-search-controls{grid-template-columns:1fr}.reference-detail{padding:12px}.todo-edit-trigger{font-size:13px}}
+.todo-inline-input-row {position:relative;display:flex;align-items:flex-start;gap:6px;width:100%}
+.todo-inline-input-row textarea {flex:1;min-width:0}
+.todo-add-trigger {width:44px;min-height:44px;flex:none;font-size:24px;border:1px solid #cbd5e1;border-radius:12px;background:transparent;color:inherit}
+.todo-inline-add-menu {position:fixed;inset:auto;margin:0;box-sizing:border-box;width:min(210px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:auto;padding:6px;border:1px solid #cbd5e1;border-radius:14px;background:var(--card-bg,#fff);box-shadow:0 8px 30px #0002;z-index:4}
+.todo-inline-add-menu[hidden] {display:none}
+.todo-inline-add-menu button {width:100%;text-align:left;min-height:44px;border:0;background:transparent;padding:10px;color:inherit;font-size:15px;border-radius:8px}
+.todo-inline-add-menu button:hover,.todo-inline-add-menu button:focus-visible {background:#e2e8f0}
+
+.todo-inline-add-menu::backdrop {background:#0001}

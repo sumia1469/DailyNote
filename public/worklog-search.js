@@ -18,7 +18,13 @@
   unmark();matches=[];if(!term){nav.hidden=true;return;}
   const pattern=new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'giu');
   document.querySelectorAll('#worklog-list .todo-text-btn,#worklog-list .plan-tree-text,#worklog-list .card-info-list li,#worklog-list .card-date').forEach(element=>{
+   if(window.References)window.References.render(element,element.dataset.referenceSource||element.textContent);
    const value=element.textContent;let from=0;const found=Array.from(value.matchAll(pattern));if(!found.length)return;
+   if(document.createTreeWalker){
+    const walker=document.createTreeWalker(element,NodeFilter.SHOW_TEXT),texts=[];let node;while(node=walker.nextNode())texts.push(node);
+    for(const textNode of texts){const local=textNode.textContent,hits=[...local.matchAll(pattern)];if(!hits.length)continue;const frag=document.createDocumentFragment();let at=0;for(const hit of hits){frag.append(document.createTextNode(local.slice(at,hit.index)));const mark=document.createElement('mark');mark.dataset.worklogMatch='';mark.textContent=hit[0];frag.append(mark);matches.push(mark);at=hit.index+hit[0].length;}frag.append(document.createTextNode(local.slice(at)));textNode.replaceWith(frag);}
+    return;
+   }
    const fragment=document.createDocumentFragment();
    found.forEach(result=>{const index=result.index;fragment.append(document.createTextNode(value.slice(from,index)));const mark=document.createElement('mark');mark.dataset.worklogMatch='';mark.textContent=result[0];fragment.append(mark);matches.push(mark);from=index+result[0].length;});
    fragment.append(document.createTextNode(value.slice(from)));element.replaceChildren(fragment);
@@ -42,3 +48,4 @@
  document.getElementById('logout-btn')?.addEventListener('click',clear);
  window.WorklogSearch={run,refresh,clear};
 })();
+

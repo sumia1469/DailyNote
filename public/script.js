@@ -503,7 +503,7 @@ document.querySelector('[data-modal-close]').addEventListener('click', () => {
 /* ESC로 모달 닫기 */
 document.addEventListener('keydown', (e) => {
   const modal = document.getElementById('worklog-modal');
-  if (e.key === 'Escape' && modal.classList.contains('open') && !document.getElementById('text-import-dialog').open && !document.getElementById('editor-add-dialog')?.open) {
+  if (e.key === 'Escape' && modal.classList.contains('open') && !document.getElementById('text-import-dialog').open && !document.getElementById('editor-add-dialog')?.open && !document.getElementById('reference-dialog')?.open) {
     closeWorklogModal();
   }
 })
@@ -596,11 +596,10 @@ function createTodoItem(worklog, todo) {
   checkbox.checked = Boolean(todo.checked);
   checkbox.disabled=!canUse('worklogEdit');
   checkbox.setAttribute('aria-label', (todo.task || 'TODO 항목') + ' 완료');
-  const text = document.createElement('button');
-  text.type='button';
+  const text = document.createElement('div');
+  text.tabIndex=0;
   text.className='todo-text-btn';
-  text.textContent = todo.task || '';
-  text.disabled=!canUse('worklogEdit');
+  References.render(text,todo.task || '');
   if(canUse('worklogEdit'))TodoInline.attach(label,text,todo,async (value,changes) => {
     const copy=JSON.parse(JSON.stringify(worklog.todo));
     const position=flattenTodoItems(worklog.todo).indexOf(todo);
@@ -647,7 +646,8 @@ function createTodoItem(worklog, todo) {
     }
   });
   label.appendChild(checkbox);
-  label.appendChild(text)
+  label.appendChild(text);
+  const editTrigger=label.querySelector('.todo-edit-trigger');if(editTrigger)label.appendChild(editTrigger);
   return label;
 }
 
@@ -735,9 +735,7 @@ function createInfoSection(title, value) {
   list.className = 'card-info-list';
   values.forEach(valueItem => {
     const item = document.createElement('li');
-    item.textContent = typeof valueItem === 'string'
-      ? valueItem
-      : valueItem.task || '';
+    References.render(item,typeof valueItem === 'string' ? valueItem : valueItem.task || '');
     list.appendChild(item);
   });
   section.appendChild(list);
@@ -759,9 +757,7 @@ function createPlanTree(items, depth = 0) {
     item.className = 'plan-tree-item';
     const text = document.createElement('span');
     text.className = 'plan-tree-text';
-    text.textContent = typeof plan === 'string'
-      ? plan
-      : plan.task || '';
+    References.render(text,typeof plan === 'string' ? plan : plan.task || '');
     item.appendChild(text);
 
     if (
