@@ -40,7 +40,7 @@
 .calendar-help{font-size:12px;line-height:1.6;color:var(--muted,#617084);margin:12px 0 0}
 .calendar-search-dialog{width:min(420px,calc(100% - 24px))}.calendar-search-dialog input{font-size:16px;width:100%;box-sizing:border-box;min-width:0}.calendar-search-dialog .calendar-form-actions{margin-top:20px}
 .calendar-more-dialog{position:fixed;margin:0;width:min(280px,calc(100% - 24px));box-sizing:border-box;padding:12px;border-radius:16px;max-height:calc(100dvh - 24px);overflow:auto}
-.calendar-more-dialog::backdrop{background:#0002}.calendar-more-heading{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;font-size:14px}
+.calendar-more-dialog::backdrop{background:transparent;backdrop-filter:none}
 .calendar-more-dialog>button{display:flex;align-items:center;gap:10px;width:100%;padding:12px 8px;border:0;background:transparent;color:inherit;font:inherit;font-size:14px;text-align:left;cursor:pointer;border-radius:8px;min-height:44px}.calendar-more-dialog>button:hover{background:var(--shell-sidebar,#f2f4f7)}.calendar-more-dialog .app-icon{width:18px;height:18px}
 .calendar-more-dialog .calendar-filters{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;margin:8px 0 0;padding:8px 0;border:0;border-top:1px solid var(--line,#e2e7ed);font-size:13px}.calendar-filters legend{font-size:12px;color:var(--muted,#617084);padding:0 4px}.calendar-more-dialog .calendar-filters label{min-height:36px}.calendar-filters input{width:16px;height:16px}
 body #main-section .calendar-header{grid-template-columns:142px minmax(0,1fr) 142px}
@@ -70,3 +70,12 @@ body #main-section .calendar-header{grid-template-columns:142px minmax(0,1fr) 14
 .calendar-agenda .cal-agenda-link{line-height:1.5;padding:5px 0;font-size:14px}
 .calendar-agenda .cal-agenda-event{min-height:32px;padding:5px 8px;line-height:22px}
 .calendar-agenda .cal-agenda-link:focus-visible{outline:2px solid #2368c8;outline-offset:2px;border-radius:4px}
+
+/* Header action menu shares the nonmodal action-menu lifecycle. */
+#calendar-more-dialog{width:min(264px,calc(100vw - 24px));padding:8px;border:1px solid var(--line,#e2e7ed);border-radius:14px;box-shadow:0 8px 30px #0002;background:var(--surface,#fff)}
+#calendar-more-dialog>button{justify-content:flex-start;min-height:44px;padding:10px 12px;border-radius:8px}
+#calendar-more-dialog .calendar-filters{grid-template-columns:minmax(0,1fr);gap:2px;padding:6px 0 0;margin-top:6px}
+#calendar-more-dialog .calendar-filters label{padding:6px 12px;min-height:40px;box-sizing:border-box;border-radius:8px;cursor:pointer;gap:10px}
+#calendar-more-dialog .calendar-filters label:hover,#calendar-more-dialog .calendar-filters label:focus-within{background:var(--shell-sidebar,#f2f4f7)}
+#calendar-more-dialog .calendar-help{margin:8px 12px;font-size:11px;line-height:1.5}
+#calendar-more-dialog button:focus-visible,#calendar-more-dialog input:focus-visible{outline:2px solid #2368c8;outline-offset:2px}
