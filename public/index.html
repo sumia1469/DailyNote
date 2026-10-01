@@ -48,11 +48,14 @@
       <a href="#memos" data-view="memos" data-icon="edit">메모</a>
       <a href="#notifications" data-view="notifications" data-icon="notice">공지사항 <span class="nav-badge" id="notification-count" hidden></span></a>
       <a href="#files" data-view="files" data-icon="files">파일관리</a>
-      <a href="admin.html" id="admin-page-btn" data-icon="appearance" hidden>관리자</a>
-      <button type="button" id="logout-btn" data-icon="logout">로그아웃</button>
     </nav>
     <a class="onboarding-link" href="onboarding.html" data-icon="journal">시작 가이드</a>
-    <div class="sidebar-account"><span class="account-avatar" data-icon="users" aria-hidden="true"></span><div><strong id="shell-account">내 업무 공간</strong><small>DailyNote</small></div><a href="change-password.html" class="shell-icon" title="비밀번호 변경" aria-label="비밀번호 변경" data-icon="password"></a></div>
+    <div class="sidebar-account"><span class="account-avatar" data-icon="users" aria-hidden="true"></span><div><strong id="shell-account">내 업무 공간</strong><small>DailyNote</small></div></div>
+    <div class="sidebar-account-actions" aria-label="계정 메뉴">
+      <a href="admin.html" id="admin-page-btn" class="shell-icon" title="관리자" aria-label="관리자" data-icon="appearance" hidden></a>
+      <a href="change-password.html" id="change-password-link" class="shell-icon" title="비밀번호 변경" aria-label="비밀번호 변경" data-icon="password"></a>
+      <button type="button" id="logout-btn" class="shell-icon" title="로그아웃" aria-label="로그아웃" data-icon="logout"></button>
+    </div>
   </aside>
   <header class="main-header ui-header">
     <button type="button" class="shell-icon mobile-menu" id="sidebar-open" aria-label="메뉴 열기" aria-expanded="false" aria-controls="app-sidebar" data-icon="menu"></button>
