@@ -35,8 +35,8 @@ function render(){
   const meta=node('small',[board.group,board.active?'활성':'보관',board.inMenu?'메뉴 표시':'메뉴 숨김'].join(' · '));meta.className='board-admin-meta';
   const categories=node('small','분류 · '+(board.categories.join(', ')||'미분류'));categories.className='board-admin-meta';content.append(title,meta,categories);
   if(board.description){const description=node('p',board.description);description.className='board-admin-description';content.append(description);}
-  const more=control('','more',()=>{menuBoard=board;menuOpener=more;$('board-admin-menu-title').textContent=board.name;view.href='/#boards/'+board.id;menu.showModal();});
-  more.className='shell-icon board-admin-more';more.setAttribute('aria-label',board.name+' 게시판 메뉴');more.setAttribute('aria-haspopup','dialog');more.setAttribute('aria-controls','board-admin-menu');
+  const more=control('','more',()=>{menuBoard=board;menuOpener=more;$('board-admin-menu-title').textContent=board.name;view.href='/#boards/'+board.id;UIShell.actionMenu(menu,more);});
+  more.className='shell-icon board-admin-more';more.setAttribute('aria-label',board.name+' 게시판 메뉴');more.setAttribute('aria-haspopup','menu');more.setAttribute('aria-controls','board-admin-menu');
   row.append(content,more);$('board-admin-list').append(row);
  }
  if(!records.length)$('board-admin-list').append(node('p','게시판을 만들어 메뉴에 추가하세요.'));
@@ -50,3 +50,4 @@ window.BoardAdmin={load};UIShell.dialogs();
 if(context()?.user?.permissions.boards)load();
 if(location.hash==='#boards'){const timer=setInterval(()=>{if(context()?.user){clearInterval(timer);if(context().user.permissions.boards)document.querySelector('[data-panel="boards"]').click();}},50);setTimeout(()=>clearInterval(timer),10000);}
 })();
+
