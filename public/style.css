@@ -1002,3 +1002,34 @@ button:focus-visible { outline: 3px solid #93c5fd; outline-offset: 3px; }
     background-position: 40% center;
   }
 }
+
+/* Eight dots orbit while an operation is in progress. */
+.loading-overlay {
+  position: fixed; inset: 0; z-index: 2000;
+  display: grid; place-items: center; padding: 20px;
+  background: rgba(15, 23, 42, .35);
+  cursor: progress;
+}
+.loading-overlay[hidden] { display: none; }
+.loading-panel {
+  width: min(300px, 100%); padding: 28px 24px;
+  border-radius: 20px; background: #fff; text-align: center;
+  box-shadow: 0 18px 60px rgba(15, 23, 42, .22);
+}
+.loading-panel p { margin: 20px 0 8px; font-weight: 700; line-height: 1.5; }
+.loading-panel small { color: var(--muted); }
+.orbit-spinner {
+  position: relative; width: 56px; height: 56px; margin: 0 auto;
+  animation: orbit-spin 1.4s linear infinite;
+}
+.orbit-spinner span {
+  position: absolute; top: 0; left: 24px; width: 8px; height: 8px;
+  border-radius: 50%; background: var(--primary);
+  transform-origin: 4px 28px;
+  transform: rotate(calc(var(--dot) * 45deg));
+  opacity: calc(.25 + var(--dot) * .1);
+}
+@keyframes orbit-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .orbit-spinner { animation: none; }
+}

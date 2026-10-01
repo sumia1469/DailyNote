@@ -5,13 +5,56 @@ let token = localStorage.getItem('token') || '';
 let currentWorklogs = [];
 let currentFilterDate = '';
 
+
+/* Shared progress indicator, including concurrent requests. */
+const loadingTasks = new Map();
+let loadingTaskId = 0;
+let loadingHideTimer;
+function startLoading(message = '처리 중입니다…') {
+  clearTimeout(loadingHideTimer);
+  const id = ++loadingTaskId;
+  loadingTasks.set(id, message);
+  const overlay = document.getElementById('loading-overlay');
+  overlay.hidden = false;
+  document.getElementById('loading-message').textContent = message;
+  document.getElementById('main-section').setAttribute('aria-busy', 'true');
+  document.getElementById('login-section').setAttribute('aria-busy', 'true');
+  return () => {
+    loadingTasks.delete(id);
+    if (loadingTasks.size) {
+      document.getElementById('loading-message').textContent = Array.from(loadingTasks.values()).at(-1);
+      return;
+    }
+    loadingHideTimer = setTimeout(() => {
+      overlay.hidden = true;
+      document.getElementById('main-section').removeAttribute('aria-busy');
+      document.getElementById('login-section').removeAttribute('aria-busy');
+    }, 180);
+  };
+}
+async function withLoading(message, action) {
+  const finish = startLoading(message);
+  try { return await action(); }
+  finally { finish(); }
+}
+async function loadingFetch(url, options = {}) {
+  const method = (options.method || 'GET').toUpperCase();
+  const message = url.includes('/auth/login') ? '로그인 중입니다…'
+    : method === 'DELETE' ? '삭제 중입니다…'
+    : url.includes('/upload') && method === 'POST' ? '파일을 업로드하고 있습니다…'
+    : method === 'POST' ? '등록 중입니다…'
+    : method === 'PUT' || method === 'PATCH' ? '수정 내용을 저장하고 있습니다…'
+    : '불러오는 중입니다…';
+  return withLoading(message, () => fetch(url, options));
+}
+
 /* 공통 fetch (Authorization 자동 삽입) */
 async function authFetch(url, options = {}) {
   const headers = {
     ...(options.headers || {})
   };
   if (token) headers['Authorization'] = `Bearer ${token}`;
-  const response = await fetch(url, {
+  const response = await loadingFetch(url, {
     ...options,
     headers
   });
@@ -57,7 +100,7 @@ document
     submitButton.disabled = true;
     submitButton.textContent = '로그인 중...';
     try {
-      const response = await fetch('/api/auth/login', {
+      const response = await loadingFetch('/api/auth/login', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify(payload)
@@ -167,24 +210,34 @@ document.getElementById('upload-form').addEventListener('submit', async e => {
   e.preventDefault();
   const file = document.getElementById('file-input').files[0];
   if (!file) return;
-  const reader = new FileReader();
-  reader.onload = async () => {
-    const base64 = reader.result.split(',')[1];
-    const payload = {filename: file.name, mime: file.type, data: base64};
-    const res = await authFetch('/api/upload', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(payload)
+  const button = e.target.querySelector('button[type="submit"]');
+  if (button.disabled) return;
+  button.disabled = true;
+  try {
+    await withLoading('파일을 업로드하고 있습니다…', async () => {
+      const result = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(new Error('파일을 읽지 못했습니다.'));
+        reader.onabort = () => reject(new Error('파일 읽기가 취소되었습니다.'));
+        reader.readAsDataURL(file);
+      });
+      const payload = {filename: file.name, mime: file.type, data: result.split(',')[1]};
+      const res = await authFetch('/api/upload', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || '파일을 업로드하지 못했습니다.');
+      document.getElementById('file-input').value = '';
+      await loadFiles();
     });
-    const data = await res.json();
-    if (res.ok) {
-      alert('업로드 성공');
-      loadFiles();
-    } else {
-      alert('업로드 실패: ' + (data.message || ''));
-    }
-  };
-  reader.readAsDataURL(file);
+  } catch (error) {
+    alert('업로드 실패: ' + error.message);
+  } finally {
+    button.disabled = false;
+  }
 });
 
 /* 파일 목록 — GET /api/files */
@@ -222,7 +275,7 @@ async function loadFiles() {
       link.addEventListener('click', async e => {
         e.preventDefault();
         try {
-          const response = await fetch(`/api/upload/${file.id}`, {
+          const response = await loadingFetch(`/api/upload/${file.id}`, {
             method: 'GET',
             headers: {Authorization: `Bearer ${localStorage.getItem('token')}`}
           });
