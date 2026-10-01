@@ -11,7 +11,8 @@
     "test:browser": "node scripts/verify-ui.cjs",
     "test:memos": "node scripts/verify-memos.cjs",
     "test:files": "node scripts/verify-large-files.cjs",
-    "test:imports": "node scripts/verify-text-import.cjs"
+    "test:imports": "node scripts/verify-text-import.cjs",
+    "test:references": "node scripts/verify-references.cjs"
   },
   "author": "Your Company",
   "license": "MIT",
