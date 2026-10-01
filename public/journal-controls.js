@@ -24,7 +24,8 @@
     if(event.key==='End')next=buttons.length-1;
     if(next !== undefined){event.preventDefault();buttons[next]?.focus();}
   });
-  document.getElementById('open-search-btn').addEventListener('click', () => { search.showModal(); document.getElementById('filter-date').focus(); });
+  // The dialog focuses its close button; date selection starts only on user input.
+  document.getElementById('open-search-btn').addEventListener('click', () => search.showModal());
   document.getElementById('open-upload-btn').addEventListener('click',()=>upload.showModal());
   document.getElementById('upload-close').addEventListener('click',()=>upload.close());
   document.getElementById('search-close').addEventListener('click', () => search.close());
