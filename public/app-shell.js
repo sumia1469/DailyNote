@@ -6,6 +6,7 @@
   const drawer=UIShell.drawer({nav:document.getElementById('app-sidebar'),opener,closer:document.getElementById('sidebar-close'),scrim:document.getElementById('sidebar-scrim'),select:'[data-view]'});
   function show(){
     if(!ready)return;
+    document.getElementById('change-password-link').href='/change-password.html?returnTo='+encodeURIComponent(location.pathname+location.hash);
     const route=location.hash.slice(1),detailId=route.match(/^notifications\/(\d+)$/)?.[1];
     let key=detailId?'notifications':route;if(!allowed.includes(key))key=allowed[0];
     const isDetail=Boolean(detailId&&key==='notifications');
