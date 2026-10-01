@@ -35,7 +35,7 @@ function render(){
   const meta=node('small',[board.group,board.active?'활성':'보관',board.inMenu?'메뉴 표시':'메뉴 숨김'].join(' · '));meta.className='board-admin-meta';
   const categories=node('small','분류 · '+(board.categories.join(', ')||'미분류'));categories.className='board-admin-meta';content.append(title,meta,categories);
   if(board.description){const description=node('p',board.description);description.className='board-admin-description';content.append(description);}
-  const more=control('','more',()=>{menuBoard=board;menuOpener=more;$('board-admin-menu-title').textContent=board.name;view.href='/#boards/'+board.id;UIShell.actionMenu(menu,more);});
+  const more=control('','more',()=>{menuBoard=board;menuOpener=more;$('board-admin-menu-title').textContent=board.name;view.href='/#boards/'+board.id;UIShell.dropdown.open(menu,more);});
   more.className='shell-icon board-admin-more';more.setAttribute('aria-label',board.name+' 게시판 메뉴');more.setAttribute('aria-haspopup','menu');more.setAttribute('aria-controls','board-admin-menu');
   row.append(content,more);$('board-admin-list').append(row);
  }
