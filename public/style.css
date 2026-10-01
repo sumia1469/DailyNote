@@ -874,7 +874,11 @@ body.modal-open {
   min-height: 100vh;
   min-height: 100dvh;
   padding: 32px 20px;
-  background: radial-gradient(ellipse at top, #e4edff, transparent 65%), var(--background);
+  background-color: #f3ead9;
+  background-image: linear-gradient(rgba(255, 248, 235, .18), rgba(45, 30, 17, .12)), url("images/login-autumn.webp");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 .login-card {
   width: 100%;
@@ -985,3 +989,16 @@ button:focus-visible { outline: 3px solid #93c5fd; outline-offset: 3px; }
 }
 
 .card-info-list li { tab-size: 3; }
+
+/* Warm autumn sign-in theme; opaque card keeps the form readable. */
+.login-card { border-color: #eadfce; box-shadow: 0 20px 64px rgba(62, 37, 18, .22); }
+.login-icon { background: #fff3df; }
+.login-btn { background: #99501d; }
+.login-btn:hover { background: #7c3e13; }
+#login-form input:focus { border-color: #99501d; outline-color: rgba(153, 80, 29, .16); }
+@media (max-width: 600px) {
+  .login-section {
+    background-image: linear-gradient(rgba(255, 248, 235, .18), rgba(45, 30, 17, .12)), url("images/login-autumn-mobile.webp");
+    background-position: 40% center;
+  }
+}
