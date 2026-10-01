@@ -604,7 +604,6 @@ function createTodoItem(worklog, todo) {
     const copy=JSON.parse(JSON.stringify(worklog.todo));
     const position=flattenTodoItems(worklog.todo).indexOf(todo);
     const target=flattenTodoItems(copy)[position];target.task=value;
-    if(changes.direction)TodoTree.move(copy,target,changes.direction);
     // Reverse sibling inserts to preserve the order entered by the user.
     changes.additions.filter(a=>a.kind==='child').forEach(a=>TodoTree.add(copy,target,a.kind,a.task));
     changes.additions.filter(a=>a.kind==='sibling').reverse().forEach(a=>TodoTree.add(copy,target,a.kind,a.task));
@@ -647,7 +646,11 @@ function createTodoItem(worklog, todo) {
   });
   label.appendChild(checkbox);
   label.appendChild(text);
-  const editTrigger=label.querySelector('.todo-edit-trigger');if(editTrigger)label.appendChild(editTrigger);
+  if(canUse('worklogEdit'))TodoDrag.attach(label,todo,worklog,async copy=>{
+    const response=await authFetch(`/api/worklogs/${worklog.id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({todo:copy})});
+    if(!response.ok){const result=await response.json().catch(()=>({}));throw new Error(result.message||'항목 위치를 저장하지 못했습니다.');}
+    worklog.todo=copy;if(label.isConnected)renderWorklogs(currentWorklogs);
+  });
   return label;
 }
 

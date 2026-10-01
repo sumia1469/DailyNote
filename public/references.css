@@ -14,8 +14,7 @@
 .reference-detail-content img {max-width:100%;height:auto}
 .reference-detail-content audio {max-width:100%}
 .todo-text-btn:not(button) {display:block;white-space:pre-wrap;flex:1;min-width:0;border:0;background:none;color:inherit;text-align:left;font:inherit;padding:8px 0;cursor:text}
-.todo-edit-trigger {flex:none;min-height:44px;padding:8px 10px;border:1px solid #e2e8f0;border-radius:12px;background:transparent;color:inherit}
-@media(max-width:480px){.reference-dialog{padding:18px}.reference-search-controls{grid-template-columns:1fr}.reference-detail{padding:12px}.todo-edit-trigger{font-size:13px}}
+@media(max-width:480px){.reference-dialog{padding:18px}.reference-search-controls{grid-template-columns:1fr}.reference-detail{padding:12px}}
 .todo-inline-input-row {position:relative;display:flex;align-items:flex-start;gap:6px;width:100%}
 .todo-inline-input-row textarea {flex:1;min-width:0}
 .todo-add-trigger {width:44px;min-height:44px;flex:none;font-size:24px;border:1px solid #cbd5e1;border-radius:12px;background:transparent;color:inherit}
@@ -25,3 +24,14 @@
 .todo-inline-add-menu button:hover,.todo-inline-add-menu button:focus-visible {background:#e2e8f0}
 
 .todo-inline-add-menu::backdrop {background:#0001}
+
+.todo-text-btn {touch-action:manipulation}
+.todo-drag-handle {flex:none;display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;padding:10px;border:0;border-radius:10px;background:transparent;color:var(--muted,#64748b);cursor:grab;touch-action:none;user-select:none}
+.todo-drag-handle svg {width:20px;height:20px;pointer-events:none}
+.todo-drag-handle:active {cursor:grabbing}
+.todo-drag-handle:focus-visible {outline:2px solid #2563eb}
+.todo-dragging {opacity:.55}
+.todo-drop-before {box-shadow:0 -3px #2563eb}
+.todo-drop-after {box-shadow:0 3px #2563eb}
+.todo-drag-status {font-size:13px;color:var(--danger,#b91c1c);margin:4px 0}
+[data-todo-editing] .todo-drag-handle {display:none}

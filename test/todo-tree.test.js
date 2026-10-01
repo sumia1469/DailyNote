@@ -1,5 +1,12 @@
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
 const tree=require('../public/todo-tree');
+test('drop moves whole subtrees before or after a target and rejects cycles',()=>{
+ const child={task:'child',checked:true,children:[]},parent={task:'parent',checked:true,children:[child]},other={task:'other',children:[]},last={task:'last',children:[]},items=[parent,other,last];
+ assert.equal(tree.reposition(items,parent,child),false);assert.deepEqual(items,[parent,other,last]);
+ assert.equal(tree.reposition(items,parent,last,true),true);assert.deepEqual(items,[other,last,parent]);assert.equal(parent.children[0],child);assert.equal(child.checked,true);
+ assert.equal(tree.reposition(items,other,child),true);assert.deepEqual(items,[last,parent]);assert.deepEqual(parent.children,[other,child]);
+ assert.equal(tree.reposition(items,other,last),true);assert.deepEqual(items,[other,last,parent]);assert.deepEqual(parent.children,[child]);assert.equal(tree.reposition(items,parent,parent),false);
+});
 test('move preserves descendants and checked states; add starts unchecked',()=>{
  const first={task:'first',checked:true,children:[]},child={task:'child',checked:true,children:[]},second={task:'second',checked:true,children:[child]},items=[first,second];
  assert.equal(tree.canMove(items,first,'indent'),false);assert.equal(tree.canMove(items,first,'outdent'),false);

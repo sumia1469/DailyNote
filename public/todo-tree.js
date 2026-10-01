@@ -15,5 +15,11 @@
   return true;
  }
  function add(items,target,kind,task){const p=locate(items,target);const node={task,checked:false,children:[]};if(kind==='child')(target.children||(target.children=[])).push(node);else p.items.splice(p.index+1,0,node);return node;}
- const api={locate,canMove,move,add};if(typeof module!=='undefined')module.exports=api;else root.TodoTree=api;
+ function reposition(items,source,target,after=false){
+  if(source===target||locate(source.children||[],target))return false;
+  const from=locate(items,source),to=locate(items,target);if(!from||!to)return false;
+  from.items.splice(from.index,1);const destination=locate(items,target);
+  destination.items.splice(destination.index+(after?1:0),0,source);return true;
+ }
+ const api={locate,canMove,move,add,reposition};if(typeof module!=='undefined')module.exports=api;else root.TodoTree=api;
 })(typeof window!=='undefined'?window:globalThis);
