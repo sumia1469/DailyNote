@@ -5,3 +5,6 @@ uploads/
 !.env.example
 config.json
 .vercel/
+
+backup/
+dist/

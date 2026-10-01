@@ -61,7 +61,7 @@ async function main(){
  const server=http.createServer((req,res)=>{res.writeHead(503);res.end('Starting DailyNote');});
  await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(port,'127.0.0.1',resolve);});
  try{
-  await initialize(process.env.DATA_DIR);const handler=require('../src/server');
+  await initialize(process.env.DATA_DIR);await require('../src/local-backup').startup();const handler=require('../src/server');
   server.removeAllListeners('request');server.on('request',(req,res)=>{
    if(req.method==='GET'&&req.url==='/__dailynote_local_health'){res.writeHead(200,{'Content-Type':'application/json','Cache-Control':'no-store'});return res.end(JSON.stringify({app:'DailyNote',instance:id}));}
    return handler(req,res);
@@ -72,3 +72,4 @@ async function main(){
 }
 if(require.main===module)main().catch(e=>{console.error('\n실행 실패: '+e.message);process.exitCode=1;});
 module.exports={localEnvironment,identity,probe,openBrowser};
+

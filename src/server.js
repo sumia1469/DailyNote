@@ -34,7 +34,7 @@ async function handleApi(req, res) {
   if (pathname === '/api/auth/login' && req.method === 'POST') return loginHandler(req, res);
   if (pathname === '/api/auth/register' && req.method === 'POST') return registerHandler(req,res);
   if (req.method === 'GET' && (pathname === '/api/settings' || pathname === '/api/background/1')) return settingsHandler(req, res);
-  const authInfo = await verifyToken(req);
+  const authInfo = await verifyToken(req);req.auditAuth=authInfo;
   if (!authInfo) return sendJson(res, 401, {message: 'Invalid or missing token'});
   if (pathname === '/api/license' && req.method === 'GET') return sendJson(res,200,await require('./license').status());
   if (pathname === '/api/auth/me' && req.method === 'GET') return sendJson(res, 200, authInfo);
@@ -44,6 +44,9 @@ async function handleApi(req, res) {
   const recovery = /^\/api\/admin\/(users|permissions|directory)(\/|$)/.test(pathname);
   if (license.overLimit && !recovery) throw require('./license').licenseError(license.activeUserCount);
   if (pathname === '/api/auth/profile' && req.method === 'PUT') return require('./profile').updateProfile(req,res,authInfo);
+  if(pathname.startsWith('/api/backup/'))return require('./backup.routes').backupRouter(req,res,authInfo);
+  if(pathname.startsWith('/api/admin/logs'))return require('./audit').router(req,res,authInfo);
+  if(pathname.startsWith('/api/admin/backups'))return require('./local-backup').router(req,res,authInfo);
   let basicRight;
   if(pathname.startsWith('/api/calendar')) basicRight={GET:'calendarRead',POST:'calendarCreate',PUT:'calendarEdit',DELETE:'calendarDelete'}[req.method];
   if(pathname.startsWith('/api/memos')) basicRight={GET:'memoRead',POST:'memoCreate',PUT:'memoEdit',DELETE:'memoDelete'}[req.method];
@@ -63,6 +66,10 @@ async function handleApi(req, res) {
   sendJson(res, 404, {message: 'API endpoint not found'});
 }
 async function handler(req, res) {
+ const audit=require('./audit');const start=Date.now();
+ try{
+ const end=res.end;res.end=function(...args){if(!req.auditDone){req.auditDone=true;req.auditPending=audit.recordRequest(req,res,Date.now()-start).catch(()=>{});}return end.apply(this,args);};
+ }catch{}
  try {
   // Vercel rewrites the public API URL to this single function entry point.
   const incoming = new URL(req.url, 'http://localhost');
@@ -82,12 +89,13 @@ async function handler(req, res) {
   if (!res.headersSent && error.code === 'LICENSE_USER_LIMIT') return sendJson(res,403,{code:error.code,message:error.message,...error.details});
   if (!res.headersSent) sendJson(res, 500, {message: 'Server error'});
   else res.end();
- }
+ } finally {await req.auditPending;}
 }
 module.exports = handler;
 if (require.main === module) {
- http.createServer(handler).listen(PORT, () => console.log(`dailyNote http://localhost:${PORT}`));
+ require('./local-backup').startup().then(()=>http.createServer(handler).listen(PORT, () => console.log(`dailyNote http://localhost:${PORT}`))).catch(error=>{console.error(error.message);process.exitCode=1;});
 }
+
 
 
 

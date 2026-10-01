@@ -258,6 +258,7 @@ document.getElementById('upload-form').addEventListener('submit', async e => {
 });
 
 /* 파일 목록 — GET /api/files */
+let backupFileRecords=[];
 async function loadFiles(strict=false) {
   const job=++fileLoadJob,owner=token,route=location.hash,revision=window.AppShell?.revision;
   const stale=()=>job!==fileLoadJob||owner!==token||route!==location.hash||revision!==window.AppShell?.revision;
@@ -279,6 +280,7 @@ async function loadFiles(strict=false) {
       ).values()
     );
 
+    backupFileRecords=uniqueFiles;window.DataTools?.setFiles(uniqueFiles);
     if (uniqueFiles.length === 0) {
       const emptyItem = document.createElement('li');
       emptyItem.className = 'file-empty';
@@ -1041,3 +1043,6 @@ document.getElementById('duplicate-worklog-btn').addEventListener('click', () =>
 
 
 
+
+
+window.BackupRefresh=()=>window.AppShell.refresh();window.BackupGetFiles=()=>backupFileRecords;

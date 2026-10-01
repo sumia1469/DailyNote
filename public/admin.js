@@ -1,6 +1,6 @@
 const adminScroll=ListScroll.mount(document.querySelector('.admin-shell'));
 const adminToken=localStorage.getItem('token');
-let licenseStatus;
+let licenseStatus,backupFileRecords=[];
 let me, directory=[], users=[], appearance={}, backgroundData=null, activePanel;
 let panelEpoch=0;
 const refreshDirty=new Set();
@@ -35,7 +35,7 @@ function row(title,detail){const div=document.createElement('div');div.className
 function button(label,action,danger=false){const b=document.createElement('button');b.type='button';b.className=danger?'danger-btn':'secondary-btn';b.textContent=label;b.addEventListener('click',()=>run(action));return b;}
 async function run(action){status('');try{await busy(action);}catch(e){if(e.name!=='AbortError')status(e.message,true);}}
 function empty(container){if(!container.children.length){const p=document.createElement('p');p.textContent='등록된 항목이 없습니다.';container.appendChild(p);}}
-function showPanel(key){UIShell.dropdown.close();if(activePanel!==key){panelEpoch++;AppLoading.clear();AppLoading.run('불러오는 중입니다…',()=>new Promise(requestAnimationFrame));}adminScroll.capture();activePanel=key;const menu=UIConfig.menus.admin.find(menu=>menu.id===key);UIShell.title($('admin-title'),menu?.title||'관리페이지');UIShell.actions('admin',key,me?.permissions||{},[$('admin-create'),$('admin-search')]);document.querySelectorAll('.admin-panel').forEach(panel=>panel.hidden=panel.id!==menu?.panel);document.querySelectorAll('[data-panel]').forEach(button=>{if(button.dataset.panel===key)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current');});adminScroll.activate(key);}
+function showPanel(key){UIShell.dropdown.close();if(activePanel!==key){panelEpoch++;AppLoading.clear();AppLoading.run('불러오는 중입니다…',()=>new Promise(requestAnimationFrame));}adminScroll.capture();activePanel=key;const menu=UIConfig.menus.admin.find(menu=>menu.id===key);UIShell.title($('admin-title'),menu?.title||'관리페이지');UIShell.actions('admin',key,me?.permissions||{},[$('admin-create'),$('admin-search')]);document.querySelectorAll('.admin-panel').forEach(panel=>panel.hidden=panel.id!==menu?.panel);document.querySelectorAll('[data-panel]').forEach(button=>{if(button.dataset.panel===key)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current');});adminScroll.activate(key);window.DataTools?.activate();}
 
 function renderLicenseStatus(){
  const list=$('admin-users');if(!list)return;
@@ -55,7 +55,7 @@ async function refresh(reload=true){
  window.AccountMenu.configure(me);
  const allowed=UIConfig.allowed('admin',me.permissions).map(menu=>menu.id);document.querySelectorAll('[data-panel]').forEach(b=>b.hidden=!allowed.includes(b.dataset.panel));
  if(!allowed.length){$('admin-create').hidden=true;$('admin-search').hidden=true;$('admin-title').textContent='관리페이지';document.querySelectorAll('.admin-panel').forEach(p=>p.hidden=true);status('관리페이지에 접근할 권한이 없습니다.',true);return;}
- showPanel(allowed.includes(activePanel)?activePanel:allowed[0]);
+ showPanel(allowed.includes(activePanel)?activePanel:allowed[0]);window.DataTools?.configure(me);if(['backups','logs'].includes(activePanel))await window.AdminOperations?.refresh(activePanel);
  if(me.permissions.boards)await window.BoardAdmin?.load();
  if(['files','users','permissions'].includes(activePanel))directory=await api('/api/admin/directory');
  if((activePanel==='users'||activePanel==='permissions')&&(me.permissions.users||me.permissions.permissions)){users=await api('/api/admin/'+(me.permissions.users?'users':'permissions'));
@@ -66,7 +66,7 @@ async function refresh(reload=true){
   if(reload||!notices.length)await loadNotices(true);
   else if($('notice-load-more'))noticeObserver?.observe($('notice-load-more'));
  }
- if(activePanel==='files'&&me.permissions.files){const files=await api('/api/admin/files');const list=$('admin-files');UIShell.dropdown.close();list.replaceChildren(...files.map(fileRow));empty(list);}
+ if(activePanel==='files'&&me.permissions.files){const files=await api('/api/admin/files');backupFileRecords=files;window.DataTools?.setFiles(files);const list=$('admin-files');UIShell.dropdown.close();list.replaceChildren(...files.map(fileRow));empty(list);}
  if(activePanel==='users'&&me.permissions.users){const pendingUsers=users.filter(user=>user.approval==='pending');$('approval-count').textContent=pendingUsers.length;const requests=$('admin-approvals');requests.replaceChildren();pendingUsers.forEach(user=>{const r=row(user.username,'승인 대기 · '+(user.createdAt?new Date(user.createdAt).toLocaleDateString('ko-KR'):''));r.actions.append(button('승인',async()=>{await api('/api/admin/users/'+user.id+'/approve','POST',{});await refresh();status('가입신청을 승인했습니다. 이제 로그인할 수 있습니다.');}),button('반려',async()=>{if(!confirm('이 가입신청을 반려할까요?'))return;await api('/api/admin/users/'+user.id+'/reject','POST',{});await refresh();status('가입신청을 반려했습니다.');},true));requests.appendChild(r.div);});empty(requests);const list=$('admin-users');UIShell.dropdown.close();list.replaceChildren();users.forEach(user=>list.appendChild(userRow(user)));empty(list);}
  if(activePanel==='appearance'&&me.permissions.appearance){const values=await api('/api/admin/settings');backgroundData=null;$('background-file').value='';setAppearance(values);}
  refreshDirty.delete(activePanel);
@@ -193,3 +193,6 @@ if(!adminToken)location.replace('/');else run(refresh);
 
 window.AdminBoardContext={get user(){return me;},get activePanel(){return activePanel;},api,refresh};
 
+
+
+window.BackupRefresh=refresh;window.BackupGetUser=()=>me;window.BackupGetFiles=()=>backupFileRecords;window.BackupActivePanel=()=>activePanel;

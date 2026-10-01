@@ -1,6 +1,8 @@
 name: Build portable Windows package
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
 jobs:
   package:
     runs-on: ubuntu-latest
@@ -17,3 +19,4 @@ jobs:
           name: DailyNote-Windows-x64
           path: dist/DailyNote-Windows-x64.zip
           retention-days: 30
+

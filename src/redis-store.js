@@ -73,3 +73,16 @@ async function initialize() {
 }
 async function close() { if (client?.isOpen) await client.close(); client = null; }
 module.exports={close,findAll,findOne,insert,insertOnce,update,remove,hasAnyDelivery,insertSession,findSessionByToken,deleteExpiredSessions:async()=>{},command,initialize};
+
+
+module.exports.reserveIds=async function(name,count){if(!count)return [];const end=Number(await command('INCRBY',prefix+name+':id',count));return Array.from({length:count},(_,i)=>end-count+i+1);};
+module.exports.notificationHistory=async function(){const keys=await command('HKEYS',prefix+'notifications:deliveries');return keys.sort().map((key,i)=>{const split=key.lastIndexOf(':');return {id:Number.parseInt(require('node:crypto').createHash('sha256').update(key).digest('hex').slice(0,13),16),releaseId:key.slice(0,split),userId:key.slice(split+1)==='shared'?0:Number(key.slice(split+1))};});};
+module.exports.commitBackup=async function(entries,receipt,settings,deliveries,expectedUsers){
+ const writes=[];for(const [name,records] of Object.entries(entries))for(const record of records)writes.push([prefix+name,String(record.id),JSON.stringify(record)]);
+ if(settings)writes.push([prefix+'site_settings','1',JSON.stringify({...settings,id:1})]);
+ for(const item of deliveries)writes.push([prefix+'notifications:deliveries',item.key,String(item.notificationId)]);
+ const result=await command('EVAL',`if redis.call('HEXISTS',KEYS[1],ARGV[1])==1 then return 0 end; local function equal(a,b) if type(a)~=type(b) then return false end; if type(a)~='table' then return a==b end; for k,v in pairs(a) do if not equal(v,b[k]) then return false end end; for k,v in pairs(b) do if a[k]==nil then return false end end; return true end; local expected=cjson.decode(ARGV[4]); if #expected~=redis.call('HLEN',KEYS[2]) then return -1 end; for _,v in ipairs(expected) do if not equal(cjson.decode(redis.call('HGET',KEYS[2],v[1]) or 'null'),cjson.decode(v[2])) then return -1 end end; local writes=cjson.decode(ARGV[3]); for _,v in ipairs(writes) do redis.call('HSET',v[1],v[2],v[3]) end; redis.call('HSET',KEYS[1],ARGV[1],ARGV[2]); return 1`,2,prefix+'backup_receipts',prefix+'users',receipt.key,JSON.stringify(receipt),JSON.stringify(writes),JSON.stringify(expectedUsers.map(x=>[String(x.id),JSON.stringify(x)])));
+ if(Number(result)===-1)throw Error('사용자 정보가 변경되었습니다. 다시 시도하세요.');return Boolean(result);
+};
+
+module.exports.appendAudit=async function(entry,limit,days){return command('EVAL',`local id=redis.call('INCR',KEYS[3]); local entry=cjson.decode(ARGV[1]); entry.id=id; redis.call('HSET',KEYS[1],tostring(id),cjson.encode(entry)); redis.call('ZADD',KEYS[2],ARGV[2],tostring(id)); local old=redis.call('ZRANGEBYSCORE',KEYS[2],'-inf',ARGV[3]); for _,key in ipairs(old) do redis.call('HDEL',KEYS[1],key);redis.call('ZREM',KEYS[2],key) end; local count=redis.call('ZCARD',KEYS[2]); if count>tonumber(ARGV[4]) then local extra=redis.call('ZRANGE',KEYS[2],0,count-tonumber(ARGV[4])-1); for _,key in ipairs(extra) do redis.call('HDEL',KEYS[1],key);redis.call('ZREM',KEYS[2],key) end end; return id`,3,prefix+'audit_logs',prefix+'audit_logs:index',prefix+'audit_logs:id',JSON.stringify(entry),Date.now(),Date.now()-days*86400000,limit);};
