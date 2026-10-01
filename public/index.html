@@ -70,7 +70,7 @@
   </header>
   <button type="button" id="notification-back" class="shell-icon ui-back" aria-label="공지 목록으로 돌아가기" data-icon="back" hidden></button>
   <p id="no-access" class="empty-state" hidden>사용 가능한 메뉴가 없습니다. 관리자에게 권한을 요청해 주세요.</p>
-  <section id="view-memos" hidden><p id="memo-list-status" role="status"></p><div id="memo-list" class="memo-list"></div></section>
+  <section id="view-memos" hidden><div id="memo-selection-bar" class="memo-selection-bar" hidden><label><input type="checkbox" id="memo-select-all"> 전체 선택</label><span id="memo-selection-count" role="status">0개 선택</span><button type="button" id="memo-delete-selected" data-icon="trash" disabled>선택 삭제</button><button type="button" id="memo-clear-selection" disabled>선택 해제</button></div><p id="memo-list-status" role="status"></p><div id="memo-list" class="memo-list"></div></section>
   <!-- 공지 -->
   <section id="view-notifications" class="content-card notification-section" hidden>
     <div id="notification-body" class="collapsible-card-body">

@@ -19,17 +19,19 @@ function validate(input){
  }
  if(!value.title.trim()&&!value.text.trim()&&!value.attachments.length)throw Error('제목이나 내용을 입력해 주세요.');return value;
 }
+function attachmentArray(value){if(Array.isArray(value))return value;if(value==null||(typeof value==='object'&&Object.keys(value).length===0))return [];throw Error('메모 첨부 정보를 읽지 못했습니다.');}
+function normalizeMemo(value){return {...value,attachments:attachmentArray(value.attachments)};}
 async function memoRouter(req,res,auth){
  const pathname=new URL(req.url,'http://localhost').pathname;const match=pathname.match(/^\/api\/memos(?:\/(\d+))?$/);if(!match)return sendJson(res,404,{message:'메모를 찾을 수 없습니다.'});
  const id=match[1]?Number(match[1]):null;
- if(req.method==='GET'&&!id){const all=await ds.findAll('memos');return sendJson(res,200,all.filter(x=>x.userId===auth.userId).map(({html,attachments,...x})=>({...x,attachmentCount:attachments.length})));}
+ if(req.method==='GET'&&!id){const all=await ds.findAll('memos');return sendJson(res,200,all.filter(x=>x.userId===auth.userId).map(({html,attachments,...x})=>({...x,attachmentCount:attachmentArray(attachments).length})));}
  const existing=id?await ds.findOne('memos',x=>x.id===id&&x.userId===auth.userId):null;
  if(id&&!existing)return sendJson(res,404,{message:'메모를 찾을 수 없습니다.'});
- if(req.method==='GET'&&id)return sendJson(res,200,existing);
+ if(req.method==='GET'&&id)return sendJson(res,200,normalizeMemo(existing));
  if(req.method==='DELETE'&&id){await ds.remove('memos',id);return sendJson(res,200,{message:'삭제했습니다.'});}
  if((req.method==='POST'&&!id)||(req.method==='PUT'&&id)){
   let value;try{value=validate(await body(req));}catch(e){return sendJson(res,400,{message:e.message});}
-  const now=new Date().toISOString();const result=id?await ds.update('memos',id,{...value,updatedAt:now}):await ds.insert('memos',{...value,userId:auth.userId,createdAt:now,updatedAt:now});return sendJson(res,id?200:201,result);
+  const now=new Date().toISOString();const result=id?await ds.update('memos',id,{...value,updatedAt:now}):await ds.insert('memos',{...value,userId:auth.userId,createdAt:now,updatedAt:now});return sendJson(res,id?200:201,normalizeMemo(result));
  }return sendJson(res,405,{message:'지원하지 않는 요청입니다.'});
 }
 module.exports={memoRouter,validate};
