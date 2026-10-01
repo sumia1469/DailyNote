@@ -44,7 +44,8 @@
     }, {once:true});
     window.AppIcons?.render(menu);
   }
-  UIShell.actionMenu = actionMenu;
+  const sharedActionMenu=UIShell.actionMenu;
+  UIShell.actionMenu=sharedActionMenu?(menu,opener)=>{menu.classList.add('ui-action-menu');sharedActionMenu(menu,opener);}:actionMenu;
 
   function writingForm({id, formId, headerSelector, closeSelector, nativeHistory=false}) {
     const host = $(id), form = $(formId);
