@@ -407,7 +407,7 @@ function linesToArray(value) {
   if (!value) return [];
   const result = [];
   const stack = [];
-  let currentParent = null;
+  let lastNode = null;
   value.split('\n').forEach(line => {
     // 원본 line으로 들여쓰기를 검사합니다.
     if (!line.trim()) {
@@ -415,7 +415,10 @@ function linesToArray(value) {
     }
     const tabMatch = line.match(/^\t*/);
     const depth = tabMatch ? tabMatch[0].length : 0;
-    const node = {task: line.trim(), checked: false, children: []};
+    const content=line.slice(depth);
+    if(content.startsWith('\\ ')&&lastNode){lastNode.task+='\n'+content.slice(2);return;}
+    const node = {task: content.startsWith('\\\\')?content.slice(1):content.trim(), checked: false, children: []};
+    lastNode=node;
     if (depth === 0) {
       result.push(node);
     } else {
@@ -443,7 +446,7 @@ function arrayToLines(items) {
         return;
       }
       if (node.task) {
-        lines.push(`${'\t'.repeat(depth)}${node.task}`);
+        String(node.task).split('\n').forEach((line,index)=>lines.push('\t'.repeat(depth)+(index?'\\ ':line.startsWith('\\')?'\\':'')+line));
       }
       if (Array.isArray(node.children)) {
         appendItems(node.children, depth + 1);
@@ -614,15 +617,19 @@ function createTodoItem(worklog, todo) {
   text.className='todo-text-btn';
   text.textContent = todo.task || '';
   text.disabled=!canUse('worklogEdit');
-  if(canUse('worklogEdit'))TodoInline.attach(label,text,todo,async value => {
-    const previous=todo.task;
-    todo.task=value;
-    try {
-      const response=await authFetch(`/api/worklogs/${worklog.id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({todo:worklog.todo})});
-      if(!response.ok){const result=await response.json().catch(()=>({}));throw new Error(result.message||'TODO 내용을 저장하지 못했습니다.');}
-    } catch(error){todo.task=previous;throw error;}
+  if(canUse('worklogEdit'))TodoInline.attach(label,text,todo,async (value,changes) => {
+    const copy=JSON.parse(JSON.stringify(worklog.todo));
+    const position=flattenTodoItems(worklog.todo).indexOf(todo);
+    const target=flattenTodoItems(copy)[position];target.task=value;
+    if(changes.direction)TodoTree.move(copy,target,changes.direction);
+    // Reverse sibling inserts to preserve the order entered by the user.
+    changes.additions.filter(a=>a.kind==='child').forEach(a=>TodoTree.add(copy,target,a.kind,a.task));
+    changes.additions.filter(a=>a.kind==='sibling').reverse().forEach(a=>TodoTree.add(copy,target,a.kind,a.task));
+    const response=await authFetch(`/api/worklogs/${worklog.id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({todo:copy})});
+    if(!response.ok){const result=await response.json().catch(()=>({}));throw new Error(result.message||'TODO 내용을 저장하지 못했습니다.');}
+    worklog.todo=copy;
     renderWorklogs(currentWorklogs);
-  });
+  },worklog.todo);
   checkbox.addEventListener('change', async () => {
     const affected = flattenTodoItems([todo]);
     const previousStates = affected.map(item => ({item, checked: Boolean(item.checked)}));
@@ -801,6 +808,7 @@ function renderWorklogs(worklogs) {
   container.innerHTML = '';
   if (!Array.isArray(worklogs) || worklogs.length === 0) {
     container.appendChild(createEmptyState());
+    window.WorklogSearch?.refresh();
     return;
   }
   worklogs.forEach(worklog => {
@@ -916,7 +924,8 @@ function renderWorklogs(worklogs) {
     card.appendChild(cardFooter);
     JournalControls.addCardMenu(card, worklog, {duplicate:()=>duplicateWorklogs([worklog]),edit:()=>editButton.click(),remove:()=>deleteButton.click()}, {create:canUse('worklogCreate'),edit:canUse('worklogEdit'),remove:canUse('worklogDelete')});
     container.appendChild(card);
-  })
+  });
+  window.WorklogSearch?.refresh();
 }
 
 /**
@@ -971,6 +980,8 @@ document.getElementById('filter-btn').addEventListener('click', async () => {
 document.getElementById('reset-filter-btn').addEventListener('click', () => {
   const date = document.getElementById('filter-date').value = '';
   document.getElementById('search-dialog').close();
+  document.getElementById('worklog-query').value='';
+  window.WorklogSearch?.clear();
   loadList('');
 })
 
@@ -1097,4 +1108,5 @@ async function duplicateWorklogs(sources) {
   }
 }
 document.getElementById('duplicate-worklog-btn').addEventListener('click', () => duplicateWorklogs(currentWorklogs.filter(item => selectedWorklogIds.has(String(item.id)))));
+
 
