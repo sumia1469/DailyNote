@@ -191,3 +191,8 @@ TODO 일반 본문은 더블클릭·두 번 탭·Enter/F2로 편집하며 링크
 ## 공통 공지 데이터 호환
 
 notice-posts.js는 공통 게시글(shared:true,userId:0)과 notification_reads의 사용자·게시글 버전별 읽음을 분리합니다. 업데이트 공지는 releaseId:shared 삽입 키로 한 번만 생성합니다. 기존 사용자별 releaseId 복사본은 읽음 복원과 이전 상세 URL 별칭으로 보존하고 목록에는 노출하지 않습니다. 최초 공통화 시 가장 최근 관리 수정본을 사용합니다. 삭제는 게시글에 deleted 표시를 남겨 재조회·새 가입으로 되살아나지 않게 합니다. 이전 수신자 전용 게시글은 공개로 바꾸지 않습니다. 신규 관리자 POST는 한 건의 공통 게시글을 생성합니다. notificationRead와 notifications 권한을 기존 서버에서 검증합니다.
+
+
+## Windows 로컬 포터블 실행·바로가기
+
+Node.js 설치 없이 포함된 runtime/node.exe를 사용하는 Windows x64 압축 패키지입니다. Start_DailyNote.bat로 실행하고 처음에만 관리자 계정을 생성합니다. Create_DailyNote_Shortcut.bat로 체크 노트 아이콘의 바탕화면 바로가기를 만듭니다. 사용자·관리자 왼쪽 메뉴의 바로가기 만들기에서 안내와 생성 BAT를 받습니다. 자세한 사용·패키징·데이터 보존은 [로컬 포터블 안내](LOCAL-PORTABLE.md)를 참고하세요.

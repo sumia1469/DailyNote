@@ -154,3 +154,8 @@ TODO 일반 본문은 더블클릭·두 번 탭·Enter/F2로 편집하며 링크
 ## 공통 목록 스크롤
 
 사용자 #main-section과 관리자 .admin-shell은 ListScroll.mount와 list-scroll.css를 공유합니다. 100dvh(100vh fallback), 세로 자동 스크롤, 하단 safe-area, 얇은 스크롤바를 적용합니다. 한 메뉴에 여러 목록이 있어도 본문 스크롤은 하나이며 행은 줄어들지 않습니다. 헤더 76px은 고정됩니다. PC 1440×1000·모바일 390×844에서 긴 목록 마지막 행, 메뉴 이동·참조 복귀 위치, 팝업과 드래그를 확인합니다. 하네스의 긴 목록 예시도 같은 모듈을 사용합니다.
+
+
+## Windows 로컬 포터블 실행·바로가기
+
+Node.js 설치 없이 포함된 runtime/node.exe를 사용하는 Windows x64 압축 패키지입니다. Start_DailyNote.bat로 실행하고 처음에만 관리자 계정을 생성합니다. Create_DailyNote_Shortcut.bat로 체크 노트 아이콘의 바탕화면 바로가기를 만듭니다. 사용자·관리자 왼쪽 메뉴의 바로가기 만들기에서 안내와 생성 BAT를 받습니다. 자세한 사용·패키징·데이터 보존은 [로컬 포터블 안내](LOCAL-PORTABLE.md)를 참고하세요.
