@@ -24,7 +24,7 @@
    plus.addEventListener('click',()=>{if(!addMenu.hidden){hideMenu();return;}addMenu.hidden=false;plus.setAttribute('aria-expanded','true');addMenu.showModal();const r=plus.getBoundingClientRect();addMenu.style.left=Math.max(12,Math.min(innerWidth-addMenu.offsetWidth-12,r.right-addMenu.offsetWidth))+'px';addMenu.style.top=Math.max(12,Math.min(innerHeight-addMenu.offsetHeight-12,r.bottom+6))+'px';addMenu.querySelector('button').focus();});
    addMenu.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();event.stopPropagation();hideMenu();plus.focus();}else if(['ArrowUp','ArrowDown'].includes(event.key)){event.preventDefault();const choices=[...addMenu.children];choices[(choices.indexOf(document.activeElement)+1)%choices.length].focus();}});
    addMenu.addEventListener('cancel',event=>{event.preventDefault();hideMenu();plus.focus();});
-   function outside(event){if(!inputRow.contains(event.target))hideMenu();}document.addEventListener('pointerdown',outside);
+   function outside(event){if(!addMenu.open)return;const r=addMenu.getBoundingClientRect();if(!inputRow.contains(event.target)||(addMenu.open&&event.target===addMenu&&(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom))){hideMenu();plus.focus({preventScroll:true});}}document.addEventListener('pointerdown',outside);
    inputRow.append(input,plus,addMenu);
    const save=document.createElement('button');save.type='button';save.className='primary-btn';save.textContent='저장';
    const cancel=document.createElement('button');cancel.type='button';cancel.className='secondary-btn';cancel.textContent='취소';
