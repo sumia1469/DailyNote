@@ -10,5 +10,17 @@
     close();return {close};
   }
   function dialogs(root=document){root.querySelectorAll('dialog').forEach(dialog=>{if(dialog.dataset.uiBound)return;dialog.dataset.uiBound='true';dialog.addEventListener('click',event=>{if(event.target!==dialog)return;const r=dialog.getBoundingClientRect();if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom){if(!dialog.querySelector('[type=submit]:disabled'))dialog.close();}});dialog.addEventListener('cancel',event=>{if(dialog.querySelector('[type=submit]:disabled'))event.preventDefault();});});}
-  window.UIShell={title,actions,drawer,dialogs};
+  // Search dialogs share the same open/apply/reset lifecycle across menu adapters.
+  function searchDialog({dialog,opener,closer,form,resetter,read,write,defaults,onApply}){
+    let applied={...defaults};
+    function open(){write({...applied});dialog.showModal();}
+    function apply(value){applied={...value};onApply({...applied});dialog.close();opener.focus();}
+    function reset(){write({...defaults});apply(defaults);}
+    opener.addEventListener('click',open);
+    closer.addEventListener('click',()=>dialog.close());
+    form.addEventListener('submit',event=>{event.preventDefault();apply(read());});
+    resetter.addEventListener('click',reset);
+    return {open,reset,get value(){return {...applied};}};
+  }
+  window.UIShell={title,actions,drawer,dialogs,searchDialog};
 })();

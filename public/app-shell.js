@@ -1,7 +1,7 @@
 (function(){
   const menus=UIConfig.menus.user,panels=Object.fromEntries(menus.map(menu=>[menu.id,document.getElementById(menu.panel)]));
   const detail=document.getElementById('view-notification-detail'),back=document.getElementById('notification-back'),opener=document.getElementById('sidebar-open');
-  const controls=['open-search-btn','open-worklog-btn','open-upload-btn','open-memo-btn'].map(id=>document.getElementById(id));
+  const controls=['open-search-btn','open-worklog-btn','open-upload-btn','open-memo-btn','open-memo-search-btn'].map(id=>document.getElementById(id));
   let user=null,allowed=[],ready=false;
   const drawer=UIShell.drawer({nav:document.getElementById('app-sidebar'),opener,closer:document.getElementById('sidebar-close'),scrim:document.getElementById('sidebar-scrim'),select:'[data-view]'});
   function show(){

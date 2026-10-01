@@ -61,6 +61,7 @@
     <button type="button" class="shell-icon mobile-menu" id="sidebar-open" aria-label="메뉴 열기" aria-expanded="false" aria-controls="app-sidebar" data-icon="menu"></button>
     <div class="main-title ui-title"><h1 id="shell-title">일일리스트</h1><small>DailyNote</small></div>
     <div class="main-actions ui-actions">
+      <button type="button" id="open-memo-search-btn" class="shell-icon" aria-label="메모 검색" title="메모 검색" data-icon="search" hidden></button>
       <button type="button" id="open-memo-btn" class="shell-icon" aria-label="새 메모 등록" title="새 메모 등록" data-icon="plus" hidden></button>
       <button type="button" id="open-search-btn" class="shell-icon" aria-label="일지 검색" title="일지 검색" data-icon="search"></button>
       <button type="button" id="open-upload-btn" class="shell-icon" aria-label="파일 등록" title="파일 등록" data-icon="plus" hidden></button>
@@ -69,7 +70,7 @@
   </header>
   <button type="button" id="notification-back" class="shell-icon ui-back" aria-label="공지 목록으로 돌아가기" data-icon="back" hidden></button>
   <p id="no-access" class="empty-state" hidden>사용 가능한 메뉴가 없습니다. 관리자에게 권한을 요청해 주세요.</p>
-  <section id="view-memos" hidden><div class="memo-filters"><input id="memo-search" type="search" placeholder="메모 검색" aria-label="메모 검색"><select id="memo-filter" aria-label="메모 분류"><option value="all">전체</option><option value="star">중요</option></select><select id="memo-sort" aria-label="메모 정렬"><option value="recent">최근 수정순</option><option value="title">제목순</option><option value="old">오래된 순</option></select></div><p id="memo-list-status" role="status"></p><div id="memo-list" class="memo-list"></div></section>
+  <section id="view-memos" hidden><p id="memo-list-status" role="status"></p><div id="memo-list" class="memo-list"></div></section>
   <!-- 공지 -->
   <section id="view-notifications" class="content-card notification-section" hidden>
     <div id="notification-body" class="collapsible-card-body">
@@ -96,6 +97,7 @@
     </div>
   </section>
 </section>
+<dialog id="memo-search-dialog" class="journal-dialog ui-search-dialog" aria-labelledby="memo-search-title"><form id="memo-search-form"><div class="journal-dialog-header"><h2 id="memo-search-title">메모 검색</h2><button type="button" id="memo-search-close" class="shell-icon" aria-label="메모 검색 닫기" data-icon="close"></button></div><div class="form-field"><label for="memo-search">제목·내용</label><input id="memo-search" type="search" placeholder="검색어를 입력하세요"></div><div class="form-field"><label for="memo-filter">분류</label><select id="memo-filter"><option value="all">전체</option><option value="star">중요</option></select></div><div class="form-field"><label for="memo-sort">정렬</label><select id="memo-sort"><option value="recent">최근 수정순</option><option value="title">제목순</option><option value="old">오래된 순</option></select></div><div class="journal-dialog-actions"><button type="button" id="memo-search-reset" class="secondary-btn">전체 보기</button><button type="submit" class="primary-btn">검색</button></div></form></dialog>
 <dialog id="memo-editor" data-ui-bound="true" class="memo-editor" aria-labelledby="memo-editor-label">
  <header class="memo-editor-header"><button type="button" id="memo-close" class="shell-icon" aria-label="메모 편집 닫기">〈</button><h2 id="memo-editor-label">새 메모</h2><div><button type="button" id="memo-star" class="shell-icon" aria-label="중요 메모 표시" aria-pressed="false">☆</button><button type="button" id="memo-more" class="shell-icon" aria-label="메모 더보기" aria-expanded="false">⋯</button><button type="button" id="memo-save" class="primary-btn">저장</button></div></header>
  <div id="memo-menu" class="memo-menu" hidden><div class="memo-menu-top"><label>메모 색상<select id="memo-color"><option value="white">기본</option><option value="yellow">노랑</option><option value="blue">파랑</option><option value="green">초록</option><option value="pink">분홍</option></select></label><button type="button" id="memo-pin">메모 고정</button></div><button type="button" data-memo-action="find">메모 내 검색</button><button type="button" data-memo-action="folder">폴더 이동</button><button type="button" data-memo-action="share">공유 / 텍스트 내보내기</button><button type="button" data-memo-action="duplicate">복제</button><button type="button" data-memo-action="info">정보</button><button type="button" data-memo-action="delete">삭제</button></div>
