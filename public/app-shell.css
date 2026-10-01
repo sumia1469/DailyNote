@@ -147,3 +147,37 @@ button.mobile-menu,button.sidebar-close { display:inline-flex; }
   #main-section .main-actions { gap:4px; }
   #main-section.main-section { padding-top:86px; }
 }
+
+/* Admin uses the same full-width shell and centered title as the worklog. */
+.admin-shell { margin:0; width:auto; max-width:none; padding:92px 24px 32px; }
+.admin-shell .admin-header { position:fixed; inset:0 0 auto; z-index:25; display:grid; grid-template-columns:92px minmax(0,1fr) 92px; align-items:center; gap:8px; height:76px; padding:10px 20px; margin:0; box-sizing:border-box; background:var(--surface); }
+.admin-shell button.admin-mobile-menu { display:inline-flex; margin:0; width:42px; height:42px; border-radius:50%; background:var(--shell-sidebar); }
+.admin-title { display:flex; flex-direction:column; align-items:center; gap:2px; min-width:0; text-align:center; }
+.admin-shell .admin-title h1 { margin:0; font-size:19px; font-weight:600; line-height:1.4; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; letter-spacing:-.5px; }
+.admin-title small { color:var(--muted); font-size:12px; line-height:1.4; }
+.admin-top-actions { justify-self:end; }
+.admin-top-actions .shell-icon { width:42px; height:42px; border-radius:50%; background:var(--shell-sidebar); }
+.admin-top-actions .app-icon { width:27px; height:27px; }
+.admin-shell .admin-nav { width:min(280px,85vw); margin:0; padding:22px 14px 14px; overflow-y:auto; transform:translateX(-100%); transition:transform .18s ease; box-shadow:8px 0 40px rgba(0,0,0,.08); }
+.admin-shell .admin-nav.is-open { transform:translateX(0); }
+.admin-shell .admin-nav::before { content:none; }
+.admin-drawer-brand { display:flex; align-items:center; justify-content:space-between; padding:0 10px 18px; font-size:19px; }
+.admin-return { display:flex; align-items:center; gap:12px; padding:12px; border-radius:9px; color:var(--text); text-decoration:none; font-size:14px; }
+.admin-return:hover { background:var(--line); }
+.admin-return .app-icon { width:20px; height:20px; }
+#admin-account { padding:0 12px 16px; margin:4px 0 12px; border-bottom:1px solid var(--line); font-size:12px; color:var(--muted); }
+.admin-drawer-open { overflow:hidden; }
+.admin-shell .admin-panel > .admin-card,.admin-shell #panel-notifications > div > .admin-card { border:0; padding:0; background:transparent; }
+#panel-notifications > div > .admin-card > h2,#panel-files > .admin-card > h2,#panel-files > .admin-card > p { display:none; }
+#panel-users #user-create { display:none; }
+.admin-dialog { box-sizing:border-box; border-radius:24px; }
+.admin-dialog::backdrop { background:rgba(0,0,0,.16); backdrop-filter:blur(2px); }
+#admin-upload-dialog .admin-upload { flex-direction:column; align-items:stretch; }
+.admin-return:focus-visible,.admin-nav button:focus-visible { outline:2px solid var(--text); outline-offset:3px; }
+@media(max-width:767px) {
+ .admin-shell { padding:86px 12px 24px; }
+ .admin-shell .admin-header { padding:10px 12px; grid-template-columns:88px minmax(0,1fr) 88px; }
+ .admin-shell .admin-title h1 { font-size:18px; }
+ .admin-title small { font-size:11px; }
+}
+@media(prefers-reduced-motion:reduce){.admin-shell .admin-nav{transition:none;}}

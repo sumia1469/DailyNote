@@ -1,0 +1,37 @@
+/* Shared UI contract: loaded last in every menu module. */
+:root { --ui-header-height:76px; --ui-action-size:42px; --ui-dialog-radius:24px; --ui-page-gap:24px; }
+body .ui-header,body #main-section .ui-header,body .admin-shell .ui-header { display:grid; grid-template-columns:92px minmax(0,1fr) 92px; gap:8px; align-items:center; position:fixed; inset:0 0 auto; box-sizing:border-box; height:var(--ui-header-height); padding:10px 20px; margin:0; z-index:25; background:var(--surface); border:0; box-shadow:none; }
+body .ui-header .ui-title,body #main-section .ui-title { grid-column:2; grid-row:1; display:flex; flex-direction:column; align-items:center; justify-content:center; min-width:0; gap:2px; text-align:center; }
+body .ui-title h1,body #main-section .ui-title h1,body .admin-shell .ui-title h1 { max-width:100%; margin:0; font-size:19px; font-weight:600; line-height:1.4; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; letter-spacing:-.5px; }
+.ui-title small { color:var(--muted); font-size:12px; line-height:1.4; }
+body .ui-actions,body #main-section .ui-actions { grid-column:3; grid-row:1; display:flex; justify-content:flex-end; justify-self:end; gap:8px; margin:0; }
+body .ui-header > .shell-icon,body .ui-actions .shell-icon,body #main-section .ui-actions .shell-icon { width:var(--ui-action-size); height:var(--ui-action-size); border-radius:50%; background:var(--shell-sidebar); margin:0; grid-column:1; grid-row:1; }
+.ui-actions .app-icon { width:24px; height:24px; }
+.ui-drawer-open { overflow:hidden; }
+.onboarding-link { display:flex; gap:12px; align-items:center; padding:12px; border-radius:9px; color:var(--text); text-decoration:none; font-size:14px; }
+.onboarding-link:hover { background:var(--line); }.onboarding-link .app-icon { width:20px; height:20px; }
+#notification-back.ui-back { position:fixed; top:17px; left:20px; z-index:26; width:42px; height:42px; border-radius:50%; background:var(--shell-sidebar); }
+#main-section #view-notifications { max-width:none; margin:0; }
+#main-section #notification-body { border:0; padding:0; }
+#main-section .notification-list { gap:0; margin:0; padding:0; list-style:none; }
+#main-section .notification-item { padding:18px 8px; border:0; border-bottom:1px solid var(--line); border-radius:0; background:var(--surface); box-shadow:none; }
+#main-section .notification-item.unread { background:var(--shell-sidebar); }
+#main-section .notification-message { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+#main-section .notification-detail-page { max-width:900px; padding:24px 8px; }
+#notification-page-date { color:var(--muted); font-size:13px; }
+#notification-page-message { white-space:pre-wrap; overflow-wrap:anywhere; line-height:1.8; margin:24px 0; }
+#notification-page-state:empty { display:none; }
+.ui-guide { max-width:1040px; margin:0 auto; padding:104px 24px 48px; }
+.ui-guide section { padding:24px; margin:0 0 20px; border:1px solid var(--line); border-radius:16px; background:var(--surface); }
+.ui-guide h2 { margin-top:0; font-size:22px; }.ui-guide p,.ui-guide li { line-height:1.8; }
+.ui-guide .guide-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:20px; }
+.ui-guide a { color:var(--text); }.ui-guide code { background:var(--shell-sidebar); padding:2px 5px; border-radius:5px; }
+.ui-guide table { width:100%; border-collapse:collapse; }.ui-guide th,.ui-guide td { text-align:left; padding:12px; border-bottom:1px solid var(--line); }
+.ui-guide pre { overflow:auto; white-space:pre-wrap; overflow-wrap:anywhere; padding:16px; border-radius:12px; background:var(--shell-sidebar); }
+.ui-guide .admin-row { margin:12px 0; }
+@media(max-width:767px){body .ui-header,body #main-section .ui-header,body .admin-shell .ui-header{padding:10px 12px;grid-template-columns:88px minmax(0,1fr) 88px;}body .ui-title h1,body #main-section .ui-title h1,body .admin-shell .ui-title h1{font-size:18px;}.ui-title small{font-size:11px;}body .ui-actions,body #main-section .ui-actions{gap:4px;}#notification-back.ui-back{left:12px;}.ui-guide{padding:92px 12px 24px;}.ui-guide section{padding:18px;}.ui-guide .guide-grid{grid-template-columns:1fr;}}
+
+/* Keep notification management a concise list; full text belongs in the edit popup. */
+#admin-notifications .admin-row strong { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; white-space:normal; font-weight:500; }
+#admin-notifications .admin-row { padding:18px; border-radius:14px; }
+#admin-notifications .admin-row small { margin:8px 0 14px; }

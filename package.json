@@ -6,7 +6,9 @@
   "scripts": {
     "start": "node src/server.js",
     "init": "node scripts/init.js",
-    "test": "node --test test/*.test.js"
+    "test": "node --test test/*.test.js",
+    "test:ui": "node --test test/ui-contract.test.js",
+    "test:browser": "node scripts/verify-ui.cjs"
   },
   "author": "Your Company",
   "license": "MIT",

@@ -50,6 +50,10 @@ test('login, ownership, worklog CRUD, notifications, password update and file li
  if (!redisMode) assert.equal(JSON.parse(fs.readFileSync(path.join(process.env.DATA_DIR,'work_logs.json')))[0].memo,'저장 성공');
  else assert.equal(fs.existsSync(process.env.DATA_DIR),false);
  const note=await request('POST','/api/notifications',{userId:user.id,message:'완료'},token);assert.equal(note.status,201);
+ assert.equal((await request('GET',`/api/notifications/${note.data.id}`,null,token)).data.message,'완료');
+ assert.equal((await request('GET',`/api/notifications/${note.data.id}`,null,other)).status,404);
+ assert.equal((await request('GET','/api/notifications/999999',null,token)).status,404);
+ assert.equal((await request('GET',`/api/notifications/${note.data.id}`)).status,401);
  assert.equal((await request('PUT',`/api/notifications/${note.data.id}`,{},token)).status,200);
  assert.equal((await request('GET','/api/notifications',null,token)).data[0].isRead,true);
  const file=await request('POST','/api/upload',{filename:'../테스트.txt',mime:'text/plain',data:Buffer.from('파일 테스트').toString('base64')},token);assert.equal(file.status,201);
@@ -72,3 +76,4 @@ test('Vercel without Redis serves login and assets while API reports missing sto
   assert.equal((await request('POST','/api/auth/login',{username:'tester',password:'test-password-123'})).status,503);
  } finally {if(previous===undefined)delete process.env.VERCEL;else process.env.VERCEL=previous;}
 });
+

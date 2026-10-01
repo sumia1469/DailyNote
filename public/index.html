@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="screen-settings.css">
   <link rel="stylesheet" href="app-shell.css">
+  <link rel="stylesheet" href="ui-shell.css">
 </head>
 <body>
 <!-- 로그인 섹션 -->
@@ -48,33 +49,27 @@
       <a href="admin.html" id="admin-page-btn" data-icon="appearance" hidden>관리자</a>
       <button type="button" id="logout-btn" data-icon="logout">로그아웃</button>
     </nav>
+    <a class="onboarding-link" href="onboarding.html" data-icon="journal">시작 가이드</a>
     <div class="sidebar-account"><span class="account-avatar" data-icon="users" aria-hidden="true"></span><div><strong id="shell-account">내 업무 공간</strong><small>DailyNote</small></div><a href="change-password.html" class="shell-icon" title="비밀번호 변경" aria-label="비밀번호 변경" data-icon="password"></a></div>
   </aside>
-  <header class="main-header">
+  <header class="main-header ui-header">
     <button type="button" class="shell-icon mobile-menu" id="sidebar-open" aria-label="메뉴 열기" aria-expanded="false" aria-controls="app-sidebar" data-icon="menu"></button>
-    <div class="main-title"><h1 id="shell-title">일일리스트</h1><small>DailyNote</small></div>
-    <div class="main-actions">
+    <div class="main-title ui-title"><h1 id="shell-title">일일리스트</h1><small>DailyNote</small></div>
+    <div class="main-actions ui-actions">
       <button type="button" id="open-search-btn" class="shell-icon" aria-label="일지 검색" title="일지 검색" data-icon="search"></button>
       <button type="button" id="open-upload-btn" class="shell-icon" aria-label="파일 등록" title="파일 등록" data-icon="plus" hidden></button>
       <button type="button" id="open-worklog-btn" class="shell-icon" aria-label="새 일지 등록" title="새 일지 등록" data-icon="plus"></button>
     </div>
   </header>
+  <button type="button" id="notification-back" class="shell-icon ui-back" aria-label="알림 목록으로 돌아가기" data-icon="back" hidden></button>
   <p id="no-access" class="empty-state" hidden>사용 가능한 메뉴가 없습니다. 관리자에게 권한을 요청해 주세요.</p>
   <!-- 알림 -->
   <section id="view-notifications" class="content-card notification-section" hidden>
-    <div class="section-header">
-      <div>
-        <h2 data-icon="bell">알림</h2>
-        <p>새로운 알림과 읽지 않은 알림을 확인합니다.</p>
-      </div>
-      <button type="button" class="card-toggle" aria-label="알림 접기" aria-expanded="true" aria-controls="notification-body" data-card-title="알림">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 15 6-6 6 6"/></svg>
-      </button>
-    </div>
     <div id="notification-body" class="collapsible-card-body">
       <ul id="noti-list" class="notification-list"></ul>
     </div>
   </section>
+  <section id="view-notification-detail" class="content-card notification-detail-page" hidden aria-labelledby="shell-title"><p id="notification-page-state" role="status" aria-live="polite"></p><time id="notification-page-date"></time><p id="notification-page-message"></p></section>
   <!-- 파일 업로드 -->
   <section id="view-files" class="content-card upload-section" hidden>
     <div id="upload-body" class="collapsible-card-body">
@@ -188,11 +183,6 @@
     <button type="button" class="secondary-btn" id="copy-cancel-btn">취소</button>
   </div>
 </dialog>
-<dialog id="notification-detail-dialog" class="copy-confirm-dialog notification-detail-dialog" aria-labelledby="notification-detail-title">
-  <div class="notification-detail-header"><h2 id="notification-detail-title">알림 내용</h2><button type="button" id="notification-detail-close" class="icon-btn" aria-label="알림 닫기" data-icon="close"></button></div>
-  <small id="notification-detail-date"></small>
-  <p id="notification-detail-message"></p>
-</dialog>
 <div id="loading-overlay" class="loading-overlay" hidden>
   <div class="loading-panel" role="status" aria-live="polite" aria-atomic="true">
     <div class="orbit-spinner" aria-hidden="true">
@@ -214,9 +204,12 @@
 <script src="worklog-copy.js"></script>
 <script src="icons.js"></script>
 <script src="screen-settings.js"></script>
+<script src="ui-config.js"></script>
+<script src="ui-shell.js"></script>
 <script src="app-shell.js"></script>
 <script src="journal-controls.js"></script>
 <script src="script.js"></script>
 </body>
 </html>
+
 

@@ -1,0 +1,82 @@
+# 개발자 온보딩
+
+## 첫날 목표
+
+로컬에서 예시 계정으로 로그인하고 사용자 3개·관리자 5개 메뉴를 열어 봅니다. 그다음 `npm test`를 통과시키고 디자인 하네스에서 헤더·메뉴·팝업 규칙을 확인합니다. 운영 데이터 연결은 로컬 이해와 검증 후 별도로 진행합니다.
+
+## 준비 및 실행
+
+Node.js 24, npm, Git, 최신 브라우저가 필요합니다. 프런트엔드 빌드 과정은 없습니다. 저장소를 복제한 디렉터리에서 실행합니다.
+
+```bash
+npm ci
+ADMIN_USERNAME=admin ADMIN_PASSWORD='직접-지정한-8자-이상-비밀번호' npm run init
+npm start
+```
+
+PowerShell:
+
+```powershell
+npm ci
+$env:ADMIN_USERNAME='admin'
+$env:ADMIN_PASSWORD='직접-지정한-8자-이상-비밀번호'
+npm run init
+npm start
+```
+
+`http://localhost:3000`에 접속합니다. 환경 변수는 실행 셸에서 설정합니다. `.env.example`을 복사하는 것만으로는 자동 적용되지 않습니다. 초기화는 기존 계정을 덮어쓰지 않습니다. `PORT`, `DATA_DIR`, `UPLOAD_DIR`로 개발 환경을 분리할 수 있습니다.
+
+폐쇄망은 허용된 환경에서 `npm ci`로 Redis 패키지를 준비하고 조직 정책에 따라 Node 런타임·소스·필요 npm 의존성을 반입합니다. 프런트엔드 파일은 `public/`에 모두 있고 UI는 외부 CDN·폰트 요청이 없습니다. 로컬 JSON 모드 자체는 Redis 연결 없이 동작합니다. Vercel 전용 설치물을 폐쇄망 UI에 추가하지 않습니다.
+
+## 소스 지도
+
+| 위치 | 책임 |
+| --- | --- |
+| `src/server.js` | 정적 파일·API 라우팅, 인증, 기본 기능 권한 |
+| `src/auth.js`, `src/permissions.js` | 비밀번호·세션·역할·권한 |
+| `src/datastore.js`, `src/redis-store.js` | JSON 또는 Redis 저장 |
+| `src/worklog.routes.js` | 본인 일지 CRUD |
+| `src/notification.routes.js` | 본인 알림 목록·상세·읽음 |
+| `src/admin.routes.js` | 관리 기능·승인·권한·공유 설정 |
+| `public/ui-config.js` | 메뉴 선언과 권한별 액션 결정 |
+| `public/ui-shell.js` | 공통 제목·액션·숨김 메뉴·팝업 |
+| `public/app-shell.js` | 사용자 해시 라우트와 상세 진입 |
+| `public/script.js` | 사용자 로그인·업무 데이터·폼 저장 |
+| `public/admin.js` | 관리자 데이터·팝업 제출·설정 |
+| `public/journal-controls.js` | 일지 카드 메뉴·검색·삭제 확인 |
+| `public/todo-inline.js`, `public/list-editor.js` | TODO 인라인 수정·목록 구조 |
+| `public/ui-shell.css` | 최종 공통 디자인 규칙 |
+| `test/` | Node 기본 테스트 러너 |
+
+## 로딩 순서와 규칙
+
+CSS는 `style.css` → 화면 설정 → 관리자 CSS(해당 화면) → `app-shell.css` → `ui-shell.css` 순서입니다. 공통 UI 계약은 마지막에 적용됩니다. JS는 아이콘·화면 설정 → `ui-config.js` → `ui-shell.js` → 업무 셸·업무 JS 순서입니다. 관리자의 `admin.js`는 데이터 준비 후 공통 설정으로 패널을 표시합니다. 메뉴 DOM ID와 설정의 `panel`·`actions.id`를 일치시킵니다.
+
+## 등록·수정 연결
+
+UIConfig의 액션은 제목·버튼·권한을 선언합니다. 실제 저장은 업무 어댑터가 담당합니다. 관리자 ＋ 클릭은 활성 패널에 따라 알림·업로드·사용자 팝업을 엽니다. `submitDialog`는 중복 제출 방지, 진행 표시, 오류 표시, 성공 종료를 담당합니다. 오류 시 폼을 먼저 초기화하지 않습니다. 수정은 ID와 기존 값으로 팝업을 채워 PUT을 보냅니다. 권한 설정·화면 설정은 본문 폼을 유지합니다.
+
+## 알림 상세 URL
+
+`/#notifications/ID`는 사용자 셸의 상세 라우트입니다. 해시를 사용하므로 정적 호스팅의 별도 rewrite가 필요 없습니다. 상세 데이터를 `GET /api/notifications/:id`로 받아 본문을 `textContent`로 표시합니다. 서버는 세션의 사용자 ID와 알림 소유자를 비교합니다. 성공하면 PUT으로 읽음 처리합니다. 화면 전환 시 요청 버전을 증가시켜 이전 응답이 현재 화면을 바꾸지 않게 합니다. 새로고침·브라우저 뒤로가기·404·401·권한 거부를 검증합니다.
+
+## 검증
+
+```bash
+npm test
+npm run test:ui
+```
+
+디자인 하네스는 `/design-harness.html`에서 사용자·관리자 메뉴를 선택하고 ＋ 팝업, 빈 입력 오류, 저장 상태, 숨김 메뉴와 키보드를 확인합니다. 체크 실행은 현재 뷰포트에서 제목 중앙·가로 넘침·중복 ID·버튼 배치를 검사합니다. 이 페이지는 예시 전용이며 API를 호출하거나 운영 데이터를 저장하지 않습니다.
+
+실제 브라우저의 PC 1440×1000과 모바일 390×844에서 메뉴 전환·팝업·포커스·헤더·목록을 확인합니다. Node UI 계약 테스트만으로 픽셀·브라우저 호환성을 통과했다고 판단하지 않습니다. 브라우저 설치 실패 시 검증 불가를 명시합니다.
+
+## 배포와 운영 인계
+
+Vercel은 `vercel.json`과 `api/index.js`를 사용합니다. 저장소 연결은 환경 변수로 설정하며 토큰·비밀번호를 커밋하지 않습니다. Redis 연결 모드의 세션·자료 저장과 로컬 JSON 모드는 분리되어 있습니다. 운영 Redis에 테스트를 실행하지 않습니다. 신규 AI·개발자는 README와 AGENTS.md를 먼저 읽고 최신 원격 커밋을 확인합니다. 화면 변경 후 문서·하네스·테스트를 함께 갱신하고 커밋한 소스와 배포 소스를 일치시킵니다.
+
+## 선택 브라우저 자동 하네스
+
+개발 환경에 Playwright가 있을 때 npm run test:browser를 실행합니다. 없다면 외부 반입이 허용된 개발 환경에서만 npm install --no-save --package-lock=false playwright와 npx playwright install chromium으로 준비합니다. 이 도구는 프런트엔드나 운영 런타임의 의존성이 아닙니다. PLAYWRIGHT_MODULE_PATH와 BROWSER_EXECUTABLE_PATH로 이미 설치한 도구를 지정할 수 있습니다. UI_CAPTURE_DIR로 캡처 저장 경로를 지정합니다.
+
+스크립트는 매번 독립 임시 JSON·업로드 경로와 랜덤 비밀번호 예시 계정을 만들고 Redis 환경 변수를 사용하지 않습니다. 1440×1000 PC 및 390×844 모바일, 사용자 3개·관리자 5개 메뉴, 상세 새로고침·복귀, 알림 등록·수정·입력 유지, 파일 업로드와 디자인 하네스를 검증하고 20개 캡처를 저장합니다. 캡처 폰트는 검증 기기에 한국어 글꼴이 있어야 하며 제품에 외부 폰트를 추가할 필요는 없습니다.

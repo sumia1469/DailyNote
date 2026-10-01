@@ -9,6 +9,7 @@ async function listNoti(req, res, auth) {
   const mine = all.filter(n => n.userId === auth.userId);
   sendJson(res, 200, mine.sort((a,b) => new Date(b.createdAt)-new Date(a.createdAt) || b.id-a.id));
 }
+async function detailNoti(req,res,auth,id){const note=await ds.findOne('notifications',note=>note.id===id&&note.userId===auth.userId);if(!note)return sendJson(res,404,{message:'Notification not found'});return sendJson(res,200,note);}
 async function createNoti(req, res, auth) {
   const {userId, message} = await parseJsonBody(req);
   if (Number(userId) !== auth.userId && !auth.permissions.notifications) return sendJson(res, 403, {message: '알림 관리 권한이 필요합니다.'});
@@ -27,9 +28,11 @@ async function notificationRouter(req, res, auth) {
   const parts = parsed.pathname.split('/').filter(Boolean);
   const id = parts[2] ? Number(parts[2]) : null;
   const method = req.method.toUpperCase();
+  if (method === 'GET' && id) return detailNoti(req,res,auth,id);
   if (method === 'GET' && !id) return listNoti(req, res, auth);
   if (method === 'POST' && !id) return createNoti(req, res, auth);
   if (method === 'PUT' && id) return markRead(req, res, auth, id);
   sendJson(res, 404, {message: 'Notification API not found'});
 }
 module.exports = {notificationRouter};
+

@@ -203,12 +203,8 @@ async function loadNoti() {
       const content = document.createElement('button');
       content.type = 'button';
       content.className = 'notification-content';
-      content.setAttribute('aria-haspopup', 'dialog');
-      content.addEventListener('click', () => {
-        document.getElementById('notification-detail-message').textContent = notification.message || '';
-        document.getElementById('notification-detail-date').textContent = notification.createdAt ? new Date(notification.createdAt).toLocaleString('ko-KR') : '';
-        document.getElementById('notification-detail-dialog').showModal();
-      });
+      content.setAttribute('aria-label',(notification.message||'알림')+' 상세 보기');
+      content.addEventListener('click', () => { location.hash='notifications/'+notification.id; });
       const message = document.createElement('span');
       message.className = 'notification-message';
       message.textContent = notification.message || '';
@@ -250,13 +246,20 @@ async function loadNoti() {
   }
 }
 
-const notificationDialog = document.getElementById('notification-detail-dialog');
-document.getElementById('notification-detail-close').addEventListener('click', () => notificationDialog.close());
-notificationDialog.addEventListener('click', event => {
-  if (event.target !== notificationDialog) return;
-  const bounds = notificationDialog.getBoundingClientRect();
-  if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) notificationDialog.close();
-});
+window.NotificationPage = (function(){
+  let version=0;
+  return {cancel(){version++;},async load(id){
+    const current=++version,state=document.getElementById('notification-page-state'),message=document.getElementById('notification-page-message'),date=document.getElementById('notification-page-date');
+    state.textContent='알림을 불러오는 중입니다…';message.textContent='';date.textContent='';date.removeAttribute('datetime');
+    try{
+      const response=await authFetch('/api/notifications/'+encodeURIComponent(id));if(current!==version)return;
+      if(!response.ok)throw new Error(response.status===404?'알림을 찾을 수 없습니다. 삭제되었거나 접근할 수 없는 알림입니다.':'알림을 불러오지 못했습니다.');
+      const note=await response.json();if(current!==version)return;message.textContent=note.message||'';
+      if(note.createdAt){date.textContent=new Date(note.createdAt).toLocaleString('ko-KR');date.dateTime=note.createdAt;}state.textContent='';
+      if(!note.isRead){const read=await authFetch('/api/notifications/'+encodeURIComponent(id),{method:'PUT'});if(current!==version)return;if(!read.ok)state.textContent='읽음 처리에 실패했습니다. 알림 목록에서 다시 시도해 주세요.';else await loadNoti();}
+    }catch(error){if(current===version)state.textContent=error.message;}
+  }};
+})();
 
 /* 파일 업로드 — POST /api/upload (base64) */
 document.getElementById('upload-form').addEventListener('submit', async e => {
@@ -1094,3 +1097,4 @@ async function duplicateWorklogs(sources) {
   }
 }
 document.getElementById('duplicate-worklog-btn').addEventListener('click', () => duplicateWorklogs(currentWorklogs.filter(item => selectedWorklogIds.has(String(item.id)))));
+

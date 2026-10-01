@@ -1,66 +1,27 @@
-(function () {
-  const views = {worklogs: document.getElementById('worklog-section'), notifications: document.getElementById('view-notifications'), files: document.getElementById('view-files')};
-  const titles = {worklogs:'일일리스트',notifications:'알림',files:'파일관리'};
-  let allowed = [], ready = false;
-  const sidebar = document.getElementById('app-sidebar');
-  const scrim = document.getElementById('sidebar-scrim');
-  const opener = document.getElementById('sidebar-open');
-  function closeMenu(restoreFocus = false) {
-    sidebar.classList.remove('is-open'); scrim.hidden = true; opener.setAttribute('aria-expanded','false');
-    sidebar.inert = true;
-    if (restoreFocus) opener.focus();
+(function(){
+  const menus=UIConfig.menus.user,panels=Object.fromEntries(menus.map(menu=>[menu.id,document.getElementById(menu.panel)]));
+  const detail=document.getElementById('view-notification-detail'),back=document.getElementById('notification-back'),opener=document.getElementById('sidebar-open');
+  const controls=['open-search-btn','open-worklog-btn','open-upload-btn'].map(id=>document.getElementById(id));
+  let user=null,allowed=[],ready=false;
+  const drawer=UIShell.drawer({nav:document.getElementById('app-sidebar'),opener,closer:document.getElementById('sidebar-close'),scrim:document.getElementById('sidebar-scrim'),select:'[data-view]'});
+  function show(){
+    if(!ready)return;
+    const route=location.hash.slice(1),detailId=route.match(/^notifications\/(\d+)$/)?.[1];
+    let key=detailId?'notifications':route;if(!allowed.includes(key))key=allowed[0];
+    const isDetail=Boolean(detailId&&key==='notifications');
+    Object.entries(panels).forEach(([id,panel])=>panel.hidden=isDetail||id!==key);detail.hidden=!isDetail;back.hidden=!isDetail;opener.hidden=isDetail;
+    document.querySelectorAll('[data-view]').forEach(node=>{if(node.dataset.view===key)node.setAttribute('aria-current','page');else node.removeAttribute('aria-current');});
+    UIShell.title(document.getElementById('shell-title'),isDetail?'알림 상세':menus.find(menu=>menu.id===key)?.title||'DailyNote');
+    UIShell.actions('user',isDetail?'detail':key,user.permissions||{},controls);
+    document.getElementById('no-access').hidden=allowed.length>0;
+    if(isDetail)window.NotificationPage?.load(detailId);else window.NotificationPage?.cancel();
+    const canonical=isDetail?'notifications/'+detailId:key;if(canonical&&location.hash!=='#'+canonical)history.replaceState(null,'','#'+canonical);
+    window.JournalControls?.close();drawer.close();
+    if(isDetail){document.getElementById('shell-title').setAttribute('tabindex','-1');document.getElementById('shell-title').focus();}
   }
-  function show(view) {
-    if (!ready) return;
-    if (!allowed.includes(view)) view = allowed[0];
-    Object.entries(views).forEach(([key, node]) => { node.hidden = key !== view; });
-    document.querySelectorAll('[data-view]').forEach(node => { if (node.dataset.view === view) node.setAttribute('aria-current','page'); else node.removeAttribute('aria-current'); });
-    document.getElementById('shell-title').textContent = titles[view] || 'DailyNote';
-    document.title = (titles[view] || 'DailyNote') + ' · DailyNote';
-    document.getElementById('no-access').hidden = allowed.length > 0;
-    document.getElementById('open-search-btn').hidden = view !== 'worklogs' || !allowed.includes('worklogs') || document.getElementById('worklog-list').hidden;
-    document.getElementById('open-worklog-btn').hidden = view !== 'worklogs' || !window.AppShell.canCreate;
-    document.getElementById('open-upload-btn').hidden = view !== 'files' || !window.AppShell.canUpload;
-    if (view && location.hash !== '#'+view) history.replaceState(null,'','#'+view);
-    closeMenu();
-  }
-  document.querySelectorAll('[data-view]').forEach(node => node.addEventListener('click', event => {
-    event.preventDefault();
-    if (!allowed.includes(node.dataset.view)) return;
-    if (location.hash !== '#'+node.dataset.view) location.hash = node.dataset.view; else show(node.dataset.view);
-  }));
-  window.addEventListener('hashchange', () => show(location.hash.slice(1)));
-  opener.addEventListener('click', () => { sidebar.inert = false; sidebar.classList.add('is-open'); scrim.hidden = false; opener.setAttribute('aria-expanded','true'); document.getElementById('sidebar-close').focus(); });
-  document.getElementById('sidebar-close').addEventListener('click', () => closeMenu(true));
-  scrim.addEventListener('click', () => closeMenu(true));
-  document.addEventListener('keydown', event => {
-    if (!sidebar.classList.contains('is-open')) return;
-    if (event.key === 'Escape') closeMenu(true);
-    if (event.key === 'Tab') {
-      const controls = Array.from(sidebar.querySelectorAll('a,button')).filter(node => !node.hidden && node.getClientRects().length);
-      const first = controls[0], last = controls.at(-1);
-      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
-      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
-    }
-  });
-
-  const list = document.getElementById('noti-list');
-  new MutationObserver(() => {
-    const count = list.querySelectorAll('.notification-item.unread').length;
-    const badge = document.getElementById('notification-count'); badge.textContent = count; badge.hidden = !count;
-  }).observe(list,{childList:true,subtree:true});
-  window.AppShell = {
-    configure(user) {
-      const p = user.permissions || {}, can = key => p[key] !== false;
-      allowed = Object.keys(views).filter(key => key === 'worklogs' ? can('worklogRead') || can('worklogCreate') : key === 'files' ? can('fileRead') || can('fileUpload') : can('notificationRead'));
-      document.querySelectorAll('[data-view]').forEach(node => { node.hidden = !allowed.includes(node.dataset.view); });
-      document.getElementById('open-search-btn').hidden = !can('worklogRead');
-      document.getElementById('shell-account').textContent = user.username || '내 업무 공간';
-      window.AppShell.canCreate = can('worklogCreate');
-      window.AppShell.canUpload = can('fileUpload');
-      ready = true; show(location.hash.slice(1));
-    },
-    reset() { ready = false; allowed = []; closeMenu(); window.JournalControls?.close(); }
-  };
-  closeMenu();
+  document.querySelectorAll('[data-view]').forEach(node=>node.addEventListener('click',event=>{event.preventDefault();if(!allowed.includes(node.dataset.view))return;if(location.hash==='#'+node.dataset.view)show();else location.hash=node.dataset.view;}));
+  back.addEventListener('click',()=>{location.hash='notifications';});window.addEventListener('hashchange',show);
+  const list=document.getElementById('noti-list');new MutationObserver(()=>{const count=list.querySelectorAll('.notification-item.unread').length,badge=document.getElementById('notification-count');badge.textContent=count;badge.hidden=!count;}).observe(list,{childList:true,subtree:true});
+  window.AppShell={configure(value){user=value;allowed=UIConfig.allowed('user',user.permissions||{}).map(menu=>menu.id);document.querySelectorAll('[data-view]').forEach(node=>node.hidden=!allowed.includes(node.dataset.view));document.getElementById('shell-account').textContent=user.username||'내 업무 공간';ready=true;show();},reset(){ready=false;user=null;allowed=[];window.NotificationPage?.cancel();drawer.close();window.JournalControls?.close();}};
+  UIShell.dialogs();
 })();
