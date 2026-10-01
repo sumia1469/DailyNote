@@ -1,0 +1,34 @@
+/* Shared user/admin menu viewport. Header stays fixed; long content scrolls once. */
+.ui-list-viewport,body #main-section.ui-list-viewport,body .admin-shell.ui-list-viewport {
+  box-sizing:border-box;
+  height:100vh;
+  height:100dvh;
+  min-height:0;
+  width:100%;
+  max-width:none;
+  margin:0;
+  padding:calc(var(--ui-header-height,76px) + 16px) 24px calc(24px + env(safe-area-inset-bottom,0px));
+  overflow-y:auto;
+  overflow-x:hidden;
+  overscroll-behavior-y:contain;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:thin;
+  scrollbar-color:var(--muted) transparent;
+  scroll-padding-top:calc(var(--ui-header-height,76px) + 16px);
+  scroll-padding-bottom:24px;
+}
+body.ui-drawer-open .ui-list-viewport,body.modal-open .ui-list-viewport { overflow-y:hidden; }
+.ui-list-viewport > section { min-width:0; }
+body #main-section.ui-list-viewport .worklog-section { min-height:0; overflow:visible; }
+body #main-section.ui-list-viewport .worklog-list,
+body #main-section.ui-list-viewport .notification-list,
+body #main-section.ui-list-viewport .file-list,
+.ui-list-viewport .admin-list { max-height:none; overflow:visible; }
+.ui-list-viewport :is(.worklog-card,.notification-item,.file-item,.admin-row,.memo-card) { flex-shrink:0; }
+.ui-list-viewport::-webkit-scrollbar { width:6px; }
+.ui-list-viewport::-webkit-scrollbar-thumb { background:var(--muted); border-radius:6px; }
+@media(max-width:767px){
+  body #main-section.ui-list-viewport,body .admin-shell.ui-list-viewport {
+    padding:calc(var(--ui-header-height,76px) + 10px) 12px calc(24px + env(safe-area-inset-bottom,0px));
+  }
+}

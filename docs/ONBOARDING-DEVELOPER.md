@@ -182,3 +182,9 @@ TODO 일반 본문은 더블클릭·두 번 탭·Enter/F2로 편집하며 링크
 캘린더 상단 액션은 돋보기(조회 팝업)·…(기기 알림/새로고침/표시 항목)·＋(등록)입니다. 제목 양옆 기간 화살표, 월·주·일 전환, 달력 하단 오늘 버튼과 짧은 월간 행을 사용합니다. 검색은 UIShell.searchDialog를 재사용하며 취소 시 적용 조건을 유지합니다. CalendarCore.tasks는 Redis 빈 객체와 중첩 하위 항목을 정규화합니다.
 
 캘린더 등록·조회 날짜 입력은 iOS 네이티브 크기가 grid를 늘리지 않도록 minmax(0,1fr) 트랙, 부모 min-width:0, 날짜/date-time appearance:none·inline-size 제한·16px 글꼴을 유지합니다. 네이티브 날짜 선택 기능은 그대로 사용합니다.
+
+
+## 공통 목록 스크롤
+
+`public/list-scroll.js`의 ListScroll.mount는 메뉴별 스크롤 위치를 관리합니다. 사용자 AppShell.scroll과 관리자 adminScroll에서 capture 후 activate를 호출합니다. 새 메뉴는 기존 본문 셸 안에 넣으면 list-scroll.css의 스크롤을 공유합니다. 별도 max-height 목록을 만들지 마세요. 검색 결과 scrollIntoView, 참조 복귀, TODO 자동 스크롤은 본문 viewport를 사용합니다.
+
