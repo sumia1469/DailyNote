@@ -315,8 +315,17 @@ UIShell.actionMenu가 메뉴 위치·키보드 이동·aria-expanded를 관리�
 `#board-code-form`은 한 열 grid로 언어·코드·삽입 버튼을 배치합니다. 입력 요소는 border-box 전체 너비와 16px 글자 크기를 유지하며 긴 코드의 스크롤은 textarea 안에 제한합니다. `EditorCore.viewport`로 visualViewport 높이·위치에 맞춰 팝업을 제한하고 내부 스크롤을 허용합니다. 기존 `scripts/verify-boards.cjs` 하네스에서 1440×1000, 390×844, 320×568, 390×360의 세로 배치·화면 경계·가로 넘침·버튼 접근·Escape 후 작성 유지·본문 삽입을 검사합니다. 낮은 화면 높이 검사는 키보드 공간의 모의 검증이며 실제 iOS 키보드 검증을 대체하지 않습니다.
 
 
+### 전체 작성 화면의 테마와 스크롤 (2026-10-02)
+
+공통 `ui-writing-paper`와 `memo-paper`는 화면 전체 폭을 차지하는 스크롤 소유자입니다. `max-width`로 스크롤 컨테이너를 좁히지 않으며 가로 padding으로 본문 폭을 최대 840px로 유지합니다. 모바일은 좌우 20px입니다. 호스트·헤더·기본 종이·메모 저장 상태·게시글 도구는 `--surface`, `--text`, `--line`을 사용하고 `--ui-soft`는 현재 테마의 hover 색으로 매핑합니다. 메모의 기본 white 종이는 고정 흰색 대신 surface CSS 변수를 사용합니다.
+
+`npm run test:writing` 하네스는 9개 사용자·관리자 작성 화면에 대해 light/white/dark 테마의 전체 배경·헤더·본문 일치, 오른쪽 화면 경계와 스크롤 소유자, 긴 본문 스크롤, 본문 폭, 가로 넘침, 도구 글자·메모 저장 상태 배경을 PC 1440×1000·모바일 390×844에서 확인합니다. Chromium 검증이며 실제 macOS Safari는 별도 확인 대상입니다.
+
+
+
 
 
 ## 본문 링크 스타일
 
 게시판·메모의 `a.editor-link`는 공통 ui-shell.css의 파란색 밑줄과 줄바꿈을 사용합니다. 새 탭으로 열고 noopener/noreferrer를 적용합니다. design-harness.html의 본문 링크 예시에서 일반 주소·www 주소·코드 제외와 텍스트 보존을 확인할 수 있습니다.
+

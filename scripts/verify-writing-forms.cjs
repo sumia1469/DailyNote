@@ -7,7 +7,28 @@ const ds=require('../src/datastore'),{makeUserRecord}=require('../src/auth'),han
  server=http.createServer(handler);await new Promise(r=>server.listen(0,'127.0.0.1',r));const base='http://127.0.0.1:'+server.address().port;
  browser=await chromium.launch({headless:true,executablePath:process.env.BROWSER_EXECUTABLE_PATH,args:['--no-sandbox']});const page=await browser.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto(base);await page.locator('#username').fill('검토계정');await page.locator('#password').fill('local-password-123');await page.locator('.login-btn').click();await page.locator('#main-section').waitFor({state:'visible'});await page.waitForFunction(()=>document.getElementById('loading-overlay').hidden);
- async function full(id){assert.equal(await page.locator('#'+id).evaluate(x=>x.tagName),'SECTION',id+' is a page');assert.equal(await page.locator('#'+id).evaluate(x=>x.matches(':modal')),false);assert.equal(new URL(page.url()).searchParams.get('write'),id);assert.equal(await page.evaluate(()=>history.state.writingPage),id);const b=await page.locator('#'+id).boundingBox(),v=page.viewportSize();assert.equal(Math.round(b.x),0,id);assert.equal(Math.round(b.y),0,id);assert.equal(Math.round(b.width),v.width,id);assert.equal(Math.round(b.height),v.height,id);assert.equal(await page.locator('#'+id).evaluate(x=>getComputedStyle(x).borderRadius),'0px');assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));}
+ async function full(id){assert.equal(await page.locator('#'+id).evaluate(x=>x.tagName),'SECTION',id+' is a page');assert.equal(await page.locator('#'+id).evaluate(x=>x.matches(':modal')),false);assert.equal(new URL(page.url()).searchParams.get('write'),id);assert.equal(await page.evaluate(()=>history.state.writingPage),id);const b=await page.locator('#'+id).boundingBox(),v=page.viewportSize();assert.equal(Math.round(b.x),0,id);assert.equal(Math.round(b.y),0,id);assert.equal(Math.round(b.width),v.width,id);assert.equal(Math.round(b.height),v.height,id);assert.equal(await page.locator('#'+id).evaluate(x=>getComputedStyle(x).borderRadius),'0px');assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));await themeAndEdgeScroll(id);}
+ async function themeAndEdgeScroll(id){
+  for(const theme of ['light','white','dark']){
+   const result=await page.evaluate(({id,theme})=>{
+    const old=document.body.dataset.theme;document.body.dataset.theme=theme;
+    const host=document.getElementById(id),paper=host.querySelector('.ui-writing-paper,.memo-paper'),header=host.querySelector('.ui-writing-header,.memo-editor-header');
+    const surface=getComputedStyle(document.body).getPropertyValue('--surface').trim(),probe=document.createElement('div');probe.style.backgroundColor=surface;document.body.append(probe);const expected=getComputedStyle(probe).backgroundColor;probe.style.color=getComputedStyle(document.body).getPropertyValue('--text').trim();const expectedText=getComputedStyle(probe).color;probe.remove();
+    const h=host.getBoundingClientRect(),p=paper.getBoundingClientRect(),style=getComputedStyle(paper);
+    const spacer=document.createElement('div');spacer.style.height='1600px';paper.append(spacer);const before=paper.scrollTop;paper.scrollTop=paper.scrollHeight;const scrolls=paper.scrollTop>0;paper.scrollTop=before;spacer.remove();
+    const controls=[...host.querySelectorAll('.board-toolbar button,.board-format button,.category-tab[aria-checked=true]')].map(x=>getComputedStyle(x).color),footer=host.querySelector('.memo-save-state');
+    const result={expected,expectedText,controls,footer:footer?getComputedStyle(footer).backgroundColor:null,host:getComputedStyle(host).backgroundColor,paper:getComputedStyle(paper).backgroundColor,header:getComputedStyle(header).backgroundColor,left:p.left,right:p.right,hostRight:h.right,width:innerWidth,contentWidth:paper.clientWidth-parseFloat(style.paddingLeft)-parseFloat(style.paddingRight),overflow:paper.scrollWidth>paper.clientWidth,scrolls,theme,id};
+    document.body.dataset.theme=old;return result;
+   },{id,theme});
+   assert.equal(result.host,result.expected,id+' '+theme+' full canvas color');assert.equal(result.paper,result.expected,id+' paper color');assert.equal(result.header,result.expected,id+' header color');
+   for(const color of result.controls)assert.equal(color,result.expectedText,id+' theme control text');if(result.footer)assert.equal(result.footer,result.expected,id+' footer theme');
+   assert.ok(Math.abs(result.left)<1&&Math.abs(result.right-result.width)<1,id+' scrollbar at viewport edge');
+   assert.ok(result.contentWidth<=841,id+' centered readable column');assert.equal(result.overflow,false,id+' no horizontal overflow');assert.ok(result.scrolls,id+' scrolling available');
+  }
+  if(process.env.UI_CAPTURE_DIR&&page.viewportSize().width===1440){
+   await page.evaluate(()=>document.body.dataset.theme='dark');await capture('dark-'+id);await page.evaluate(()=>document.body.dataset.theme='light');
+  }
+ }
  async function scrollAndKeyboard(id){
  const host=page.locator('#'+id),paper=host.locator('.ui-writing-paper,.memo-paper').first();
  const result=await paper.evaluate(x=>{const overflow=getComputedStyle(x).overflowY;const old=x.scrollTop;x.scrollTop=x.scrollHeight;const moved=x.scrollTop>0;x.scrollTop=old;return {overflow,moved,height:x.clientHeight,total:x.scrollHeight};});
@@ -21,7 +42,7 @@ const ds=require('../src/datastore'),{makeUserRecord}=require('../src/auth'),han
  if(process.env.UI_CAPTURE_DIR&&page.viewportSize().width===390){fs.mkdirSync(process.env.UI_CAPTURE_DIR,{recursive:true});await page.waitForFunction(()=>!document.getElementById('loading-overlay')||document.getElementById('loading-overlay').hidden);await page.screenshot({path:path.join(process.env.UI_CAPTURE_DIR,'keyboard-'+id+'.png')});}
  await page.evaluate(()=>{delete visualViewport.height;delete visualViewport.offsetTop;visualViewport.dispatchEvent(new Event('resize'));});
  }
- async function capture(name){if(process.env.UI_CAPTURE_DIR){fs.mkdirSync(process.env.UI_CAPTURE_DIR,{recursive:true});await page.screenshot({path:path.join(process.env.UI_CAPTURE_DIR,name+'-'+page.viewportSize().width+'.png')});}}
+ async function capture(name){if(process.env.UI_CAPTURE_DIR){await page.waitForFunction(()=>!document.getElementById('loading-overlay')||document.getElementById('loading-overlay').hidden);fs.mkdirSync(process.env.UI_CAPTURE_DIR,{recursive:true});await page.screenshot({path:path.join(process.env.UI_CAPTURE_DIR,name+'-'+page.viewportSize().width+'.png')});}}
  for(const viewport of [{width:1440,height:1000},{width:390,height:844}]){
   await page.setViewportSize(viewport);await page.goto(base+'/#worklogs');await page.locator('#open-worklog-btn').click();await full('worklog-modal');await scrollAndKeyboard('worklog-modal');await page.locator('#todo').fill('첫 항목');await page.locator('#todo').fill('둘째 항목');await page.locator('#worklog-modal [aria-label="실행 취소"]').click();assert.equal(await page.locator('#todo').inputValue(),'첫 항목');await page.locator('#worklog-modal [aria-label="다시 실행"]').click();assert.equal(await page.locator('#todo').inputValue(),'둘째 항목');await capture('writing-journal');await page.locator('#modal-close-btn').click();
   await page.goto(base+'/#memos');await page.locator('#open-memo-btn').click();await full('memo-editor');await scrollAndKeyboard('memo-editor');await capture('writing-memo');await page.locator('#memo-close').click();
