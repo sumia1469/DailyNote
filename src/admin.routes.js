@@ -1,7 +1,7 @@
 const ds = require('./datastore');
 const {sendJson, parseJsonBody} = require('./utils');
 const {makeUserRecord} = require('./auth');
-const {keys, roleOf, safeUser} = require('./permissions');
+const {keys, basicKeys, roleOf, safeUser, rightsOf} = require('./permissions');
 const storage = require('./file-storage');
 const defaults = {fontFamily:'system',fontSize:16, spacing:'normal', theme:'light', background:'autumn'};
 const publicSettings = record => ({...defaults, ...(record?.values || {}),
@@ -67,7 +67,10 @@ async function adminRouter(req,res,auth) {
           if(!['admin','member'].includes(body.role))return sendJson(res,400,{message:'잘못된 사용자 역할입니다.'});
           updates.role=body.role;
         }
-        if(body.permissions!==undefined)updates.permissions=Object.fromEntries(keys.map(key=>[key,body.permissions?.[key]===true]));
+        if(body.permissions!==undefined) {
+          const currentRights=rightsOf(existing||{role:'member'});
+          updates.permissions=Object.fromEntries(keys.map(key=>[key,basicKeys.includes(key)&&body.permissions?.[key]===undefined?currentRights[key]:body.permissions?.[key]===true]));
+        }
       }
       if(existing) {
         if(existing.id===auth.userId&&updates.active===false)return sendJson(res,400,{message:'현재 로그인한 계정은 비활성화할 수 없습니다.'});

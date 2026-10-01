@@ -4,11 +4,13 @@
 let token = localStorage.getItem('token') || '';
 let currentWorklogs = [];
 let currentFilterDate = '';
+let currentPermissions = {};
+const canUse = key => currentPermissions[key] !== false;
 const selectedWorklogIds = new Set();
 let duplicatingWorklogs = false;
 function updateCopyButton() {
   const button = document.getElementById('duplicate-worklog-btn');
-  button.disabled = duplicatingWorklogs || selectedWorklogIds.size === 0;
+  button.disabled = duplicatingWorklogs || !canUse('worklogCreate') || selectedWorklogIds.size === 0;
   button.textContent = duplicatingWorklogs ? '복제 중…' : selectedWorklogIds.size ? `선택 일지 복제 (${selectedWorklogIds.size})` : '선택 일지 복제';
 }
 
@@ -94,7 +96,20 @@ async function showMainScreen() {
   }
   document.getElementById('login-section').style.display = 'none';
   document.getElementById('main-section').style.display = 'grid';
-  document.getElementById('admin-page-btn').hidden = !Object.values(user.permissions || {}).some(Boolean);
+  currentPermissions=user.permissions||{};
+  document.getElementById('admin-page-btn').hidden = !['notifications','files','appearance','users','permissions'].some(key=>currentPermissions[key]);
+  document.querySelector('.notification-section').hidden=!canUse('notificationRead');
+  document.querySelector('.upload-section').hidden=!canUse('fileRead')&&!canUse('fileUpload');
+  document.querySelector('.worklog-section').hidden=!canUse('worklogRead')&&!canUse('worklogCreate');
+  document.getElementById('upload-form').hidden=!canUse('fileUpload');
+  document.querySelector('.search-panel').hidden=!canUse('worklogRead');
+  document.getElementById('worklog-list').hidden=!canUse('worklogRead');
+  document.getElementById('file-list').hidden=!canUse('fileRead');
+  if(!canUse('worklogRead')){currentWorklogs=[];selectedWorklogIds.clear();document.getElementById('worklog-list').replaceChildren();}
+  if(!canUse('fileRead'))document.getElementById('file-list').replaceChildren();
+  document.getElementById('open-worklog-btn').hidden=!canUse('worklogCreate');
+  document.getElementById('duplicate-worklog-btn').hidden=!canUse('worklogCreate')||!canUse('worklogRead');
+  updateCopyButton();
   return true;
 }
 
@@ -159,6 +174,7 @@ document.getElementById('logout-btn').addEventListener('click', () => {
 
 /* 알림 — GET /api/notifications */
 async function loadNoti() {
+  if(!canUse('notificationRead'))return;
   const notificationList = document.getElementById('noti-list');
   notificationList.innerHTML = '';
 
@@ -277,6 +293,7 @@ document.getElementById('upload-form').addEventListener('submit', async e => {
 
 /* 파일 목록 — GET /api/files */
 async function loadFiles() {
+  if(!canUse('fileRead'))return;
   const fileList = document.getElementById('file-list');
   fileList.replaceChildren();
   try {
@@ -304,11 +321,12 @@ async function loadFiles() {
       item.className = 'file-item';
       const fileInfo = document.createElement('div');
       fileInfo.className = 'file-info';
-      const link = document.createElement('a');
-      link.href = '#';
+      const link = document.createElement(canUse('fileDownload')?'a':'span');
+      if(canUse('fileDownload'))link.href = '#';
       link.textContent = file.originalName || file.filename || '파일 다운로드';
       link.addEventListener('click', async e => {
         e.preventDefault();
+        if(!canUse('fileDownload'))return;
         try {
           const response = await loadingFetch(`/api/upload/${file.id}`, {
             method: 'GET',
@@ -336,7 +354,8 @@ async function loadFiles() {
       fileInfo.appendChild(link);
       const deleteButton = document.createElement('button');
       deleteButton.type = 'button';
-      deleteButton.textContent = 'X';
+      deleteButton.textContent = '삭제';
+      deleteButton.hidden=!canUse('fileDelete');
       deleteButton.className = 'file-delete-btn';
       deleteButton.addEventListener('click', async () => {
         const fileName = file.originalName || file.filename || '해당 파일';
@@ -568,7 +587,7 @@ function createButton(text, className, clickHandler) {
 ** TODO 항목 생성
 */
 function createTodoItem(worklog, todo) {
-  const label = document.createElement('label');
+  const label = document.createElement('div');
   label.className = 'todo-item';
   if (todo.checked) {
     label.classList.add('completed');
@@ -576,15 +595,31 @@ function createTodoItem(worklog, todo) {
   const checkbox = document.createElement('input');
   checkbox.type = 'checkbox';
   checkbox.checked = Boolean(todo.checked);
-  const text = document.createElement('span');
+  checkbox.disabled=!canUse('worklogEdit');
+  checkbox.setAttribute('aria-label', (todo.task || 'TODO 항목') + ' 완료');
+  const text = document.createElement('button');
+  text.type='button';
+  text.className='todo-text-btn';
   text.textContent = todo.task || '';
+  text.disabled=!canUse('worklogEdit');
+  if(canUse('worklogEdit'))TodoInline.attach(label,text,todo,async value => {
+    const previous=todo.task;
+    todo.task=value;
+    try {
+      const response=await authFetch(`/api/worklogs/${worklog.id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({todo:worklog.todo})});
+      if(!response.ok){const result=await response.json().catch(()=>({}));throw new Error(result.message||'TODO 내용을 저장하지 못했습니다.');}
+    } catch(error){todo.task=previous;throw error;}
+    renderWorklogs(currentWorklogs);
+  });
   checkbox.addEventListener('change', async () => {
     const affected = flattenTodoItems([todo]);
     const previousStates = affected.map(item => ({item, checked: Boolean(item.checked)}));
     affected.forEach(item => { item.checked = checkbox.checked; });
     label.classList.toggle('completed', checkbox.checked);
     // Lock this card while saving so child edits cannot race with the parent update.
-    label.closest('.worklog-card').querySelectorAll('input[type="checkbox"]')
+    const card=label.closest('.worklog-card');
+    card.dataset.todoSaving='true';
+    card.querySelectorAll('input[type="checkbox"], button')
       .forEach(input => { input.disabled = true; });
     try {
       const response = await authFetch(
@@ -830,8 +865,8 @@ function renderWorklogs(worklogs) {
       }
     });
 
-    cardActions.appendChild(editButton);
-    cardActions.appendChild(deleteButton);
+    if(canUse('worklogEdit'))cardActions.appendChild(editButton);
+    if(canUse('worklogDelete'))cardActions.appendChild(deleteButton);
     cardHeader.appendChild(dateWrap);
     cardHeader.appendChild(cardActions);
     /* 카드 본문 */
@@ -892,6 +927,7 @@ function renderWorklogs(worklogs) {
  * 업무일지 목록 조회 - 여기부터 2026-09-10
  **/
 async function loadList(date = '') {
+  if(!canUse('worklogRead'))return;
   currentFilterDate = date;
   const container = document.getElementById('worklog-list');
   container.innerHTML = `

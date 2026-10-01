@@ -67,7 +67,7 @@ test('registration waits for approval, rejects privileged fields and supports re
  assert.equal((await request('POST','/api/admin/users/'+stored.id+'/approve',{},admin)).data.approval,'approved');
  assert.equal((await request('POST','/api/admin/users/'+stored.id+'/approve',{},admin)).status,400);
  const login=await request('POST','/api/auth/login',registration);assert.equal(login.status,200);assert.ok(login.data.token);
- const me=(await request('GET','/api/auth/me',null,login.data.token)).data;assert.equal(me.role,'member');assert.ok(Object.values(me.permissions).every(v=>v===false));
+ const me=(await request('GET','/api/auth/me',null,login.data.token)).data;assert.equal(me.role,'member');assert.ok(require('../src/permissions').adminKeys.every(key=>me.permissions[key]===false));assert.ok(require('../src/permissions').basicKeys.every(key=>me.permissions[key]===true));
  const rejected={username:'rejected-user',password:'reject-password-123',passwordConfirmation:'reject-password-123'};
  assert.equal((await request('POST','/api/auth/register',rejected)).status,201);
  const rejectedUser=await ds.findOne('users',u=>u.username===rejected.username);
@@ -106,4 +106,27 @@ test('administrator password reset validates input and revokes existing sessions
  assert.equal((await request('POST','/api/auth/login',{username:'new-user',password:body.password})).status,401);
  const personalLogin=await request('POST','/api/auth/login',{username:'new-user',password:change.password});assert.equal(personalLogin.status,200);assert.equal(personalLogin.data.mustChangePassword,false);
  const stored=await ds.findOne('users',u=>u.id===user.id);assert.notEqual(stored.password,body.password);assert.equal(stored.role,'member');assert.equal(stored.active,true);
+});
+
+test('basic user permissions enforce journal, personal file and notification actions immediately',async()=>{
+ const admin=(await request('POST','/api/auth/login',{username:'owner',password:'test-admin-123'})).data.token;
+ const added=(await request('POST','/api/admin/users',{username:'basic-rights',password:'basic-rights-123'},admin)).data;
+ const member=(await request('POST','/api/auth/login',{username:'basic-rights',password:'basic-rights-123'})).data.token;
+ const {basicKeys}=require('../src/permissions');
+ assert.ok(basicKeys.every(key=>added.permissions[key]===true));
+ const log=await request('POST','/api/worklogs',{workDate:'2026-10-01',todo:[{task:'원본',checked:false,children:[]}]},member);assert.equal(log.status,201);
+ const file=await request('POST','/api/upload',{filename:'basic.txt',mime:'text/plain',data:Buffer.from('basic').toString('base64')},member);assert.equal(file.status,201);
+ await request('PUT','/api/admin/permissions/'+added.id,{permissions:Object.fromEntries(basicKeys.map(key=>[key,false]))},admin);
+ const denied=[['GET','/api/worklogs'],['POST','/api/worklogs'],['PUT','/api/worklogs/'+log.data.id],['DELETE','/api/worklogs/'+log.data.id],['GET','/api/files'],['POST','/api/upload'],['GET','/api/upload/'+file.data.id],['GET','/api/files/'+file.data.id],['DELETE','/api/files/'+file.data.id],['GET','/api/notifications'],['PUT','/api/notifications/1']];
+ for(const [method,path] of denied){const response=await request(method,path,method==='POST'||method==='PUT'?{}:null,member);assert.equal(response.status,403,path);assert.equal(response.data.code,'PERMISSION_DENIED');}
+ assert.equal((await ds.findOne('work_logs',w=>w.id===log.data.id)).todo[0].task,'원본');
+ await request('PUT','/api/admin/permissions/'+added.id,{permissions:{worklogRead:true}},admin);
+ assert.equal((await request('GET','/api/worklogs',null,member)).status,200);
+ assert.equal((await request('PUT','/api/worklogs/'+log.data.id,{todo:[]},member)).status,403);
+ assert.equal((await request('GET','/api/files',null,member)).status,403);
+ await request('PUT','/api/admin/permissions/'+added.id,{permissions:{worklogEdit:true,fileDownload:true}},admin);
+ const edit=await request('PUT','/api/worklogs/'+log.data.id,{todo:[{task:'바로 수정',checked:false,children:[]}]},member);assert.equal(edit.status,200);
+ assert.equal((await request('GET','/api/upload/'+file.data.id,null,member)).data.toString(),'basic');
+ assert.equal((await request('DELETE','/api/upload/'+file.data.id,null,member)).status,403);
+ assert.equal((await request('GET','/api/admin/users',null,member)).status,403);
 });

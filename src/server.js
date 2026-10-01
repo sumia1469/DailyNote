@@ -36,6 +36,11 @@ async function handleApi(req, res) {
   if (pathname === '/api/auth/me' && req.method === 'GET') return sendJson(res, 200, authInfo);
   if (pathname === '/api/auth/change-password' && req.method === 'POST') return changePasswordHandler(req,res,authInfo);
   if (authInfo.mustChangePassword) return sendJson(res,403,{code:'PASSWORD_CHANGE_REQUIRED',message:'비밀번호를 변경한 후 이용해 주세요.'});
+  let basicRight;
+  if(pathname.startsWith('/api/worklogs')) basicRight={GET:'worklogRead',POST:'worklogCreate',PUT:'worklogEdit',DELETE:'worklogDelete'}[req.method];
+  if(pathname.startsWith('/api/files')||pathname.startsWith('/api/upload')) basicRight=req.method==='GET'?(pathname.split('/').filter(Boolean)[2]?'fileDownload':'fileRead'):{POST:'fileUpload',DELETE:'fileDelete'}[req.method];
+  if(pathname.startsWith('/api/notifications')&&['GET','PUT'].includes(req.method)) basicRight='notificationRead';
+  if(basicRight&&!authInfo.permissions[basicRight])return sendJson(res,403,{code:'PERMISSION_DENIED',message:'이 작업을 사용할 권한이 없습니다. 관리자에게 문의해 주세요.'});
   if (pathname.startsWith('/api/admin/')) return adminRouter(req, res, authInfo);
   if (pathname.startsWith('/api/users')) return userRouter(req, res, authInfo);
   if (pathname.startsWith('/api/notifications')) return notificationRouter(req, res, authInfo);

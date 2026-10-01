@@ -1111,3 +1111,23 @@ body[data-theme="dark"] .login-icon.has-app-icon,
 body[data-theme="dark"] .main-icon.has-app-icon { color:var(--accent); --icon-tile:#35413c; }
 .register-link.has-app-icon { display:flex; }
 @media(max-width:600px){button.has-app-icon,a.has-app-icon{gap:6px}button.has-app-icon>.app-icon,a.has-app-icon>.app-icon{width:18px;height:18px}.list-editor-toolbar button.has-app-icon{padding-inline:6px}}
+
+/* Edit a TODO in place without changing its completion checkbox. */
+.todo-text-btn { flex:1; min-width:0; padding:2px 0; border:0; background:transparent; color:inherit; font:inherit; font-weight:inherit; line-height:1.5; text-align:left; white-space:pre-wrap; overflow-wrap:anywhere; cursor:text; }
+.todo-text-btn:hover { text-decoration:underline; text-decoration-style:dotted; text-underline-offset:4px; }
+.todo-text-btn:focus-visible { outline:2px solid var(--primary); outline-offset:3px; border-radius:3px; }
+.todo-item.completed .todo-text-btn { color:var(--muted); text-decoration:line-through; }
+.todo-inline-editor { flex:1; min-width:0; }
+.todo-inline-editor textarea { display:block; width:100%; min-width:0; min-height:64px; padding:10px; border:1px solid var(--line); border-radius:8px; background:var(--surface); color:var(--text); font:inherit; font-size:max(16px,var(--app-font-size,16px)); line-height:1.5; resize:vertical; }
+.todo-inline-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
+.todo-inline-actions button { min-height:40px; }
+.todo-inline-editor small { display:block; color:var(--muted); font-size:12px; margin-top:8px; line-height:1.5; }
+.todo-inline-message { color:#b91c1c; margin:6px 0 0; font-size:14px; line-height:1.5; overflow-wrap:anywhere; }
+.todo-inline-message:empty { display:none; }
+body[data-theme="dark"] .todo-inline-message { color:var(--danger); }
+@media(max-width:600px){.todo-inline-actions button{min-height:44px;flex:1}.todo-inline-editor small{font-size:11px}}
+
+[hidden] { display:none !important; }
+.todo-text-btn:disabled { opacity:1; cursor:default; }
+.todo-text-btn:disabled:hover { text-decoration:none; }
+.todo-item.completed .todo-text-btn:disabled:hover { text-decoration:line-through; }
