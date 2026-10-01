@@ -96,7 +96,7 @@ async function showMainScreen() {
     return false;
   }
   document.getElementById('login-section').style.display = 'none';
-  document.getElementById('main-section').style.display = 'grid';
+  document.getElementById('main-section').style.display = 'block';
   currentPermissions=user.permissions||{};
   document.getElementById('admin-page-btn').hidden = !['notifications','files','appearance','users','permissions'].some(key=>currentPermissions[key]);
   document.querySelector('.notification-section').hidden=!canUse('notificationRead');
