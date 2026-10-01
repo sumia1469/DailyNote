@@ -2,11 +2,11 @@
   const menus={
     user:[
       {id:'worklogs',title:'일일리스트',icon:'journal',panel:'worklog-section',read:['worklogRead','worklogCreate'],actions:[{id:'open-search-btn',kind:'search',label:'일지 검색',permission:'worklogRead'},{id:'open-worklog-btn',kind:'create',label:'새 일지 등록',permission:'worklogCreate'}]},
-      {id:'notifications',title:'알림',icon:'bell',panel:'view-notifications',read:['notificationRead'],actions:[]},
+      {id:'notifications',title:'공지사항',icon:'notice',panel:'view-notifications',read:['notificationRead'],actions:[]},
       {id:'files',title:'파일관리',icon:'files',panel:'view-files',read:['fileRead','fileUpload'],actions:[{id:'open-upload-btn',kind:'create',label:'파일 등록',permission:'fileUpload'}]}
     ],
     admin:[
-      {id:'notifications',title:'알림 관리',icon:'bell',panel:'panel-notifications',read:['notifications'],actions:[{id:'admin-create',kind:'create',label:'알림 등록',permission:'notifications',dialog:'notification-dialog'}]},
+      {id:'notifications',title:'공지 관리',icon:'notice',panel:'panel-notifications',read:['notifications'],actions:[{id:'admin-create',kind:'create',label:'공지 등록',permission:'notifications',dialog:'notification-dialog'}]},
       {id:'files',title:'파일 관리',icon:'files',panel:'panel-files',read:['files'],actions:[{id:'admin-create',kind:'create',label:'파일 등록',permission:'files',dialog:'admin-upload-dialog',extraPermission:'fileUpload'}]},
       {id:'appearance',title:'화면·배경 설정',icon:'appearance',panel:'panel-appearance',read:['appearance'],actions:[]},
       {id:'users',title:'사용자 설정',icon:'users',panel:'panel-users',read:['users'],actions:[{id:'admin-create',kind:'create',label:'사용자 등록',permission:'users',dialog:'user-dialog'}]},

@@ -12,7 +12,7 @@ async function listNoti(req, res, auth) {
 async function detailNoti(req,res,auth,id){const note=await ds.findOne('notifications',note=>note.id===id&&note.userId===auth.userId);if(!note)return sendJson(res,404,{message:'Notification not found'});return sendJson(res,200,note);}
 async function createNoti(req, res, auth) {
   const {userId, message} = await parseJsonBody(req);
-  if (Number(userId) !== auth.userId && !auth.permissions.notifications) return sendJson(res, 403, {message: '알림 관리 권한이 필요합니다.'});
+  if (Number(userId) !== auth.userId && !auth.permissions.notifications) return sendJson(res, 403, {message: '공지 관리 권한이 필요합니다.'});
   if (!userId || !message) return sendJson(res, 400, {message: 'userId & message required'});
   const newNoti = await ds.insert('notifications', {userId, message, isRead: false, createdAt: new Date().toISOString()});
   sendJson(res, 201, {id: newNoti.id});

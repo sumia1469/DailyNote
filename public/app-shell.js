@@ -11,7 +11,7 @@
     const isDetail=Boolean(detailId&&key==='notifications');
     Object.entries(panels).forEach(([id,panel])=>panel.hidden=isDetail||id!==key);detail.hidden=!isDetail;back.hidden=!isDetail;opener.hidden=isDetail;
     document.querySelectorAll('[data-view]').forEach(node=>{if(node.dataset.view===key)node.setAttribute('aria-current','page');else node.removeAttribute('aria-current');});
-    UIShell.title(document.getElementById('shell-title'),isDetail?'알림 상세':menus.find(menu=>menu.id===key)?.title||'DailyNote');
+    UIShell.title(document.getElementById('shell-title'),isDetail?'공지 상세':menus.find(menu=>menu.id===key)?.title||'DailyNote');
     UIShell.actions('user',isDetail?'detail':key,user.permissions||{},controls);
     document.getElementById('no-access').hidden=allowed.length>0;
     if(isDetail)window.NotificationPage?.load(detailId);else window.NotificationPage?.cancel();

@@ -174,7 +174,7 @@ document.getElementById('logout-btn').addEventListener('click', () => {
   showLoginScreen();
 });
 
-/* 알림 — GET /api/notifications */
+/* 공지 — GET /api/notifications */
 async function loadNoti() {
   if(!canUse('notificationRead'))return;
   const notificationList = document.getElementById('noti-list');
@@ -184,13 +184,13 @@ async function loadNoti() {
     const res = await authFetch('/api/notifications');
 
     if (!res.ok) {
-      throw new Error('알림을 불러오지 못했습니다.');
+      throw new Error('공지을 불러오지 못했습니다.');
     }
     const notifications = await res.json();
     if (!Array.isArray(notifications) || notifications.length === 0) {
       const emptyItem = document.createElement('li');
       emptyItem.className = 'notification-empty';
-      emptyItem.textContent = '새로운 알림이 없습니다.';
+      emptyItem.textContent = '새로운 공지이 없습니다.';
       notificationList.appendChild(emptyItem);
       return;
     }
@@ -203,11 +203,11 @@ async function loadNoti() {
       const content = document.createElement('button');
       content.type = 'button';
       content.className = 'notification-content';
-      content.setAttribute('aria-label',(notification.message||'알림')+' 상세 보기');
+      content.setAttribute('aria-label',(notification.title||notification.message||'공지')+' 상세 보기');
       content.addEventListener('click', () => { location.hash='notifications/'+notification.id; });
       const message = document.createElement('span');
       message.className = 'notification-message';
-      message.textContent = notification.message || '';
+      message.textContent = notification.title || notification.message || '';
       const createdAt = document.createElement('small');
       createdAt.className = 'notification-date';
       createdAt.textContent = notification.createdAt
@@ -226,7 +226,7 @@ async function loadNoti() {
           try {
             const readResponse = await authFetch(`/api/notifications/${notification.id}`, {method: 'PUT'});
             if (!readResponse.ok) {
-              throw new Error('알림 처리에 실패했습니다.');
+              throw new Error('공지 처리에 실패했습니다.');
             }
             await loadNoti();
           } catch (error) {
@@ -250,13 +250,13 @@ window.NotificationPage = (function(){
   let version=0;
   return {cancel(){version++;},async load(id){
     const current=++version,state=document.getElementById('notification-page-state'),message=document.getElementById('notification-page-message'),date=document.getElementById('notification-page-date');
-    state.textContent='알림을 불러오는 중입니다…';message.textContent='';date.textContent='';date.removeAttribute('datetime');
+    state.textContent='공지을 불러오는 중입니다…';message.textContent='';date.textContent='';date.removeAttribute('datetime');
     try{
       const response=await authFetch('/api/notifications/'+encodeURIComponent(id));if(current!==version)return;
-      if(!response.ok)throw new Error(response.status===404?'알림을 찾을 수 없습니다. 삭제되었거나 접근할 수 없는 알림입니다.':'알림을 불러오지 못했습니다.');
-      const note=await response.json();if(current!==version)return;message.textContent=note.message||'';
+      if(!response.ok)throw new Error(response.status===404?'공지을 찾을 수 없습니다. 삭제되었거나 접근할 수 없는 공지입니다.':'공지을 불러오지 못했습니다.');
+      const note=await response.json();if(current!==version)return;message.textContent=note.message||'';title.textContent=note.title||'';title.hidden=!note.title;
       if(note.createdAt){date.textContent=new Date(note.createdAt).toLocaleString('ko-KR');date.dateTime=note.createdAt;}state.textContent='';
-      if(!note.isRead){const read=await authFetch('/api/notifications/'+encodeURIComponent(id),{method:'PUT'});if(current!==version)return;if(!read.ok)state.textContent='읽음 처리에 실패했습니다. 알림 목록에서 다시 시도해 주세요.';else await loadNoti();}
+      if(!note.isRead){const read=await authFetch('/api/notifications/'+encodeURIComponent(id),{method:'PUT'});if(current!==version)return;if(!read.ok)state.textContent='읽음 처리에 실패했습니다. 공지 목록에서 다시 시도해 주세요.';else await loadNoti();}
     }catch(error){if(current===version)state.textContent=error.message;}
   }};
 })();
