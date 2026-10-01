@@ -251,3 +251,8 @@ Node.js 설치 없이 포함된 runtime/node.exe를 사용하는 Windows x64 압
 
 `loading.js`와 `loading.css`를 업무 어댑터보다 먼저 로드합니다. 같은 출처의 `/api/` fetch 요청을 공통 추적하며 응답 본문(JSON·파일)을 읽는 동안에도 표시합니다. `AppLoading.begin(message)`는 중복 호출에 안전한 종료 함수를 반환하고 `AppLoading.run(message, action)`은 finally에서 종료합니다. 동시 요청은 마지막 요청까지 유지하고 최소 360ms 표시합니다. 화면 전환·로그아웃은 `AppLoading.clear()`로 이전 화면 작업을 분리합니다. 네트워크 요청이 없는 메뉴 진입도 렌더링 동안 표시합니다. 폴링(`reminders=1`)과 메모 자동 저장은 인라인 상태를 유지합니다. 외부 요청·OCR 로컬 파일은 추적하지 않습니다. 포커스를 이동하지 않으며 메뉴 이동·취소를 막지 않습니다. 지원 브라우저에서는 manual popover로 모달 위에도 표시하며 미지원 환경은 fixed 레이어입니다. 디자인 스킨은 기존 spinner DOM을 유지하므로 별도로 변경할 수 있습니다. `npm run test:common-loading`으로 지연·동시 요청·실패·취소·화면 전환·PC/모바일을 확인합니다.
 
+
+
+`npm run test:license:browser`는 예시 7명 설치에서 관리자 복구, PC·모바일 등록/승인/재활성화 거부, 실패 입력 유지와 빈자리 재사용을 검증합니다. `npm run test:license:redis`는 운영 연결 설정을 무시하고 임시 Redis를 직접 시작해 실제 Lua EVAL과 REST 저장 경로의 동시성을 검증합니다. 상세 실행 변수와 결과는 [라이선스 검증 기록](LICENSE-VERIFICATION.md)에 있습니다.
+
+기존 사용자 approval이 누락·null·빈 문자열·false·0이면 승인 상태가 없는 활성 계정으로 계산합니다. Redis Lua의 cjson.null도 같은 기준으로 처리하며 `verify-license-redis.cjs`의 혼합 기존 데이터가 이 호환성을 검사합니다. 승인 대기·반려는 계속 제외합니다.

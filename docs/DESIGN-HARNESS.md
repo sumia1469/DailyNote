@@ -213,3 +213,6 @@ UIShell.actionMenu가 메뉴 위치·키보드 이동·aria-expanded를 관리�
 ## 공통 메뉴 로딩
 
 `loading.js`와 `loading.css`를 업무 어댑터보다 먼저 로드합니다. 같은 출처의 `/api/` fetch 요청을 공통 추적하며 응답 본문(JSON·파일)을 읽는 동안에도 표시합니다. `AppLoading.begin(message)`는 중복 호출에 안전한 종료 함수를 반환하고 `AppLoading.run(message, action)`은 finally에서 종료합니다. 동시 요청은 마지막 요청까지 유지하고 최소 360ms 표시합니다. 화면 전환·로그아웃은 `AppLoading.clear()`로 이전 화면 작업을 분리합니다. 네트워크 요청이 없는 메뉴 진입도 렌더링 동안 표시합니다. 폴링(`reminders=1`)과 메모 자동 저장은 인라인 상태를 유지합니다. 외부 요청·OCR 로컬 파일은 추적하지 않습니다. 포커스를 이동하지 않으며 메뉴 이동·취소를 막지 않습니다. 지원 브라우저에서는 manual popover로 모달 위에도 표시하며 미지원 환경은 fixed 레이어입니다. 디자인 스킨은 기존 spinner DOM을 유지하므로 별도로 변경할 수 있습니다. `npm run test:common-loading`으로 지연·동시 요청·실패·취소·화면 전환·PC/모바일을 확인합니다.
+
+
+라이선스 전용 브라우저 하네스 `npm run test:license:browser`에서 PC 1440×1000·모바일 390×844의 인원 표시, 문의 링크, 관리자 초과 복구, 신규 등록·승인·재활성화 차단 및 팝업 입력 유지·빈자리 재사용을 확인합니다. `UI_CAPTURE_DIR`를 지정하면 예시 차단 화면 캡처를 보관합니다. 운영 계정·운영 자료를 사용하지 않습니다.
