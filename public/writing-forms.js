@@ -7,12 +7,119 @@
     b.setAttribute('aria-label', label); b.title = label;
     return b;
   }
-  // Keep the existing adapter entry point on the common nonmodal dropdown.
+  // Preserve the shell's common nonmodal dropdown adapter.
   UIShell.actionMenu = (menu, opener) => { window.AppIcons?.render(menu); UIShell.dropdown.open(menu, opener); };
 
+  // Registration is a navigable page, not a modal dialog. Keep adapter methods
+  // so existing validation, permissions and submit handlers continue to own data.
+  let activePage = null;
+  function pageHost(element) {
+    let host = element;
+    if (host.tagName !== 'SECTION') {
+      const section = document.createElement('section');
+      [...host.attributes].forEach(a => section.setAttribute(a.name, a.value));
+      section.removeAttribute('data-ui-bound');
+      section.append(...host.childNodes); host.replaceWith(section); host = section;
+    }
+    host.setAttribute('role', 'region'); host.removeAttribute('aria-modal');
+    host.classList.add('ui-writing-page');
+    const viewport = () => {
+      host.style.setProperty('--writing-height',(window.visualViewport?.height || innerHeight)+'px');
+      host.style.setProperty('--writing-top',(window.visualViewport?.offsetTop || 0)+'px');
+    };
+    window.visualViewport?.addEventListener('resize',viewport);
+    window.visualViewport?.addEventListener('scroll',viewport);
+    window.addEventListener('resize',viewport); viewport();
+    Object.defineProperty(host, 'open', {get: () => host.hasAttribute('open')});
+    const heading = () => host.querySelector('h2')?.textContent || '등록';
+    function busy() { return Boolean(host.querySelector('[type=submit]:disabled') || host.dataset.submitting === 'true'); }
+    function requestClose() {
+      if (busy()) return;
+      const cancel = new Event('cancel', {cancelable:true});
+      if (host.dispatchEvent(cancel)) host.close();
+    }
+    host.showModal = host.show = () => {
+      if (host.open) return;
+      if (activePage) return;
+      const opener = document.activeElement;
+      const returnURL = location.href, returnState = history.state, title = document.title;
+      const scroll = [...document.querySelectorAll('#main-section,.admin-main')].map(x => [x,x.scrollTop]);
+      const hidden = [];
+      // Hide only siblings along the page's ancestry. Supplementary dialogs may
+      // still open over the page without losing its input or editor selection.
+      let child = host;
+      while (child.parentElement) {
+        for (const sibling of child.parentElement.children) {
+          if (sibling === child || sibling.tagName === 'DIALOG' || sibling.matches('script,style,link,#loading-overlay')) continue;
+          hidden.push([sibling,sibling.inert,sibling.getAttribute('aria-hidden')]); sibling.classList.add('ui-writing-covered');
+          sibling.inert = true; sibling.setAttribute('aria-hidden','true');
+        }
+        if (child.parentElement === document.body) break;
+        child = child.parentElement;
+      }
+      activePage = {host, returnURL, returnState, title, opener, scroll, hidden, requestClose};
+      const url = new URL(returnURL); url.searchParams.set('write', host.id);
+      history.pushState({...returnState, writingPage:host.id}, '', url);
+      document.title = heading() + ' · DailyNote';
+      document.body.classList.add('ui-writing-open');
+      host.setAttribute('open',''); host.setAttribute('aria-hidden','false'); host.classList.add('open');
+      host.querySelector('.ui-writing-paper,.memo-paper')?.scrollTo(0,0);
+      requestAnimationFrame(() => host.querySelector('input:not([type=hidden]):not([type=checkbox]):not([type=file]),textarea,[contenteditable],button')?.focus({preventScroll:true}));
+    };
+    host.close = () => {
+      if (!host.open) return;
+      const state = activePage;
+      host.removeAttribute('open'); host.classList.remove('open'); host.setAttribute('aria-hidden','true');
+      document.body.classList.remove('ui-writing-open','modal-open');
+      if (state?.host === host) {
+        activePage = null;
+        if (history.state?.writingPage === host.id) history.replaceState(state.returnState, '', state.returnURL);
+        document.title = state.title;
+        for (const [node,inert,aria] of state.hidden) { node.classList.remove('ui-writing-covered'); node.inert = inert; if (aria === null) node.removeAttribute('aria-hidden'); else node.setAttribute('aria-hidden',aria); }
+        requestAnimationFrame(() => { state.scroll.forEach(([node,top]) => node.scrollTop = top); if (!activePage && !document.querySelector('dialog[open]') && state.opener?.isConnected) state.opener.focus({preventScroll:true}); });
+      }
+      host.dispatchEvent(new Event('close'));
+    };
+    host.addEventListener('click', e => {
+      if (e.target.closest('.ui-writing-left button:first-child,#memo-close,[data-close-dialog],#modal-cancel-btn,#notification-reset')) {
+        e.preventDefault(); e.stopImmediatePropagation();
+        if (!busy()) history.back();
+      }
+    }, true);
+    document.addEventListener('keydown', e => {
+      if (!host.open || document.querySelector('dialog[open]') || e.key !== 'Escape') return;
+      e.preventDefault(); e.stopImmediatePropagation(); if (!busy()) history.back();
+    }, true);
+    return host;
+  }
+  window.addEventListener('popstate', e => {
+    if (!activePage) {
+      // An old completed form history entry never reopens a stale draft.
+      if (e.state?.writingPage) {
+        const url = new URL(location.href); url.searchParams.delete('write');
+        const state = {...e.state}; delete state.writingPage; history.replaceState(state,'',url);
+      }
+      return;
+    }
+    e.stopImmediatePropagation();
+    const page = activePage;
+    page.requestClose();
+    if (activePage === page) {
+      // Busy forms and asynchronous memo saves retain their current draft route.
+      const url = new URL(page.returnURL); url.searchParams.set('write',page.host.id);
+      history.pushState({...page.returnState,writingPage:page.host.id},'',url);
+    }
+  }, true);
+  // Reloads return safely to the source menu. Unsaved forms are not shareable URLs.
+  if (new URL(location.href).searchParams.has('write')) {
+    const url = new URL(location.href); url.searchParams.delete('write');
+    const state = {...history.state}; delete state.writingPage; history.replaceState(state,'',url);
+  }
+
   function writingForm({id, formId, headerSelector, closeSelector, nativeHistory=false, busySelector}) {
-    const host = $(id), form = $(formId);
+    let host = $(id); const form = $(formId);
     if (!host || !form || host.dataset.writingBound) return;
+    host = pageHost(host);
     host.dataset.writingBound = 'true'; host.classList.add('ui-writing-screen');
     // Boards already own their content/attachment history through EditorCore.
     if (nativeHistory && form.querySelector('#board-undo')) {
@@ -42,6 +149,7 @@
     const paper = document.createElement('div'); paper.className = 'ui-writing-paper';
     [...form.children].forEach(x => paper.append(x));
     form.append(header,paper); container.append(form);
+    host.querySelectorAll('.admin-card').forEach(x => { if (!x.children.length) x.remove(); });
     form.querySelectorAll('.journal-dialog-actions,.admin-actions,.modal-actions').forEach(x => x.classList.add('ui-writing-secondary'));
     const toolbar = form.querySelector('.board-toolbar');
     if (toolbar) {
@@ -60,7 +168,7 @@
     };
     window.visualViewport?.addEventListener('resize', viewport); window.visualViewport?.addEventListener('scroll', viewport);
     window.addEventListener('resize', viewport); viewport();
-    const fields = [...form.querySelectorAll('input:not([type=hidden]):not([type=file]),textarea,select')];
+    const fields = [...form.querySelectorAll('input:not([type=hidden]):not([type=file]):not([type=password]),textarea,select')];
     let history = [], cursor = -1, restoring = false;
     const snapshot = () => fields.map(x => x.type === 'checkbox' ? x.checked : x.value);
     const busy = () => save.disabled || Boolean(busySelector && form.querySelector(busySelector));
@@ -88,11 +196,14 @@
   }
   writingForm({id:'board-editor',formId:'board-form',headerSelector:'.journal-dialog-header',closeSelector:'[data-board-close=board-editor]',nativeHistory:true});
   writingForm({id:'notification-dialog',formId:'notification-form',headerSelector:'.admin-dialog-header',closeSelector:'[data-close-dialog=notification-dialog]'});
-  writingForm({id:'board-manage-dialog',formId:'board-manage-form',headerSelector:'.journal-dialog-header',closeSelector:'#board-manage-close',busySelector:'#board-manage-delete:disabled'});
   writingForm({id:'worklog-modal',formId:'worklog-form',headerSelector:'.modal-header',closeSelector:'#modal-close-btn'});
   writingForm({id:'calendar-event-dialog',formId:'calendar-event-form',headerSelector:'.journal-dialog-header',closeSelector:'#calendar-event-close'});
   writingForm({id:'harness-dialog',formId:'harness-form',headerSelector:'.admin-dialog-header',closeSelector:'#harness-dialog-close'});
-  const memo = $('memo-editor');
+  writingForm({id:'board-manage-dialog',formId:'board-manage-form',headerSelector:'.journal-dialog-header',closeSelector:'#board-manage-close'});
+  writingForm({id:'user-dialog',formId:'user-form',headerSelector:'.admin-dialog-header',closeSelector:'[data-close-dialog=user-dialog]'});
+  writingForm({id:'admin-upload-dialog',formId:'admin-upload-form',headerSelector:'.admin-dialog-header',closeSelector:'[data-close-dialog=admin-upload-dialog]'});
+  writingForm({id:'upload-dialog',formId:'upload-form',headerSelector:'.journal-dialog-header',closeSelector:'#upload-close'});
+  const memo = $('memo-editor') ? pageHost($('memo-editor')) : null;
   if (memo) {
     memo.classList.add('ui-writing-screen','ui-writing-memo');
     const viewport=()=>{memo.style.setProperty('--writing-height',(window.visualViewport?.height||innerHeight)+'px');memo.style.setProperty('--writing-top',(window.visualViewport?.offsetTop||0)+'px');};
@@ -100,3 +211,4 @@
   }
   window.WritingForms = {register:writingForm};
 })();
+
