@@ -143,3 +143,7 @@ TODO 직접 수정에서 같은 단계·하위 항목을 추가하고 상위로�
 사용자 승인에 따라 파일 해석용 로컬 라이브러리만 `public/vendor`에 포함했습니다. 프레임워크·UI 플러그인·CDN은 추가하지 않습니다. 파일 목록·버전·출처·라이선스는 `public/vendor/README.md` 및 `manifest.json`을 확인하세요. 배포·폐쇄망 반입에는 vendor 전체를 포함해야 하며 런타임 npm 설치나 네트워크 다운로드를 요구하지 않습니다. 정적 서버는 `.mjs`를 JavaScript MIME으로 제공해야 합니다. 파일을 `file://`로 직접 여는 방식은 지원하지 않습니다.
 
 `npm run test:imports`는 선택적인 개발용 Playwright·JSZip·pdf-lib를 사용합니다. PLAYWRIGHT_MODULE_PATH, QA_NODE_MODULES, BROWSER_EXECUTABLE_PATH를 필요하면 지정합니다. 예시 계정과 임시 저장소로 PC·모바일, 파일 형식·한글 OCR·시트/열·미리보기 수정·추가/교체·취소·재시도·등록 후 재조회·외부 요청 차단을 확인합니다. 사용자 PC에 검증 도구를 설치할 필요는 없습니다.
+
+## 항목 추가 팝업 및 사진 OCR 보정
+
+editor-add-menu.js는 data-editor 대상과 data-action="add-menu" 버튼을 연결합니다. 직접 추가는 ListEditor.addLine, 파일/사진 선택은 TextImport.open을 호출합니다. 본문 편집창 Escape 처리에서 하위 메뉴·불러오기 dialog를 먼저 닫습니다. OCR은 흰 배경 합성·제한된 확대·수동 90도 회전 후 자동/단일 열/희소 배치를 적용하며 rotateAuto로 기울기를 보정합니다. 엔진 confidence가 65 미만이거나 빈 결과이면 대비 보정 후 한 번 더 인식하고 더 높은 confidence의 결과를 채택합니다. confidence는 실제 정확도 백분율이 아니며 낮은 품질 경고 판단에만 사용합니다. 원본은 서버로 전송하지 않으며 모바일 Canvas는 최대 4096px·800만 픽셀로 제한합니다. 기존 엔진과 언어 파일을 재사용합니다.

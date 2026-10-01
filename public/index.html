@@ -162,11 +162,7 @@
         <div class="list-editor-toolbar" data-editor="todo" role="group" aria-label="업무 목록 편집">
           <button type="button" class="secondary-btn" data-action="outdent" aria-controls="todo" data-icon="outdent">상위로</button>
           <button type="button" class="secondary-btn" data-action="indent" aria-controls="todo" data-icon="indent">하위로</button>
-          <button type="button" class="secondary-btn" data-action="add" aria-controls="todo" data-icon="plus">항목 추가</button>
-        </div>
-        <div class="text-import-buttons" role="group" aria-label="텍스트 불러오기">
-          <button type="button" class="secondary-btn" data-text-import="todo" data-import-kind="image" data-icon="camera">사진에서 불러오기</button>
-          <button type="button" class="secondary-btn" data-text-import="todo" data-import-kind="file" data-icon="files">파일에서 불러오기</button>
+          <button type="button" class="secondary-btn" data-action="add-menu" aria-haspopup="dialog" aria-expanded="false" aria-controls="todo" data-icon="plus">항목 추가</button>
         </div>
         <small>줄을 선택한 뒤 상위로·하위로 버튼을 누르세요. PC에서는 Tab·Shift+Tab을 사용할 수 있어요.</small>
       </div>
@@ -176,11 +172,7 @@
         <div class="list-editor-toolbar" data-editor="next-day-plan" role="group" aria-label="계획 목록 편집">
           <button type="button" class="secondary-btn" data-action="outdent" aria-controls="next-day-plan" data-icon="outdent">상위로</button>
           <button type="button" class="secondary-btn" data-action="indent" aria-controls="next-day-plan" data-icon="indent">하위로</button>
-          <button type="button" class="secondary-btn" data-action="add" aria-controls="next-day-plan" data-icon="plus">항목 추가</button>
-        </div>
-        <div class="text-import-buttons" role="group" aria-label="텍스트 불러오기">
-          <button type="button" class="secondary-btn" data-text-import="next-day-plan" data-import-kind="image" data-icon="camera">사진에서 불러오기</button>
-          <button type="button" class="secondary-btn" data-text-import="next-day-plan" data-import-kind="file" data-icon="files">파일에서 불러오기</button>
+          <button type="button" class="secondary-btn" data-action="add-menu" aria-haspopup="dialog" aria-expanded="false" aria-controls="next-day-plan" data-icon="plus">항목 추가</button>
         </div>
         <small>줄을 선택한 뒤 상위로·하위로 버튼을 누르세요. PC에서는 Tab·Shift+Tab을 사용할 수 있어요.</small>
       </div>
@@ -195,11 +187,7 @@
         <div class="list-editor-toolbar" data-editor="memo" role="group" aria-label="메모 목록 편집">
           <button type="button" class="secondary-btn" data-action="outdent" aria-controls="memo" data-icon="outdent">상위로</button>
           <button type="button" class="secondary-btn" data-action="indent" aria-controls="memo" data-icon="indent">하위로</button>
-          <button type="button" class="secondary-btn" data-action="add" aria-controls="memo" data-icon="plus">항목 추가</button>
-        </div>
-        <div class="text-import-buttons" role="group" aria-label="텍스트 불러오기">
-          <button type="button" class="secondary-btn" data-text-import="memo" data-import-kind="image" data-icon="camera">사진에서 불러오기</button>
-          <button type="button" class="secondary-btn" data-text-import="memo" data-import-kind="file" data-icon="files">파일에서 불러오기</button>
+          <button type="button" class="secondary-btn" data-action="add-menu" aria-haspopup="dialog" aria-expanded="false" aria-controls="memo" data-icon="plus">항목 추가</button>
         </div>
         <small>줄을 선택한 뒤 상위로·하위로 버튼을 누르세요. PC에서는 Tab·Shift+Tab을 사용할 수 있어요.</small>
       </div>
@@ -220,7 +208,7 @@
     <div class="form-field"><label for="import-column">가져올 열</label><select id="import-column"><option value="all">모든 열</option></select></div>
   </div>
   <div id="import-encoding-options" class="form-field" hidden><label for="import-encoding">텍스트 인코딩</label><select id="import-encoding"><option value="auto">자동 (UTF-8 / UTF-16 / 한글)</option><option value="utf-8">UTF-8</option><option value="euc-kr">한글 (EUC-KR / CP949)</option><option value="utf-16le">UTF-16 LE</option><option value="utf-16be">UTF-16 BE</option></select></div>
-  <div id="import-image-options" class="form-field" hidden><label for="import-ocr-language">사진 인식 언어</label><select id="import-ocr-language"><option value="kor+eng">한국어 + 영어</option><option value="kor">한국어</option><option value="eng">영어</option></select><p class="import-help">인쇄된 글자·스크린샷에 적합합니다. 손글씨나 흐릿한 사진은 오인식될 수 있으니 아래 내용을 확인해 주세요.</p></div>
+  <div id="import-image-options" class="form-field" hidden><label for="import-ocr-language">사진 인식 언어</label><select id="import-ocr-language"><option value="kor+eng">한국어 + 영어</option><option value="kor">한국어</option><option value="eng">영어</option></select><div class="import-options"><div class="form-field"><label for="import-ocr-layout">사진 글자 배치</label><select id="import-ocr-layout"><option value="auto">자동 (문서·표)</option><option value="column">한 열 문서</option><option value="sparse">흩어진 글자·화면 캡처</option></select></div><div class="form-field"><label for="import-ocr-rotation">사진 방향</label><select id="import-ocr-rotation"><option value="0">원본 방향</option><option value="90">오른쪽 90°</option><option value="180">180°</option><option value="270">왼쪽 90°</option></select></div></div><p class="import-help">글자 크기·대비를 보정해 읽습니다. 인쇄된 글자·스크린샷에 적합합니다. 손글씨나 흐릿한 사진은 오인식될 수 있으니 아래 내용을 확인해 주세요.</p></div>
   <button type="button" id="import-read" class="secondary-btn" disabled>텍스트 읽기 / 다시 읽기</button>
   <p id="import-status" class="import-state" role="status" aria-live="polite"></p><progress id="import-progress" max="100" hidden aria-label="텍스트 인식 진행"></progress>
   <p id="import-error" class="dialog-error" role="alert"></p>
@@ -269,7 +257,7 @@
 <script src="script.js"></script>
 <script src="memo.js"></script>
 <script src="text-import-core.js"></script>
-<script src="text-import.js"></script>
+<script src="text-import.js"></script><script src="editor-add-menu.js"></script>
 </body>
 </html>
 
