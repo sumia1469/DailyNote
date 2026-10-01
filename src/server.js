@@ -36,9 +36,13 @@ async function handleApi(req, res) {
   if (req.method === 'GET' && (pathname === '/api/settings' || pathname === '/api/background/1')) return settingsHandler(req, res);
   const authInfo = await verifyToken(req);
   if (!authInfo) return sendJson(res, 401, {message: 'Invalid or missing token'});
+  if (pathname === '/api/license' && req.method === 'GET') return sendJson(res,200,await require('./license').status());
   if (pathname === '/api/auth/me' && req.method === 'GET') return sendJson(res, 200, authInfo);
   if (pathname === '/api/auth/change-password' && req.method === 'POST') return changePasswordHandler(req,res,authInfo);
   if (authInfo.mustChangePassword) return sendJson(res,403,{code:'PASSWORD_CHANGE_REQUIRED',message:'비밀번호를 변경한 후 이용해 주세요.'});
+  const license = await require('./license').status();
+  const recovery = /^\/api\/admin\/(users|permissions|directory)(\/|$)/.test(pathname);
+  if (license.overLimit && !recovery) throw require('./license').licenseError(license.activeUserCount);
   let basicRight;
   if(pathname.startsWith('/api/calendar')) basicRight={GET:'calendarRead',POST:'calendarCreate',PUT:'calendarEdit',DELETE:'calendarDelete'}[req.method];
   if(pathname.startsWith('/api/memos')) basicRight={GET:'memoRead',POST:'memoCreate',PUT:'memoEdit',DELETE:'memoDelete'}[req.method];
@@ -74,6 +78,7 @@ async function handler(req, res) {
   await handleApi(req, res);
  } catch (error) {
   console.error(error.message);
+  if (!res.headersSent && error.code === 'LICENSE_USER_LIMIT') return sendJson(res,403,{code:error.code,message:error.message,...error.details});
   if (!res.headersSent) sendJson(res, 500, {message: 'Server error'});
   else res.end();
  }

@@ -14,3 +14,5 @@
 
 document.getElementById('harness-excel').addEventListener('click',()=>WorklogExcel.download({id:'example',workDate:'2026-10-01',todo:[{task:'상위 업무',checked:true,children:[{task:'하위 업무\n줄바꿈',checked:false}]}],nextDayPlan:['내일 계획'],remarks:'비고',memo:'메모'}));
 
+
+(function(){const select=document.getElementById('harness-license-count'),note=document.getElementById('harness-license-status');function render(){const count=Number(select.value);note.textContent='무료 사용 '+count+'/6명 · 관리자 포함. '+(count>6?'업무 기능이 차단되었습니다. 계정을 비활성화하여 6명 이하로 줄이세요.':count===6?'7번째 활성 사용자 등록·승인·재활성화에는 별도 라이선스가 필요합니다.':'활성 사용자 1명을 추가할 수 있습니다.');}select.addEventListener('change',render);render();})();

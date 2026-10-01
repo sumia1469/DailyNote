@@ -19,7 +19,9 @@ async function loginHandler(req, res) {
   if (hashBuf.length !== storedBuf.length || !crypto.timingSafeEqual(hashBuf, storedBuf)) {
     return sendJson(res, 401, { message: 'Invalid password' });
   }
-  if (user.active === false) return sendJson(res, 403, {message: user.approval === 'pending' ? '관리자 승인을 기다리고 있습니다. 승인 후 로그인해 주세요.' : user.approval === 'rejected' ? '가입신청이 반려되었습니다. 관리자에게 문의해 주세요.' : '비활성화된 계정입니다. 관리자에게 문의해 주세요.'});
+  if (user.active === false || (user.approval && user.approval !== 'approved')) return sendJson(res, 403, {message: user.approval === 'pending' ? '관리자 승인을 기다리고 있습니다. 승인 후 로그인해 주세요.' : user.approval === 'rejected' ? '가입신청이 반려되었습니다. 관리자에게 문의해 주세요.' : '비활성화된 계정입니다. 관리자에게 문의해 주세요.'});
+  const license = await require('./license').status();
+  if (license.overLimit && require('./permissions').roleOf(user) !== 'admin' && !require('./permissions').rightsOf(user).users) throw require('./license').licenseError(license.activeUserCount);
   sendJson(res, 200, await createLoginSession(user));
 }
 
@@ -42,7 +44,7 @@ async function verifyToken(req) {
   const sess = await ds.findSessionByToken(token);
   if (!sess) return null;
   const user = await ds.findOne('users', u => u.id === sess.userId);
-  if (!user || user.active === false) return null;
+  if (!user || user.active === false || (user.approval && user.approval !== 'approved')) return null;
   if (user.passwordResetAt && (!sess.createdAt || new Date(sess.createdAt).getTime() <= new Date(user.passwordResetAt).getTime())) return null;
   const {roleOf, rightsOf} = require('./permissions');
   return { userId: user.id, username: user.username, role: roleOf(user), permissions: rightsOf(user), mustChangePassword:user.mustChangePassword===true };
@@ -73,6 +75,8 @@ async function registerHandler(req, res) {
   if (typeof body.password !== 'string' || body.password.length < 8 || body.password.length > 128) return sendJson(res,400,{message:'비밀번호는 8~128자로 입력하세요.'});
   if (body.password !== body.passwordConfirmation) return sendJson(res,400,{message:'비밀번호 확인이 일치하지 않습니다.'});
   if (await ds.findOne('users', user => user.username === username)) return sendJson(res,409,{message:'이미 등록되었거나 승인 대기 중인 아이디입니다.'});
+  const license = await require('./license').status();
+  if (license.atLimit) throw require('./license').licenseError(license.activeUserCount);
   await ds.insert('users',{...makeUserRecord(username,body.password),role:'member',permissions:{},active:false,approval:'pending',createdAt:new Date().toISOString()});
   return sendJson(res,201,{message:'사용자 등록신청을 완료했습니다. 관리자 승인 후 로그인할 수 있습니다.'});
 }

@@ -1,5 +1,6 @@
 const adminScroll=ListScroll.mount(document.querySelector('.admin-shell'));
 const adminToken=localStorage.getItem('token');
+let licenseStatus;
 let me, directory=[], users=[], appearance={}, backgroundData=null, activePanel;
 let noticeVersion=0, noticeNext=null, noticeLoading=false, noticeObserver;
 let pending=0, notices=[], noticeFilters={query:'',recipient:'',read:''};
@@ -26,18 +27,29 @@ async function run(action){status('');try{await busy(action);}catch(e){status(e.
 function empty(container){if(!container.children.length){const p=document.createElement('p');p.textContent='등록된 항목이 없습니다.';container.appendChild(p);}}
 function showPanel(key){adminScroll.capture();activePanel=key;const menu=UIConfig.menus.admin.find(menu=>menu.id===key);UIShell.title($('admin-title'),menu?.title||'관리페이지');UIShell.actions('admin',key,me?.permissions||{},[$('admin-create'),$('admin-search')]);document.querySelectorAll('.admin-panel').forEach(panel=>panel.hidden=panel.id!==menu?.panel);document.querySelectorAll('[data-panel]').forEach(button=>{if(button.dataset.panel===key)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current');});adminScroll.activate(key);}
 
+function renderLicenseStatus(){
+ const list=$('admin-users');if(!list)return;
+ let note=$('license-status');
+ if(!note){note=document.createElement('p');note.id='license-status';note.setAttribute('role','status');list.before(note);}
+ note.replaceChildren(document.createTextNode(`무료 사용 ${licenseStatus.activeUserCount}/${licenseStatus.limit}명 · 관리자 포함. `));
+ if(licenseStatus.atLimit)note.append(document.createTextNode(licenseStatus.overLimit?'한도 초과로 업무 기능이 차단되었습니다. 계정을 비활성화하여 6명 이하로 줄이세요. ':'7번째 사용자 등록·승인·재활성화에는 별도 라이선스가 필요합니다. '));
+ const link=document.createElement('a');link.href='mailto:'+licenseStatus.contact;link.textContent='라이선스 문의 · '+licenseStatus.contact;note.append(link);
+}
 function setPermissionForm(){const u=users.find(u=>String(u.id)===$('permission-user').value);if(!u)return;$('permission-role').value=u.role;for(const key of permissionKeys){const box=$('permission-form').elements.namedItem(key);box.checked=u.permissions[key]===true;box.disabled=u.role==='admin';}}
 function updatePermissionRole(){const admin=$('permission-role').value==='admin';for(const key of permissionKeys){const box=$('permission-form').elements.namedItem(key);box.disabled=admin;if(admin)box.checked=true;}}
 function preview(){const form=$('appearance-form').elements;const values={...appearance,fontFamily:form.fontFamily.value,fontSize:Number(form.fontSize.value),spacing:form.spacing.value,theme:form.theme.value,background:form.background.value,loadingMotion:form.loadingMotion.value};window.SiteSettings.apply(values,{persist:false});const image=values.background==='custom'?(backgroundData||values.backgroundUrl):values.background==='autumn'?'images/login-autumn.webp':null;$('background-preview').style.backgroundImage=image?`url("${image}")`:'none';}
 function setAppearance(values){appearance=values;for(const key of ['fontFamily','fontSize','spacing','theme','background','loadingMotion'])$('appearance-form').elements.namedItem(key).value=key==='loadingMotion'?LoadingMotion.normalize(values[key]):values[key];preview();}
 async function refresh(reload=true){
- me=await api('/api/auth/me');if(me.mustChangePassword){location.replace('/change-password.html');return;}$('admin-account').textContent=me.username+' · '+(me.role==='admin'?'관리자':'일반 사용자');
+ me=await api('/api/auth/me');if(me.mustChangePassword){location.replace('/change-password.html');return;}licenseStatus=await api('/api/license');
+ if(licenseStatus.overLimit && !['users','permissions'].includes(activePanel)) activePanel=me.permissions.users?'users':'permissions';
+ $('admin-account').textContent=me.username+' · '+(me.role==='admin'?'관리자':'일반 사용자');
  const allowed=UIConfig.allowed('admin',me.permissions).map(menu=>menu.id);document.querySelectorAll('[data-panel]').forEach(b=>b.hidden=!allowed.includes(b.dataset.panel));
  if(!allowed.length){$('admin-create').hidden=true;$('admin-search').hidden=true;$('admin-title').textContent='관리페이지';document.querySelectorAll('.admin-panel').forEach(p=>p.hidden=true);status('관리페이지에 접근할 권한이 없습니다.',true);return;}
  showPanel(allowed.includes(activePanel)?activePanel:allowed[0]);
  if(me.permissions.boards)await window.BoardAdmin?.load();
  if(['files','users','permissions'].includes(activePanel))directory=await api('/api/admin/directory');
- if((activePanel==='users'||activePanel==='permissions')&&(me.permissions.users||me.permissions.permissions)){users=await api('/api/admin/'+(me.permissions.users?'users':'permissions'));options($('permission-user'),users);setPermissionForm();}
+ if((activePanel==='users'||activePanel==='permissions')&&(me.permissions.users||me.permissions.permissions)){users=await api('/api/admin/'+(me.permissions.users?'users':'permissions'));
+ renderLicenseStatus();options($('permission-user'),users);setPermissionForm();}
  if(activePanel==='notifications'&&me.permissions.notifications){
   options($('notification-user'),[{id:'all',username:'전체 사용자 공통 공지'}]);
   options($('notice-recipient'),[{id:'',username:'전체 공지'}]);
@@ -89,7 +101,7 @@ for(const b of document.querySelectorAll('[data-panel]'))b.addEventListener('cli
 $('notification-reset').addEventListener('click',()=>{$('notification-dialog').close();});
 function openNotificationDialog(note){const form=$('notification-form');form.reset();const f=form.elements;f.id.value=note?.id||'';f.userId.value='all';f.title.value=note?.title||'';f.message.value=note?.message||'';$('notice-target-hint').textContent=note&&!note.shared?'기존 개별 공지는 원래 게시 대상에게 수정 내용이 적용됩니다.':'모든 사용자가 함께 보는 공지입니다. 수정하면 사용자별 읽음 상태가 초기화됩니다.';$('notification-dialog-title').textContent=note?'공지 수정':'공지 등록';$('notification-form-error').textContent='';$('notification-dialog').showModal();$('notification-message').focus();}
 $('admin-create').addEventListener('click',()=>{if(!me?.permissions[activePanel])return;if(activePanel==='notifications')openNotificationDialog();else if(activePanel==='files'){$('admin-upload-form').reset();$('admin-upload-error').textContent='';$('admin-upload-dialog').showModal();}else if(activePanel==='users')openUserDialog();});
-function openUserDialog(user){const form=$('user-form');form.reset();const f=form.elements;f.id.value=user?.id||'';f.username.value=user?.username||'';f.active.value=String(user?.active!==false);f.password.required=!user;$('user-dialog-title').textContent=user?'사용자 수정':'사용자 등록';$('user-form-error').textContent='';$('user-dialog').showModal();}
+function openUserDialog(user){const form=$('user-form');form.reset();const f=form.elements;f.id.value=user?.id||'';f.username.value=user?.username||'';f.active.value=String(user?.active!==false);f.password.required=!user;$('user-dialog-title').textContent=user?'사용자 수정':'사용자 등록';$('user-form-error').textContent=licenseStatus?.atLimit?'무료 사용 한도에 도달했습니다. 신규 활성 등록·승인은 제한됩니다. 이노마인드랩스: sumia1469@gmail.com':'';$('user-dialog').showModal();}
 $('user-create').addEventListener('click',()=>openUserDialog());
 for(const b of document.querySelectorAll('[data-close-dialog]'))b.addEventListener('click',()=>$(b.dataset.closeDialog).close());
 async function submitDialog(form,dialog,errorId,action){const submit=form.querySelector('[type=submit]');if(submit.disabled)return;submit.disabled=true;form.querySelector('.dialog-progress').hidden=false;$(errorId).textContent='';try{await busy(action);dialog.close();}catch(error){$(errorId).textContent=error.message;}finally{submit.disabled=false;form.querySelector('.dialog-progress').hidden=true;}}

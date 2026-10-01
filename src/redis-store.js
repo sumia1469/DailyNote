@@ -33,11 +33,21 @@ async function command(...args) {
 }
 async function findAll(name) { return (await command('HVALS',prefix+name)).map(JSON.parse); }
 async function findOne(name,predicate) { return (await findAll(name)).find(predicate); }
+async function mutateUser(id, updates) {
+ const {FREE_USER_LIMIT,licenseError} = require('./license');
+ const result = await command('EVAL',require('./user-seat-script'),2,prefix+'users',prefix+'users:id',id===null?'':String(id),JSON.stringify(updates),FREE_USER_LIMIT);
+ if (!result) return null;
+ const user = JSON.parse(result);
+ if (user.code === 'LICENSE_USER_LIMIT') throw licenseError(user.count);
+ return user;
+}
 async function insert(name,obj) {
+ if (name === 'users') return mutateUser(null,obj);
  obj = {...obj,id:await command('INCR',prefix+name+':id')};
  await command('HSET',prefix+name,String(obj.id),JSON.stringify(obj));return obj;
 }
 async function update(name,id,updates) {
+ if (name === 'users') return mutateUser(id,updates);
  const result = await command('EVAL', `local v=redis.call('HGET',KEYS[1],ARGV[1]); if not v then return false end; local o=cjson.decode(v); local u=cjson.decode(ARGV[2]); for k,v in pairs(u) do o[k]=v end; local s=cjson.encode(o); redis.call('HSET',KEYS[1],ARGV[1],s); return s`,1,prefix+name,String(id),JSON.stringify(updates));
  return result ? JSON.parse(result) : null;
 }
