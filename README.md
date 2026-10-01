@@ -333,3 +333,9 @@ Node.js 설치 없이 포함된 runtime/node.exe를 사용하는 Windows x64 압
 
 게시글 작성 도구의 코드 버튼을 누르면 언어 선택, 코드 입력, 본문에 넣기 버튼이 세로로 표시됩니다. 긴 코드는 입력창 안에서 스크롤하며 모바일 입력 글자는 16px 이상입니다. 창이 작아지면 팝업 내부를 스크롤해 버튼을 사용할 수 있고 닫기 또는 Escape로 작성 중인 글에 돌아갑니다.
 
+
+
+
+## macOS 로컬 실행
+
+맥은 `Start_DailyNote.command`, Windows는 `Start_DailyNote.bat`로 각각 로컬 서버를 실행합니다. Node.js 설치 없이 사용하려면 GitHub Actions에서 런타임 포함 포터블 ZIP을 내려받습니다. Git의 Code → Download ZIP은 소스만 포함하며 맥용 `.command`는 이 경우 이미 설치된 Node.js를 사용할 수 있습니다. 애플 실리콘·인텔 패키지 다운로드, 실행 권한, 빌드 방법은 [로컬 포터블 안내](docs/LOCAL-PORTABLE.md)를 참고하세요.
