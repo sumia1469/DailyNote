@@ -1,0 +1,19 @@
+/* Shared by every entry page. Local CSS only, and compatible with custom spinner skins. */
+.loading-overlay.app-loading {
+  position:fixed; inset:0; width:auto; height:auto; max-width:none; max-height:none;
+  margin:0; border:0; padding:20px; display:grid; place-items:center; z-index:10000;
+  background:rgba(248,250,252,.7); color:var(--text,#263247); pointer-events:none;
+}
+.loading-overlay.app-loading[hidden] { display:none; }
+.app-loading::backdrop { background:transparent; pointer-events:none; }
+.app-loading .loading-panel {
+  width:min(300px,100%); padding:28px 24px; margin:0; text-align:center;
+  border:0; border-radius:0; background:transparent; box-shadow:none;
+}
+.app-loading .loading-panel p { margin:20px 0 8px; font-weight:700; line-height:1.5; }
+.app-loading .loading-panel small { color:var(--muted,#64748b); }
+.app-loading .orbit-spinner { position:relative; width:56px; height:56px; margin:0 auto; animation:app-loading-orbit 1.4s linear infinite; }
+.app-loading .orbit-spinner span { position:absolute; top:0; left:24px; width:8px; height:8px; border-radius:50%; background:var(--primary,#3478ed); transform-origin:4px 28px; transform:rotate(calc(var(--dot)*45deg)); opacity:calc(.25 + var(--dot)*.1); }
+body[data-theme="dark"] .loading-overlay.app-loading { background:rgba(15,23,42,.75); color:#f1f5f9; }
+@keyframes app-loading-orbit { to { transform:rotate(360deg); } }
+@media (prefers-reduced-motion:reduce) { .app-loading .orbit-spinner { animation:none; } }
