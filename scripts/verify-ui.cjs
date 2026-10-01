@@ -37,6 +37,19 @@ async function seed(){
    if(await page.locator('#search-dialog').evaluate(node=>node.open))await page.locator('#search-close').click();
   }
  }
+ async function journalExcel(label){
+  await page.locator('.card-menu-trigger').first().click();
+  const action=page.getByRole('button',{name:'엑셀 다운로드',exact:true});await action.waitFor();
+  const bounds=await action.boundingBox();assert.ok(bounds.x>=0&&bounds.y>=0&&bounds.x+bounds.width<=page.viewportSize().width&&bounds.y+bounds.height<=page.viewportSize().height);
+  await page.screenshot({path:path.join(out,'excel-menu-'+label+'.png')});
+  const promise=page.waitForEvent('download');await action.click();const download=await promise;
+  assert.equal(download.suggestedFilename(),'일정_2026-10-01_1.xlsx');
+  const file=path.join(tmp,'export-'+label+'.xlsx');await download.saveAs(file);assert.equal(await download.failure(),null);
+  const sheet=require('../public/vendor/xlsx/xlsx.full.min').read(fs.readFileSync(file),{type:'buffer'}).Sheets['일정 카드'];
+  assert.equal(sheet.E5.v,'사용자·관리자 메뉴 디자인 통일');assert.equal(sheet.D5.v,'완료');assert.equal(sheet.B7.v,'2.1');
+  assert.equal(sheet.E10.v,'공통 UI 모듈을 사용하는 예시입니다.');assert.equal(sheet.E11.v,'중앙 제목 · 숨김 메뉴 · ＋ 팝업');
+  assert.equal(await page.locator('#card-menu-dialog').evaluate(node=>node.open),false);
+ }
  await page.goto(base);await page.locator('#username').fill(username);await page.locator('#password').fill(password);await page.locator('.login-btn').click();await page.locator('#main-section').waitFor({state:'visible'});await settled();await centered();await capture('01-user-worklogs');await journalSearch();
  await page.locator('#sidebar-open').click();await capture('02-user-menu');await page.locator('[data-view="notifications"]').click();await capture('03-user-notifications');await page.locator('.notification-content').first().click();await page.waitForFunction(()=>document.getElementById('notification-page-message').textContent.length>0);await page.waitForFunction(()=>document.getElementById('notification-page-state').textContent==='');assert.ok(await page.locator('#notification-page-title').textContent());await capture('04-user-notification-detail');assert.equal((await ds.findOne('notifications',n=>n.id===1)).isRead,true);await page.reload();await page.waitForFunction(()=>document.getElementById('notification-page-message').textContent.length>0);await settled();assert.equal(await page.locator('#notification-page-state').textContent(),'');await page.locator('#notification-back').click();await page.waitForURL('**/#notifications');
  await page.locator('#sidebar-open').click();await page.locator('[data-view="files"]').click();await capture('05-user-files');await page.locator('#open-upload-btn').click();await capture('06-user-file-create');await page.locator('#upload-close').click();
@@ -48,6 +61,9 @@ async function seed(){
  await page.goto(base+'/onboarding.html');await centered();await capture('16-onboarding');await page.goto(base+'/design-harness.html');await centered();await page.locator('#harness-audit').click();assert.ok(!(await page.locator('#harness-result').textContent()).includes('FAIL'));await capture('17-design-harness');await page.locator('#harness-create').click();await page.locator('#harness-form button[type=submit]').click();await page.locator('#harness-error').filter({hasText:'내용을 입력하세요.'}).waitFor();await page.locator('#harness-input').fill('예시 검증');await page.locator('#harness-form button[type=submit]').click();assert.equal(await page.locator('#harness-dialog').evaluate(node=>node.open),false);
  await page.setViewportSize({width:390,height:844});await page.locator('#harness-audit').click();assert.ok(!(await page.locator('#harness-result').textContent()).includes('FAIL'));await page.goto(base+'/#notifications/1');await page.waitForFunction(()=>document.getElementById('notification-page-message').textContent.length>0);await settled();await centered();assert.equal(await page.locator('#notification-page-state').textContent(),'');await capture('18-mobile-notification-detail');await page.locator('#notification-back').click();await page.locator('#sidebar-open').click();await page.locator('[data-view="worklogs"]').click();await capture('19-mobile-worklogs');await journalSearch();await page.goto(base+'/admin.html');await settled();await centered();await page.locator('#admin-search').click();await capture('22-mobile-notice-search');await page.locator('#notice-search').fill('취소할 검색');await page.locator('#notice-search-dialog [data-close-dialog]').first().click();await page.locator('#admin-search').click();assert.equal(await page.locator('#notice-search').inputValue(),'');await page.locator('#notice-search-all').click();await page.locator('#admin-create').click();await capture('20-mobile-admin-notification-popup');
 
+ for(const [label,viewport] of [['pc',{width:1440,height:1000}],['mobile',{width:390,height:844}]]){
+  await page.setViewportSize(viewport);await page.goto(base+'/#worklogs');await page.locator('.card-menu-trigger').first().waitFor();await settled();await journalExcel(label);
+ }
  // Account footer and password close regression, with isolated example accounts.
  for(const viewport of [{width:1440,height:1000},{width:390,height:844},{width:320,height:568},{width:844,height:390}]){
   await page.setViewportSize(viewport);await page.goto(base+'/#files');await page.locator('#main-section').waitFor({state:'visible'});await settled();await page.locator('#sidebar-open').click();

@@ -172,4 +172,7 @@ TODO 일반 본문은 더블클릭·두 번 탭·Enter/F2로 편집하며 링크
 캘린더는 UIConfig와 공통 76px 헤더·숨김 메뉴·＋ 팝업을 재사용합니다. 디자인 하네스의 사용자 메뉴에도 캘린더가 자동으로 포함됩니다. 월간 기간 막대·주간/일간 시간 블록·날짜별 목록은 calendar.js/css가 담당합니다. [API·데이터·권한·알림 범위](CALENDAR.md)를 확인하세요. `npm run test:calendar`는 1440×1000 PC 및 390×844 모바일에서 CRUD·저장 실패 입력 유지·겹침·기간·참조 상세·알림 중복·권한·계정 분리·하네스와 외부 요청 없음을 확인합니다.
 이미지 조회는 references.js의 로컬 dialog 두 개와 Blob URL을 사용하며 기존 FileTransfer.download로 원본·조각 파일을 조립합니다. 기존 fileRead·fileDownload 및 API 소유권을 유지합니다. 닫기·계정 전환 시 요청 취소·세대 검사·Blob URL 해제를 수행합니다. AppShell.openReference는 history.state에 복귀 경로와 원래 스크롤을 기록합니다. 참조 확대는 같은 URL의 별도 history 항목으로 관리하여 브라우저 뒤로가기가 팝업만 닫습니다. 검증: scripts/verify-reference-images.cjs (PC 1440×1000, 모바일 390×844, 미리보기·확대·원본/조각·복귀·취소·권한·삭제).
 
+## 일정 엑셀 내보내기
+
+`public/worklog-excel.js`는 OOXML과 무압축 ZIP을 직접 작성하는 바닐라 JS 모듈입니다. `index.html`에서 `journal-controls.js` 이전에 로드하고 카드 … 메뉴에서 조회한 worklog를 전달합니다. 모든 내용은 inlineStr로 기록해 수식으로 실행하지 않으며 XML 문자를 이스케이프하고 날짜는 Excel 날짜 형식으로 기록합니다. 비고·메모는 기존 문자열 및 remarksItems/memoItems 배열을 지원합니다. 셀 32,767자 한도 초과는 상태 문구로 알리고 원문은 변경하지 않습니다. 테스트는 로컬 XLSX 리더로 날짜·계층·줄바꿈·완료 상태를 역검증합니다. `npm run test:browser`는 PC·모바일 메뉴와 실제 다운로드를 확인합니다.
 `worklog-sections.js`는 TODO·익일 계획·비고·메모의 공통 항목 어댑터입니다. `todo`·`nextDayPlan`은 기존 배열을 사용하고 비고·메모는 문자열과 `remarksItems`·`memoItems`를 함께 저장합니다. 문자열과 항목 직렬화가 일치할 때만 부가 항목의 완료 상태를 사용하며, 이전 문자열 저장 요청은 부가 항목을 초기화합니다. 전체 수정·복제에서도 부가 항목을 보존합니다. API는 기존 소유권·worklogEdit를 유지하며 부가 항목 저장 시 문자열과 배열을 함께 요구합니다. 드래그 범위는 같은 영역이며 다른 영역과 일지로 넘기지 않습니다. `verify-sections.cjs`와 기존 참조·가져오기 회귀 검증을 실행합니다.
