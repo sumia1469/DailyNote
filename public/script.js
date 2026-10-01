@@ -428,7 +428,7 @@ function openWorklogModal(worklog = null) {
   form.remarks.value = isEdit ? worklog.remarks || '' : '';
   form.memo.value = isEdit ? worklog.memo || '' : '';
   [form.todo, form.nextDayPlan, form.remarks, form.memo].forEach(input => input.dispatchEvent(new Event('input')));
-  modal.classList.add('open');
+  modal.showModal();
   modal.querySelector('.modal-dialog').scrollTop = 0;
   modal.setAttribute('aria-hidden', 'false');
   document.body.classList.add('modal-open');
@@ -440,7 +440,7 @@ function openWorklogModal(worklog = null) {
 function closeWorklogModal() {
   const modal = document.getElementById('worklog-modal');
   const form = document.getElementById('worklog-form');
-  modal.classList.remove('open');
+  modal.close();
   modal.setAttribute('aria-hidden', 'true');
   document.body.classList.remove('modal-open');
   form.reset();
@@ -1016,6 +1016,7 @@ async function duplicateWorklogs(sources) {
   }
 }
 document.getElementById('duplicate-worklog-btn').addEventListener('click', () => duplicateWorklogs(currentWorklogs.filter(item => selectedWorklogIds.has(String(item.id)))));
+
 
 
 

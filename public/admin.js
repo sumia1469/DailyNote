@@ -25,7 +25,7 @@ function row(title,detail){const div=document.createElement('div');div.className
 function button(label,action,danger=false){const b=document.createElement('button');b.type='button';b.className=danger?'danger-btn':'secondary-btn';b.textContent=label;b.addEventListener('click',()=>run(action));return b;}
 async function run(action){status('');try{await busy(action);}catch(e){status(e.message,true);}}
 function empty(container){if(!container.children.length){const p=document.createElement('p');p.textContent='등록된 항목이 없습니다.';container.appendChild(p);}}
-function showPanel(key){if(activePanel!==key){AppLoading.clear();AppLoading.run('불러오는 중입니다…',()=>new Promise(requestAnimationFrame));}adminScroll.capture();activePanel=key;const menu=UIConfig.menus.admin.find(menu=>menu.id===key);UIShell.title($('admin-title'),menu?.title||'관리페이지');UIShell.actions('admin',key,me?.permissions||{},[$('admin-create'),$('admin-search')]);document.querySelectorAll('.admin-panel').forEach(panel=>panel.hidden=panel.id!==menu?.panel);document.querySelectorAll('[data-panel]').forEach(button=>{if(button.dataset.panel===key)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current');});adminScroll.activate(key);}
+function showPanel(key){UIShell.dropdown.close();if(activePanel!==key){AppLoading.clear();AppLoading.run('불러오는 중입니다…',()=>new Promise(requestAnimationFrame));}adminScroll.capture();activePanel=key;const menu=UIConfig.menus.admin.find(menu=>menu.id===key);UIShell.title($('admin-title'),menu?.title||'관리페이지');UIShell.actions('admin',key,me?.permissions||{},[$('admin-create'),$('admin-search')]);document.querySelectorAll('.admin-panel').forEach(panel=>panel.hidden=panel.id!==menu?.panel);document.querySelectorAll('[data-panel]').forEach(button=>{if(button.dataset.panel===key)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current');});adminScroll.activate(key);}
 
 function renderLicenseStatus(){
  const list=$('admin-users');if(!list)return;
@@ -57,8 +57,24 @@ async function refresh(reload=true){
   else if($('notice-load-more'))noticeObserver?.observe($('notice-load-more'));
  }
  if(activePanel==='files'&&me.permissions.files){const files=await api('/api/admin/files');const list=$('admin-files');list.replaceChildren();files.forEach(file=>{const r=row(file.originalName,userName(file.userId)+' · '+Math.ceil(file.sizeBytes/1024)+'KB');const input=document.createElement('input');input.value=file.originalName;input.setAttribute('aria-label',file.originalName+' 파일명 변경');input.maxLength=200;r.div.insertBefore(input,r.actions);r.actions.append(button('파일명 저장',async()=>{await api('/api/admin/files/'+file.id,'PUT',{originalName:input.value});await refresh();status('파일명을 변경했습니다.');}),button('다운로드',async()=>{const data=await FileTransfer.download(file,suffix=>api('/api/admin/files/'+file.id+suffix,'GET',undefined,true));const url=URL.createObjectURL(data),a=document.createElement('a');a.href=url;a.download=file.originalName;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}),button('삭제',async()=>{if(!confirm(file.originalName+' 파일을 삭제할까요?'))return;await api('/api/admin/files/'+file.id,'DELETE');await refresh();status('파일을 삭제했습니다.');},true));list.appendChild(r.div);});empty(list);}
- if(activePanel==='users'&&me.permissions.users){const pendingUsers=users.filter(user=>user.approval==='pending');$('approval-count').textContent=pendingUsers.length;const requests=$('admin-approvals');requests.replaceChildren();pendingUsers.forEach(user=>{const r=row(user.username,'승인 대기 · '+(user.createdAt?new Date(user.createdAt).toLocaleDateString('ko-KR'):''));r.actions.append(button('승인',async()=>{await api('/api/admin/users/'+user.id+'/approve','POST',{});await refresh();status('가입신청을 승인했습니다. 이제 로그인할 수 있습니다.');}),button('반려',async()=>{if(!confirm('이 가입신청을 반려할까요?'))return;await api('/api/admin/users/'+user.id+'/reject','POST',{});await refresh();status('가입신청을 반려했습니다.');},true));requests.appendChild(r.div);});empty(requests);const list=$('admin-users');list.replaceChildren();users.forEach(user=>{const r=row(user.username,(user.role==='admin'?'관리자':'일반 사용자')+' · '+(user.approval==='pending'?'승인 대기':user.approval==='rejected'?'반려':user.active?'활성':'비활성'));r.actions.append(button('수정',()=>openUserDialog(user)));if(me.role==='admin')r.actions.append(button('비밀번호 초기화',()=>{const form=$('password-reset-form');form.reset();form.elements.id.value=user.id;$('password-reset-account').textContent='대상 사용자: '+user.username;$('password-reset-error').textContent='';$('password-dialog').showModal();}));list.appendChild(r.div);});empty(list);}
+ if(activePanel==='users'&&me.permissions.users){const pendingUsers=users.filter(user=>user.approval==='pending');$('approval-count').textContent=pendingUsers.length;const requests=$('admin-approvals');requests.replaceChildren();pendingUsers.forEach(user=>{const r=row(user.username,'승인 대기 · '+(user.createdAt?new Date(user.createdAt).toLocaleDateString('ko-KR'):''));r.actions.append(button('승인',async()=>{await api('/api/admin/users/'+user.id+'/approve','POST',{});await refresh();status('가입신청을 승인했습니다. 이제 로그인할 수 있습니다.');}),button('반려',async()=>{if(!confirm('이 가입신청을 반려할까요?'))return;await api('/api/admin/users/'+user.id+'/reject','POST',{});await refresh();status('가입신청을 반려했습니다.');},true));requests.appendChild(r.div);});empty(requests);const list=$('admin-users');UIShell.dropdown.close();list.replaceChildren();users.forEach(user=>list.appendChild(userRow(user)));empty(list);}
  if(activePanel==='appearance'&&me.permissions.appearance){const values=await api('/api/admin/settings');backgroundData=null;$('background-file').value='';setAppearance(values);}
+}
+
+function userRow(user){
+ const r=row(user.username,(user.role==='admin'?'관리자':'일반 사용자')+' · '+(user.approval==='pending'?'승인 대기':user.approval==='rejected'?'반려':user.active?'활성':'비활성'));
+ r.div.classList.add('user-admin-row');r.actions.remove();
+ const more=document.createElement('button');more.type='button';more.className='shell-icon user-admin-more';more.dataset.icon='more';more.setAttribute('aria-label',user.username+' 사용자 메뉴');more.setAttribute('aria-haspopup','menu');more.setAttribute('aria-controls','user-admin-menu');more.setAttribute('aria-expanded','false');
+ more.addEventListener('click',()=>{
+  const menu=$('user-admin-menu');menu.setAttribute('aria-label',user.username+' 사용자 메뉴');
+  const edit=button('수정',()=>{UIShell.dropdown.close();openUserDialog(user);});edit.dataset.icon='edit';
+  menu.replaceChildren(edit);
+  if(me.role==='admin'){
+   const reset=button('비밀번호 초기화',()=>{UIShell.dropdown.close();const form=$('password-reset-form');form.reset();form.elements.id.value=user.id;$('password-reset-account').textContent='대상 사용자: '+user.username;$('password-reset-error').textContent='';$('password-dialog').showModal();});reset.dataset.icon='password';menu.appendChild(reset);
+  }
+  UIShell.dropdown.open(menu,more);
+ });
+ r.div.appendChild(more);return r.div;
 }
 
 function noticeRow(note){
@@ -108,8 +124,8 @@ function fileData(file){return new Promise((resolve,reject)=>{const reader=new F
 for(const b of document.querySelectorAll('[data-panel]'))b.addEventListener('click',()=>{noticeVersion++;noticeLoading=false;noticeObserver?.disconnect();showPanel(b.dataset.panel);run(()=>refresh(false));});
 $('notification-reset').addEventListener('click',()=>{$('notification-dialog').close();});
 function openNotificationDialog(note){const form=$('notification-form');form.reset();const f=form.elements;f.id.value=note?.id||'';f.userId.value='all';f.title.value=note?.title||'';f.message.value=note?.message||'';$('notice-target-hint').textContent=note&&!note.shared?'기존 개별 공지는 원래 게시 대상에게 수정 내용이 적용됩니다.':'모든 사용자가 함께 보는 공지입니다. 수정하면 사용자별 읽음 상태가 초기화됩니다.';$('notification-dialog-title').textContent=note?'공지 수정':'공지 등록';$('notification-form-error').textContent='';$('notification-dialog').showModal();$('notification-message').focus();}
-$('admin-create').addEventListener('click',()=>{if(!me?.permissions[activePanel])return;if(activePanel==='notifications')openNotificationDialog();else if(activePanel==='files'){$('admin-upload-form').reset();$('admin-upload-error').textContent='';$('admin-upload-dialog').showModal();$('admin-file').focus();}else if(activePanel==='users')openUserDialog();});
-function openUserDialog(user){const form=$('user-form');form.reset();const f=form.elements;f.id.value=user?.id||'';f.username.value=user?.username||'';f.active.value=String(user?.active!==false);f.password.required=!user;$('user-dialog-title').textContent=user?'사용자 수정':'사용자 등록';$('user-form-error').textContent=licenseStatus?.atLimit?'무료 사용 한도에 도달했습니다. 신규 활성 등록·승인은 제한됩니다. 이노마인드랩스: sumia1469@gmail.com':'';$('user-dialog').showModal();f.username.focus();}
+$('admin-create').addEventListener('click',()=>{if(!me?.permissions[activePanel])return;if(activePanel==='notifications')openNotificationDialog();else if(activePanel==='files'){$('admin-upload-form').reset();$('admin-upload-error').textContent='';$('admin-upload-dialog').showModal();}else if(activePanel==='users')openUserDialog();});
+function openUserDialog(user){const form=$('user-form');form.reset();const f=form.elements;f.id.value=user?.id||'';f.username.value=user?.username||'';f.active.value=String(user?.active!==false);f.password.required=!user;$('user-dialog-title').textContent=user?'사용자 수정':'사용자 등록';$('user-form-error').textContent=licenseStatus?.atLimit?'무료 사용 한도에 도달했습니다. 신규 활성 등록·승인은 제한됩니다. 이노마인드랩스: sumia1469@gmail.com':'';$('user-dialog').showModal();}
 $('user-create').addEventListener('click',()=>openUserDialog());
 for(const b of document.querySelectorAll('[data-close-dialog]'))b.addEventListener('click',()=>$(b.dataset.closeDialog).close());
 async function submitDialog(form,dialog,errorId,action){
@@ -134,3 +150,5 @@ if(!adminToken)location.replace('/');else run(refresh);
 
 
 window.AdminBoardContext={get user(){return me;},get activePanel(){return activePanel;},api,refresh};
+
+
