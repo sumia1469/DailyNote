@@ -10,7 +10,7 @@
   // Keep the existing adapter entry point on the common nonmodal dropdown.
   UIShell.actionMenu = (menu, opener) => { window.AppIcons?.render(menu); UIShell.dropdown.open(menu, opener); };
 
-  function writingForm({id, formId, headerSelector, closeSelector, nativeHistory=false}) {
+  function writingForm({id, formId, headerSelector, closeSelector, nativeHistory=false, recordHistory=true}) {
     const host = $(id), form = $(formId);
     if (!host || !form || host.dataset.writingBound) return;
     host.dataset.writingBound = 'true'; host.classList.add('ui-writing-screen');
@@ -34,7 +34,7 @@
     left.append(closer);
     const undo = nativeHistory ? form.querySelector('[data-board-command=undo]') : icon('undo','실행 취소');
     const redo = nativeHistory ? form.querySelector('[data-board-command=redo]') : icon('redo','다시 실행');
-    [undo,redo].forEach((b,i) => { b.classList.add('shell-icon'); b.dataset.icon = i ? 'redo' : 'undo'; b.textContent = ''; left.append(b); });
+    [undo,redo].forEach((b,i) => { b.classList.add('shell-icon'); b.dataset.icon = i ? 'redo' : 'undo'; b.textContent = ''; if (recordHistory) left.append(b); });
     // Keep the submit inside the form: existing adapters query it and own validation/saving.
     const save = form.querySelector('[type=submit]'); right.append(save);
     header.replaceChildren(left,heading,right);
@@ -60,13 +60,13 @@
     };
     window.visualViewport?.addEventListener('resize', viewport); window.visualViewport?.addEventListener('scroll', viewport);
     window.addEventListener('resize', viewport); viewport();
-    const fields = [...form.querySelectorAll('input:not([type=hidden]):not([type=file]),textarea,select')];
+    const fields = [...form.querySelectorAll('input:not([type=hidden]):not([type=file]):not([type=password]),textarea,select')];
     let history = [], cursor = -1, restoring = false;
     const snapshot = () => fields.map(x => x.type === 'checkbox' ? x.checked : x.value);
     const busy = () => save.disabled;
     function update() { if (!nativeHistory) { const a=cursor<=0||busy(),b=cursor>=history.length-1||busy(); if(undo.disabled!==a)undo.disabled=a; if(redo.disabled!==b)redo.disabled=b; } }
     function checkpoint() {
-      if (nativeHistory || restoring) return;
+      if (nativeHistory || !recordHistory || restoring) return;
       const state = snapshot();
       if (JSON.stringify(state) === JSON.stringify(history[cursor])) return;
       history = history.slice(0,cursor+1); history.push(state); if (history.length > 100) history.shift(); cursor = history.length-1; update();
@@ -78,6 +78,7 @@
       restoring = false; update();
     }
     if (!nativeHistory) { undo.onclick = () => travel(-1); redo.onclick = () => travel(1); form.addEventListener('input',checkpoint); form.addEventListener('change',checkpoint); }
+    host.addEventListener('close', () => { history=[]; cursor=-1; update(); });
     new MutationObserver(changes => {
       if (changes.some(x => x.attributeName === 'open' || x.attributeName === 'aria-hidden')) {
         if (host.open || host.classList.contains('open')) { history=[]; cursor=-1; checkpoint(); host.dataset.editing='false'; viewport(); }
@@ -88,6 +89,8 @@
   }
   writingForm({id:'board-editor',formId:'board-form',headerSelector:'.journal-dialog-header',closeSelector:'[data-board-close=board-editor]',nativeHistory:true});
   writingForm({id:'notification-dialog',formId:'notification-form',headerSelector:'.admin-dialog-header',closeSelector:'[data-close-dialog=notification-dialog]'});
+  writingForm({id:'user-dialog',formId:'user-form',headerSelector:'.admin-dialog-header',closeSelector:'[data-close-dialog=user-dialog]'});
+  writingForm({id:'admin-upload-dialog',formId:'admin-upload-form',headerSelector:'.admin-dialog-header',closeSelector:'[data-close-dialog=admin-upload-dialog]',recordHistory:false});
   writingForm({id:'worklog-modal',formId:'worklog-form',headerSelector:'.modal-header',closeSelector:'#modal-close-btn'});
   writingForm({id:'calendar-event-dialog',formId:'calendar-event-form',headerSelector:'.journal-dialog-header',closeSelector:'#calendar-event-close'});
   writingForm({id:'harness-dialog',formId:'harness-form',headerSelector:'.admin-dialog-header',closeSelector:'#harness-dialog-close'});
