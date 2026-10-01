@@ -1,0 +1,41 @@
+/* Writing is a page: common memo-like canvas on desktop and mobile. */
+body .ui-writing-screen{position:fixed;inset:auto;left:0;top:var(--writing-top,0px);width:100%;max-width:none;height:var(--writing-height,100dvh);max-height:none;margin:0;padding:0!important;border:0;border-radius:0;box-shadow:none;background:var(--card-bg,#fff);color:var(--text,#303035);overflow:hidden;box-sizing:border-box}
+body dialog.ui-writing-screen[open]{display:flex;flex-direction:column}
+body dialog.ui-writing-screen::backdrop{background:transparent;backdrop-filter:none}
+body #worklog-modal.ui-writing-screen{z-index:1200;background:var(--card-bg,#fff)}
+body #worklog-modal.ui-writing-screen .modal-backdrop{display:none}
+body #worklog-modal.ui-writing-screen .modal-dialog{position:static;transform:none;flex:1;width:100%;max-width:none;height:100%;max-height:none;margin:0;padding:0;border:0;border-radius:0;box-shadow:none;overflow:hidden;background:inherit}
+body .ui-writing-screen>form,body .ui-writing-screen .modal-dialog>form{display:flex;flex-direction:column;width:100%;height:100%;min-height:0;margin:0;padding:0;border:0;border-radius:0;background:inherit;box-shadow:none;overflow:hidden}
+body .ui-writing-header,body .ui-writing-memo .memo-editor-header{display:grid;grid-template-columns:150px minmax(0,1fr) 150px;align-items:center;gap:8px;flex-shrink:0;height:64px;min-height:64px;box-sizing:border-box;margin:0;padding:0 20px;border-bottom:1px solid var(--border-color,#eee);background:inherit}
+body .ui-writing-header h2,body .ui-writing-memo .memo-editor-header h2{font-size:16px;font-weight:600;text-align:center;margin:0;white-space:nowrap;text-overflow:ellipsis;overflow:hidden}
+.ui-writing-left,.ui-writing-right{display:flex;align-items:center;gap:2px;min-width:0}.ui-writing-right{justify-content:flex-end}
+body .ui-writing-header .shell-icon{display:flex;align-items:center;justify-content:center;width:40px;height:42px;flex:0 0 40px;padding:8px;margin:0;background:transparent;border:0;box-shadow:none;color:inherit}
+body .ui-writing-screen .app-icon{width:22px;height:22px;margin:0;flex-shrink:0}
+body .ui-writing-header [type=submit]{width:auto;min-height:38px;margin:0;padding:8px 14px;border-radius:10px;white-space:nowrap;font-size:14px}
+body .ui-writing-paper,body .ui-writing-memo .memo-paper{flex:1;min-height:0;width:100%;max-width:920px;margin:0 auto;padding:28px 40px;box-sizing:border-box;overflow:auto;overscroll-behavior:contain;scroll-padding:24px;scrollbar-gutter:stable}
+body .ui-writing-paper label,body .ui-writing-paper .form-field>label{font-size:14px;font-weight:500;color:var(--muted,#71717a)}
+body .ui-writing-paper .form-field{margin:20px 0}
+body .ui-writing-paper input:not([type=checkbox]):not([type=file]),body .ui-writing-paper textarea,body .ui-writing-paper select{font:inherit;font-size:16px;max-width:100%;min-width:0;box-sizing:border-box;color:inherit;background:transparent;box-shadow:none}
+body .ui-writing-paper #board-title,body .ui-writing-paper #notification-title{border:0;border-radius:0;padding:12px 0;font-size:30px;font-weight:700;outline-offset:0;width:100%}
+body .ui-writing-paper textarea{width:100%;border:0;border-bottom:1px solid var(--border-color,#eee);border-radius:0;resize:vertical;padding:12px 0;line-height:1.8;min-height:100px}
+body .ui-writing-paper #notification-message{min-height:40dvh}
+body .ui-writing-paper #board-body{border:0;border-radius:0;padding:20px 0;min-height:36dvh;max-height:none;overflow:visible;font-size:18px;line-height:1.8}
+body .ui-writing-secondary{margin:20px 0 0;border:0;padding:0;justify-content:flex-end}
+body .ui-writing-secondary button{font-size:14px;min-height:38px}
+body .ui-writing-tools{flex-shrink:0;position:static;width:100%;max-height:108px;min-height:52px;display:flex;flex-wrap:nowrap;align-items:center;overflow-x:auto;gap:6px;margin:0;padding:8px 20px max(8px,env(safe-area-inset-bottom));border-top:1px solid var(--border-color,#eee);background:var(--ui-soft,#fafafa);box-sizing:border-box}
+body .ui-writing-tools button,body .ui-writing-tools select{flex-shrink:0;white-space:nowrap;min-height:38px;font-size:14px}
+body .ui-writing-screen:not([data-editing=true]) .ui-writing-tools{display:none}
+body .ui-writing-screen button:focus-visible{outline:2px solid #5d72bc;outline-offset:2px}
+/* Compact menus align to their opener and have no modal header or page blur. */
+body dialog.ui-action-menu{position:fixed;inset:auto;width:248px;max-width:calc(100vw - 24px);margin:0;padding:6px;border:1px solid #e5e7eb;border-radius:14px;background:var(--card-bg,#fff);color:var(--text,#303035);box-shadow:0 8px 28px #0002;overflow:auto;box-sizing:border-box}
+body dialog.ui-action-menu::backdrop{background:transparent;backdrop-filter:none}
+body .ui-action-menu>.journal-dialog-header,body .ui-action-menu>#card-menu-title{display:none}
+body .ui-action-menu #board-menu-items,body .ui-action-menu .board-admin-menu-items,body .ui-action-menu #card-menu-items{display:grid;gap:0;margin:0}
+body .ui-action-menu [role=menuitem]{display:flex;align-items:center;justify-content:flex-start;gap:10px;width:100%;min-height:44px;margin:0;padding:10px 12px;background:transparent;color:inherit;text-align:left;text-decoration:none;font-size:15px;border:0;border-radius:8px;box-sizing:border-box;cursor:pointer}
+body .ui-action-menu [role=menuitem]:hover{background:var(--ui-soft,#f4f4f5)}
+body .ui-action-menu [role=menuitem]:focus{outline:none}body .ui-action-menu [role=menuitem]:focus-visible{outline:2px solid #5d72bc;outline-offset:-2px}
+body .ui-action-menu .board-admin-danger,body .ui-action-menu .menu-danger{color:#b42318;border-top:1px solid #eee;margin-top:4px;border-radius:0 0 8px 8px}
+body .ui-action-menu .app-icon{width:20px;height:20px;flex-shrink:0;margin:0}
+@media(max-width:600px){body .ui-writing-header,body .ui-writing-memo .memo-editor-header{height:56px;min-height:56px;grid-template-columns:114px minmax(0,1fr) 114px;padding:0 8px;gap:4px}body .ui-writing-header .shell-icon{width:36px;flex-basis:36px}body .ui-writing-header [type=submit]{padding:8px 12px}body .ui-writing-paper,body .ui-writing-memo .memo-paper{padding:18px 20px}body .ui-writing-paper #board-title,body .ui-writing-paper #notification-title{font-size:28px}body .ui-writing-paper #board-body{font-size:17px}body .ui-writing-tools{padding-left:12px;padding-right:12px}}
+
+body .ui-writing-paper #board-body:focus{outline:none}body .ui-writing-screen .calendar-form-actions{display:flex;justify-content:flex-end;gap:8px}

@@ -18,7 +18,8 @@
     "test:notices": "node scripts/verify-notice-pagination.cjs",
     "test:brand": "node scripts/verify-brand.cjs",
     "test:boards": "node scripts/verify-boards.cjs",
-    "test:loading": "node scripts/verify-loading.cjs"
+    "test:loading": "node scripts/verify-loading.cjs",
+    "test:writing": "node scripts/verify-writing-forms.cjs"
   },
   "author": "이노마인드랩스",
   "license": "SEE LICENSE IN LICENSE",
