@@ -14,8 +14,7 @@
 .reference-detail-content img {max-width:100%;height:auto}
 .reference-detail-content audio {max-width:100%}
 .todo-text-btn:not(button) {display:block;white-space:pre-wrap;flex:1;min-width:0;border:0;background:none;color:inherit;text-align:left;font:inherit;padding:8px 0;cursor:text}
-.todo-edit-trigger {flex:none;min-height:44px;padding:8px 10px;border:1px solid #e2e8f0;border-radius:12px;background:transparent;color:inherit}
-@media(max-width:480px){.reference-dialog{padding:18px}.reference-search-controls{grid-template-columns:1fr}.reference-detail{padding:12px}.todo-edit-trigger{font-size:13px}}
+@media(max-width:480px){.reference-dialog{padding:18px}.reference-search-controls{grid-template-columns:1fr}.reference-detail{padding:12px}}
 .todo-inline-input-row {position:relative;display:flex;align-items:flex-start;gap:6px;width:100%}
 .todo-inline-input-row textarea {flex:1;min-width:0}
 .todo-add-trigger {width:44px;min-height:44px;flex:none;font-size:24px;border:1px solid #cbd5e1;border-radius:12px;background:transparent;color:inherit}
@@ -25,3 +24,5 @@
 .todo-inline-add-menu button:hover,.todo-inline-add-menu button:focus-visible {background:#e2e8f0}
 
 .todo-inline-add-menu::backdrop {background:#0001}
+
+.todo-text-btn {touch-action:manipulation}

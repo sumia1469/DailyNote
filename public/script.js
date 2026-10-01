@@ -647,7 +647,6 @@ function createTodoItem(worklog, todo) {
   });
   label.appendChild(checkbox);
   label.appendChild(text);
-  const editTrigger=label.querySelector('.todo-edit-trigger');if(editTrigger)label.appendChild(editTrigger);
   return label;
 }
 
