@@ -48,3 +48,17 @@
 #board-content .board-post-row{display:grid;grid-template-columns:minmax(0,1fr) 42px;align-items:start;gap:12px}
 #board-content .board-post-link{min-width:0;overflow-wrap:anywhere}
 #board-content .board-post-more{grid-column:2;grid-row:1;align-self:start;justify-self:end;width:42px;height:42px;margin:0}
+
+/* Code insertion is a supplementary dialog, with stacked fields at every width. */
+#board-code-dialog{width:min(640px,calc(100vw - 32px));max-height:calc(var(--editor-height,100dvh) - 32px);position:fixed;inset:calc(var(--editor-top,0px) + var(--editor-height,100dvh)/2) 0 auto;margin:0 auto;transform:translateY(-50%);padding:24px;overscroll-behavior:contain;scroll-padding:16px}
+#board-code-form{display:grid;grid-template-columns:minmax(0,1fr);gap:18px;min-width:0}
+#board-code-form .journal-dialog-header{min-width:0}
+#board-code-form .journal-dialog-header h2{font-size:20px;overflow-wrap:anywhere}
+#board-code-form .journal-dialog-header .shell-icon{flex:none;width:42px;height:42px;min-width:42px}
+#board-code-form label{display:grid;gap:8px;margin:0;min-width:0;font-size:16px;line-height:1.5}
+#board-code-language,#board-code-text{display:block;width:100%;min-width:0;max-width:100%;box-sizing:border-box;border:1px solid var(--line,#d4d4d8);border-radius:12px;background:var(--surface,#fff);color:var(--text,#27272a);padding:12px;font-size:16px}
+#board-code-language{min-height:44px}
+#board-code-text{height:clamp(140px,32dvh,320px);resize:vertical;max-height:50dvh;overflow:auto;font-family:monospace;line-height:1.6;tab-size:2;white-space:pre}
+#board-code-form .journal-dialog-actions{margin:0;min-width:0;flex-wrap:wrap}
+#board-code-form .primary-btn{min-height:44px;max-width:100%;white-space:normal}
+@media(max-width:600px){#board-code-dialog{padding:20px}#board-code-form{gap:16px}#board-code-form .primary-btn{width:100%}}
