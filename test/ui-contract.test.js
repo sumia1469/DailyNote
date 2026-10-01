@@ -1,7 +1,7 @@
 const {test}=require('node:test');const assert=require('node:assert/strict');const fs=require('node:fs');const vm=require('node:vm');const path=require('node:path');const config=require('../public/ui-config');
 const read=file=>fs.readFileSync(path.join(__dirname,'../public',file),'utf8');
 test('menu actions enforce user and delegated administrator rights',()=>{
- assert.deepEqual(config.allowed('user',{worklogRead:false,worklogCreate:false,fileRead:false,fileUpload:false,notificationRead:true,memoRead:false,memoCreate:false}).map(menu=>menu.id),['notifications']);
+ assert.deepEqual(config.allowed('user',{worklogRead:false,worklogCreate:false,fileRead:false,fileUpload:false,notificationRead:true,calendarRead:false,calendarCreate:false,memoRead:false,memoCreate:false}).map(menu=>menu.id),['notifications']);
  assert.equal(config.actions('user','notifications',{}).length,0);
  assert.equal(config.actions('user','files',{fileUpload:false}).length,0);
  assert.equal(config.actions('admin','notifications',{notifications:false}).length,0);
