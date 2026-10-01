@@ -24,5 +24,3 @@
   }
   window.UIShell={title,actions,drawer,dialogs,searchDialog};
 })();
-
-

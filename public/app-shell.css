@@ -110,12 +110,12 @@ button.mobile-menu,button.sidebar-close { display:inline-flex; }
 .journal-dialog .search-buttons { justify-content:flex-end; }
 .journal-dialog-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:24px; }
 .card-menu-dialog { position:fixed; inset:auto; margin:0; box-sizing:border-box; width:min(250px,calc(100vw - 24px)); max-height:calc(100dvh - 24px); overflow:auto; border:1px solid var(--line); border-radius:22px; padding:10px; background:var(--surface); color:var(--text); box-shadow:0 12px 48px rgba(0,0,0,.16); }
-#card-menu-title { color:var(--muted); margin:8px 12px 12px; font-size:13px; }
-#card-menu-items { display:grid; gap:2px; }
-#card-menu-items button { display:flex; justify-content:flex-start; align-items:center; gap:12px; border:0; background:transparent; color:var(--text); font:inherit; padding:12px; border-radius:12px; cursor:pointer; text-align:left; }
-#card-menu-items button:hover { background:var(--shell-sidebar); }
-#card-menu-items button.menu-danger { color:var(--danger); border-top:1px solid var(--line); margin-top:4px; }
-#card-menu-items .app-icon { width:21px; height:21px; flex:none; }
+#card-menu-title,.action-menu-title { color:var(--muted); margin:8px 12px 12px; font-size:13px; }
+#card-menu-items,.action-menu-items { display:grid; gap:2px; }
+#card-menu-items button,.action-menu-items button { display:flex; justify-content:flex-start; align-items:center; gap:12px; border:0; background:transparent; color:var(--text); font:inherit; padding:12px; border-radius:12px; cursor:pointer; text-align:left; }
+#card-menu-items button:hover,.action-menu-items button:hover { background:var(--shell-sidebar); }
+#card-menu-items button.menu-danger,.action-menu-items button.menu-danger { color:var(--danger); border-top:1px solid var(--line); margin-top:4px; }
+#card-menu-items .app-icon,.action-menu-items .app-icon { width:21px; height:21px; flex:none; }
 @media(max-width:767px){
  #main-section.main-section { padding:74px 12px 24px; }
  #main-section .main-header { padding:10px 12px; }
