@@ -66,3 +66,13 @@ body #board-editor.ui-writing-screen{max-width:none;margin:0;left:0}body #board-
 
 
 body .ui-writing-page>form,body #worklog-modal.ui-writing-page .modal-dialog{position:relative;z-index:1}
+
+/* Board settings use the same writing page without an empty editor toolbar. */
+body #board-manage-dialog .ui-writing-paper label{margin:20px 0;gap:8px}
+body #board-manage-dialog .ui-writing-paper input:not([type=checkbox]){width:100%;padding:12px 0;border:0;border-bottom:1px solid var(--border-color,#eee);border-radius:0}
+body #board-manage-dialog #board-manage-name{font-size:28px;font-weight:700}
+body #board-manage-dialog .board-checkbox{display:flex;align-items:flex-start;gap:10px;line-height:1.6}
+body #board-manage-dialog .board-checkbox input{flex:0 0 auto;width:18px;height:18px;margin:3px 0 0}
+body #board-manage-dialog .ui-writing-secondary{display:flex;min-width:0}
+body #board-manage-dialog #board-manage-delete{white-space:normal;color:#b42318}
+body #board-manage-dialog #board-manage-error{overflow-wrap:anywhere}

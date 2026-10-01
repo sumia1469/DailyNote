@@ -116,7 +116,7 @@
     const state = {...history.state}; delete state.writingPage; history.replaceState(state,'',url);
   }
 
-  function writingForm({id, formId, headerSelector, closeSelector, nativeHistory=false}) {
+  function writingForm({id, formId, headerSelector, closeSelector, nativeHistory=false, busySelector}) {
     let host = $(id); const form = $(formId);
     if (!host || !form || host.dataset.writingBound) return;
     host = pageHost(host);
@@ -171,7 +171,7 @@
     const fields = [...form.querySelectorAll('input:not([type=hidden]):not([type=file]):not([type=password]),textarea,select')];
     let history = [], cursor = -1, restoring = false;
     const snapshot = () => fields.map(x => x.type === 'checkbox' ? x.checked : x.value);
-    const busy = () => save.disabled;
+    const busy = () => save.disabled || Boolean(busySelector && form.querySelector(busySelector));
     function update() { if (!nativeHistory) { const a=cursor<=0||busy(),b=cursor>=history.length-1||busy(); if(undo.disabled!==a)undo.disabled=a; if(redo.disabled!==b)redo.disabled=b; } }
     function checkpoint() {
       if (nativeHistory || restoring) return;
