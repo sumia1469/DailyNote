@@ -277,3 +277,6 @@ Node.js 설치 없이 포함된 runtime/node.exe를 사용하는 Windows x64 압
 ## 공통 액션 드롭다운
 
 `UIShell.dropdown.open(menu, opener)`가 버튼 좌표·화면 경계·메뉴 전환·닫기·키보드 이동·aria-expanded를 관리합니다. 기존 dialog 요소는 show()로 비모달 표시하고 메모는 에디터 내부 div를 표시합니다. … 메뉴에서는 showModal()을 사용하지 않습니다. 입력 폼·확인 dialog는 그대로 유지합니다. `test/dropdowns.test.js`는 경계 위치·닫기·포커스·어댑터 계약을 검증하고 `scripts/verify-dropdowns.cjs`는 예시 데이터로 PC/모바일 실제 화면을 확인합니다.
+
+
+캘린더 상단 …는 제목·닫기 버튼 없이 버튼 아래에 펼쳐지는 작은 드롭다운입니다. 알림·새로고침과 표시 항목 선택은 유지하며 체크 변경은 메뉴를 유지하고 즉시 달력에 반영합니다. 공통 UIShell.dropdown을 사용하며 방향키·Home·End로 체크박스까지 이동하고 Space로 선택합니다. PC·모바일 위치와 동작은 npm run test:calendar로 검증합니다.
