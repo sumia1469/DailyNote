@@ -281,3 +281,6 @@ UIShell.actionMenu가 메뉴 위치·키보드 이동·aria-expanded를 관리�
 
 검증 하네스: `node scripts/verify-admin-writing.cjs` (PC 1440×1000, 모바일 390×844, 키보드 뷰포트·스크롤·사용자 저장/재시도·파일 업로드/재시도).
 
+
+
+게시판 글 목록의 … 메뉴는 각 항목 우측 상단 42px 슬롯에 표시합니다. `#board-content .board-post-row`는 본문과 버튼의 두 열을 유지하며 긴 제목·본문은 본문 열 안에서 줄바꿈합니다. 게시판 CSS 로딩 순서가 바뀌어도 버튼이 글 아래로 내려가지 않습니다.
