@@ -199,7 +199,7 @@
   writingForm({id:'worklog-modal',formId:'worklog-form',headerSelector:'.modal-header',closeSelector:'#modal-close-btn'});
   writingForm({id:'calendar-event-dialog',formId:'calendar-event-form',headerSelector:'.journal-dialog-header',closeSelector:'#calendar-event-close'});
   writingForm({id:'harness-dialog',formId:'harness-form',headerSelector:'.admin-dialog-header',closeSelector:'#harness-dialog-close'});
-  writingForm({id:'board-manage-dialog',formId:'board-manage-form',headerSelector:'.journal-dialog-header',closeSelector:'#board-manage-close'});
+  writingForm({id:'board-manage-dialog',formId:'board-manage-form',headerSelector:'.journal-dialog-header',closeSelector:'#board-manage-close',busySelector:'#board-manage-delete:disabled'});
   writingForm({id:'user-dialog',formId:'user-form',headerSelector:'.admin-dialog-header',closeSelector:'[data-close-dialog=user-dialog]'});
   writingForm({id:'admin-upload-dialog',formId:'admin-upload-form',headerSelector:'.admin-dialog-header',closeSelector:'[data-close-dialog=admin-upload-dialog]'});
   writingForm({id:'upload-dialog',formId:'upload-form',headerSelector:'.journal-dialog-header',closeSelector:'#upload-close'});
