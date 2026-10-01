@@ -117,7 +117,7 @@
         <label for="file-input">파일선택</label>
         <input type="file" id="file-input" required>
       </div>
-      <button type="submit" class="primary-btn upload-btn">업로드</button>
+      <button type="submit" class="primary-btn upload-btn">업로드</button><p id="file-upload-status" class="dialog-error" role="alert"></p>
     </form>
 </dialog>
 <dialog id="search-dialog" class="journal-dialog" aria-labelledby="search-dialog-title">
@@ -234,6 +234,7 @@
 <script src="app-shell.js"></script>
 <script src="journal-controls.js"></script>
 <script src="worklog-search.js"></script>
+<script src="file-transfer.js"></script>
 <script src="script.js"></script>
 <script src="memo.js"></script>
 </body>

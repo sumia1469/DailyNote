@@ -1,0 +1,24 @@
+const {chromium}=require(process.env.PLAYWRIGHT_MODULE_PATH||'playwright');
+const fs=require('fs'),http=require('http'),os=require('os'),path=require('path'),assert=require('assert/strict'),crypto=require('crypto');
+const tmp=fs.mkdtempSync(path.join(os.tmpdir(),'large-file-browser-'));
+process.env.DATA_DIR=path.join(tmp,'data');process.env.UPLOAD_DIR=path.join(tmp,'uploads');delete process.env.VERCEL;delete process.env.REDIS_URL;delete process.env.UPSTASH_REDIS_REST_URL;
+const ds=require('../src/datastore'),{makeUserRecord}=require('../src/auth');let server,browser;
+(async()=>{
+ await ds.insert('users',{...makeUserRecord('검토계정','local-test-password'),role:'admin',approval:'approved'});
+ server=http.createServer(require('../src/server'));await new Promise(r=>server.listen(0,'127.0.0.1',r));
+ browser=await chromium.launch({...(process.env.BROWSER_EXECUTABLE_PATH?{executablePath:process.env.BROWSER_EXECUTABLE_PATH}:{}),headless:true,args:['--no-sandbox']});
+ const page=await browser.newPage({viewport:{width:1440,height:1000},acceptDownloads:true}),errors=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.goto('http://127.0.0.1:'+server.address().port);await page.locator('#username').fill('검토계정');await page.locator('#password').fill('local-test-password');await page.locator('.login-btn').click();await page.locator('#main-section').waitFor({state:'visible'});await page.waitForFunction(()=>document.getElementById('loading-overlay').hidden);
+ await page.locator('#sidebar-open').click();await page.locator('[data-view=files]').click();await page.locator('#open-upload-btn').click();
+ const original=crypto.randomBytes(8*1024*1024+7);await page.locator('#file-input').setInputFiles({name:'large-original.bin',mimeType:'application/octet-stream',buffer:original});
+ let failed=false;await page.route('**/api/upload',async route=>{const body=route.request().postDataJSON();if(!failed&&body.phase==='part'&&body.index===1){failed=true;return route.fulfill({status:500,contentType:'application/json',body:JSON.stringify({message:'검증용 전송 실패'})});}return route.continue();});
+ await page.locator('#upload-form button[type=submit]').click();await page.waitForFunction(()=>document.getElementById('file-upload-status').textContent.includes('검증용 전송 실패'));assert.equal(await page.locator('#upload-dialog').isVisible(),true);assert.equal(await page.locator('#file-input').evaluate(el=>el.files[0].size),original.length);await page.unroute('**/api/upload');
+ await page.locator('#upload-form button[type=submit]').click();await page.locator('#upload-dialog').waitFor({state:'hidden'});const link=page.getByRole('link',{name:'large-original.bin',exact:true});await link.waitFor();
+ const saved=page.waitForEvent('download');await link.click();const download=await saved;assert.deepEqual(fs.readFileSync(await download.path()),original);
+ await page.setViewportSize({width:390,height:844});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+ await page.goto('http://127.0.0.1:'+server.address().port+'/admin.html');await page.locator('#admin-menu-toggle').click();await page.locator('[data-panel=files]').click();
+ const userRow=page.locator('#admin-files .admin-row').filter({hasText:'large-original.bin'});await userRow.waitFor();const adminDownload=page.waitForEvent('download');await userRow.getByRole('button',{name:'다운로드',exact:true}).click();assert.deepEqual(fs.readFileSync(await (await adminDownload).path()),original);
+ await page.locator('#admin-create').click();const second=original.subarray(0,4*1024*1024+7);await page.locator('#admin-file').setInputFiles({name:'admin-large.bin',mimeType:'application/octet-stream',buffer:second});await page.locator('#admin-upload-form button[type=submit]').click();await page.locator('#admin-upload-dialog').waitFor({state:'hidden'});const adminRow=page.locator('#admin-files .admin-row').filter({hasText:'admin-large.bin'});await adminRow.waitFor();const nextDownload=page.waitForEvent('download');await adminRow.getByRole('button',{name:'다운로드',exact:true}).click();assert.deepEqual(fs.readFileSync(await (await nextDownload).path()),second);
+ assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);assert.deepEqual(errors,[]);
+ console.log('Large files browser PASS: user 8MB/admin 4MB upload, original downloads, partial failure cleanup/retry, PC/mobile, no JS errors');
+})().catch(e=>{console.error(e);process.exitCode=1;}).finally(async()=>{if(browser)await browser.close();if(server)await new Promise(r=>server.close(r));fs.rmSync(tmp,{recursive:true,force:true});});

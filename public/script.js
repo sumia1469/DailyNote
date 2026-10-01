@@ -261,39 +261,29 @@ window.NotificationPage = (function(){
   }};
 })();
 
-/* 파일 업로드 — POST /api/upload (base64) */
+/* 파일 업로드 — 원본을 작은 조각으로 전송 */
 document.getElementById('upload-form').addEventListener('submit', async e => {
   e.preventDefault();
   const file = document.getElementById('file-input').files[0];
   if (!file) return;
   const button = e.target.querySelector('button[type="submit"]');
   if (button.disabled) return;
+  const buttonText=button.textContent;
+  document.getElementById('file-upload-status').textContent='';
   button.disabled = true;
   try {
     await withLoading('파일을 업로드하고 있습니다…', async () => {
-      const result = await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = () => reject(new Error('파일을 읽지 못했습니다.'));
-        reader.onabort = () => reject(new Error('파일 읽기가 취소되었습니다.'));
-        reader.readAsDataURL(file);
-      });
-      const payload = {filename: file.name, mime: file.type, data: result.split(',')[1]};
-      const res = await authFetch('/api/upload', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(payload)
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || '파일을 업로드하지 못했습니다.');
+      const send=async payload=>{const res=await authFetch('/api/upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});const data=await res.json();if(!res.ok)throw new Error(data.message||'파일을 업로드하지 못했습니다.');return data;};
+      await FileTransfer.upload(file,send,percent=>{button.textContent='업로드 '+percent+'%';});
       document.getElementById('file-input').value = '';
       document.getElementById('upload-dialog').close();
       await loadFiles();
     });
   } catch (error) {
-    alert('업로드 실패: ' + error.message);
+    document.getElementById('file-upload-status').textContent='업로드 실패: '+error.message;
   } finally {
     button.disabled = false;
+    button.textContent=buttonText;
   }
 });
 
@@ -334,14 +324,8 @@ async function loadFiles() {
         e.preventDefault();
         if(!canUse('fileDownload'))return;
         try {
-          const response = await loadingFetch(`/api/upload/${file.id}`, {
-            method: 'GET',
-            headers: {Authorization: `Bearer ${localStorage.getItem('token')}`}
-          });
-          if (!response.ok) {
-            throw new Error(`다운로드 실패: ${response.status}`);
-          }
-          const blob = await response.blob();
+          const headers={Authorization:`Bearer ${localStorage.getItem('token')}`};
+          const blob=await FileTransfer.download(file,async suffix=>{const response=await loadingFetch(`/api/upload/${file.id}${suffix}`,{headers});if(!response.ok)throw new Error(`다운로드 실패: ${response.status}`);return response.blob();});
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
           a.href = url;
