@@ -176,3 +176,5 @@ TODO 일반 본문은 더블클릭·두 번 탭·Enter/F2로 편집하며 링크
 
 `public/worklog-excel.js`는 OOXML과 무압축 ZIP을 직접 작성하는 바닐라 JS 모듈입니다. `index.html`에서 `journal-controls.js` 이전에 로드하고 카드 … 메뉴에서 조회한 worklog를 전달합니다. 모든 내용은 inlineStr로 기록해 수식으로 실행하지 않으며 XML 문자를 이스케이프하고 날짜는 Excel 날짜 형식으로 기록합니다. 비고·메모는 기존 문자열 및 remarksItems/memoItems 배열을 지원합니다. 셀 32,767자 한도 초과는 상태 문구로 알리고 원문은 변경하지 않습니다. 테스트는 로컬 XLSX 리더로 날짜·계층·줄바꿈·완료 상태를 역검증합니다. `npm run test:browser`는 PC·모바일 메뉴와 실제 다운로드를 확인합니다.
 `worklog-sections.js`는 TODO·익일 계획·비고·메모의 공통 항목 어댑터입니다. `todo`·`nextDayPlan`은 기존 배열을 사용하고 비고·메모는 문자열과 `remarksItems`·`memoItems`를 함께 저장합니다. 문자열과 항목 직렬화가 일치할 때만 부가 항목의 완료 상태를 사용하며, 이전 문자열 저장 요청은 부가 항목을 초기화합니다. 전체 수정·복제에서도 부가 항목을 보존합니다. API는 기존 소유권·worklogEdit를 유지하며 부가 항목 저장 시 문자열과 배열을 함께 요구합니다. 드래그 범위는 같은 영역이며 다른 영역과 일지로 넘기지 않습니다. `verify-sections.cjs`와 기존 참조·가져오기 회귀 검증을 실행합니다.
+
+비고·메모는 표시 전용 점(•)을 사용합니다. worklog-sections.js의 checkable 분기는 TODO·익일 계획에만 완료 스타일·체크 이벤트를 연결합니다. 기존 비고·메모 checked 메타데이터는 삭제하지 않지만 조회에 완료·취소선을 표시하지 않습니다.
