@@ -16,6 +16,7 @@ test('memo persistence, ownership, permissions, attachments, payload validation 
  const list=(await request('GET','/api/memos',null,token)).data;assert.equal(list[0].attachmentCount,2);assert.equal('attachments' in list[0],false);
  assert.equal(JSON.parse(fs.readFileSync(path.join(root,'memos.json')))[0].attachments.length,2);
  for(const invalid of [{...payload,title:'',text:'',html:''},{...payload,font:'evil'},{...payload,attachments:[{kind:'image',name:'bad.svg',data:'data:image/svg+xml;base64,AQID'}]},{...payload,attachments:[{...image,data:'https://example.com/image.png'}]}])assert.equal((await request('POST','/api/memos',invalid,token)).status,400);
+ await ds.update('memos',id,{attachments:{}});assert.deepEqual((await request('GET','/api/memos/'+id,null,token)).data.attachments,[]);assert.equal((await request('GET','/api/memos',null,token)).data[0].attachmentCount,0);assert.equal((await request('PUT','/api/memos/'+id,payload,token)).status,200);
  await ds.update('users',member.id,{permissions:{memoRead:false,memoCreate:false,memoEdit:false,memoDelete:false}});
  for(const [method,url] of [['GET','/api/memos'],['POST','/api/memos'],['PUT','/api/memos/'+id],['DELETE','/api/memos/'+id]])assert.equal((await request(method,url,payload,token)).status,403);
  await ds.update('users',member.id,{permissions:{}});assert.equal((await request('DELETE','/api/memos/'+id,null,token)).status,200);assert.equal((await request('GET','/api/memos/'+id,null,token)).status,404);
