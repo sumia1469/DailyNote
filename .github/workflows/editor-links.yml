@@ -1,0 +1,36 @@
+name: Verify memo and board links
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - public/editor-core.js
+      - public/memo.js
+      - public/boards.js
+      - public/ui-shell.css
+      - scripts/verify-links.cjs
+      - test/editor-core.test.js
+      - .github/workflows/editor-links.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm ci
+      - run: npm test && npm run test:ui
+      - name: Install development browser
+        run: |
+          npm install --prefix "$RUNNER_TEMP/link-browser" playwright --no-audit --no-fund
+          if command -v google-chrome >/dev/null 2>&1; then
+            echo "BROWSER_EXECUTABLE_PATH=$(command -v google-chrome)" >> "$GITHUB_ENV"
+          else
+            node "$RUNNER_TEMP/link-browser/node_modules/playwright/cli.js" install --with-deps chromium
+          fi
+      - name: Verify PC and mobile link flows
+        run: PLAYWRIGHT_MODULE_PATH="$RUNNER_TEMP/link-browser/node_modules/playwright" node scripts/verify-links.cjs
