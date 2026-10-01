@@ -269,6 +269,11 @@ Node.js 설치 없이 포함된 runtime/node.exe를 사용하는 Windows x64 압
 
 기존 사용자 approval이 누락·null·빈 문자열·false·0이면 승인 상태가 없는 활성 계정으로 계산합니다. Redis Lua의 cjson.null도 같은 기준으로 처리하며 `verify-license-redis.cjs`의 혼합 기존 데이터가 이 호환성을 검사합니다. 승인 대기·반려는 계속 제외합니다.
 
+
+## 사용자 메뉴 순서
+
+일일리스트 → 캘린더 → 메모 → 공지사항 → 파일관리 → 공유게시판 순서입니다. 업무 공간 구분은 파일관리 아래에 표시합니다. 공유게시판은 여섯 번째 기본 메뉴이며 개별 게시판은 저장한 메뉴 순서(작은 숫자 먼저, 같은 숫자는 ID 순서)에 따라 이어집니다. 게시판 그룹이 달라도 순서를 바꾸지 않습니다. 숨김·비활성 게시판은 개별 메뉴에서 제외합니다.
+
 ## 공통 액션 드롭다운
 
 `UIShell.dropdown.open(menu, opener)`가 버튼 좌표·화면 경계·메뉴 전환·닫기·키보드 이동·aria-expanded를 관리합니다. 기존 dialog 요소는 show()로 비모달 표시하고 메모는 에디터 내부 div를 표시합니다. … 메뉴에서는 showModal()을 사용하지 않습니다. 입력 폼·확인 dialog는 그대로 유지합니다. `test/dropdowns.test.js`는 경계 위치·닫기·포커스·어댑터 계약을 검증하고 `scripts/verify-dropdowns.cjs`는 예시 데이터로 PC/모바일 실제 화면을 확인합니다.
