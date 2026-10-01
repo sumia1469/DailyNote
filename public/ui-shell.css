@@ -109,3 +109,7 @@ body #notice-search-dialog{box-sizing:border-box;max-width:calc(100vw - 24px)}
 #notice-search-dialog .admin-card,#notice-search-dialog .notice-toolbar label{min-width:0}
 body #notice-search-dialog input,body #notice-search-dialog select{font:inherit;font-size:max(16px,var(--app-font-size,16px));max-width:100%}
 #notice-search-dialog .admin-actions{flex-wrap:wrap}
+
+
+/* Shared safe links in memo and board rich text. */
+a.editor-link{color:var(--link-color,#2563eb);text-decoration:underline;text-underline-offset:3px;overflow-wrap:anywhere;cursor:pointer}

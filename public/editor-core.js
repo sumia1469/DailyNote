@@ -11,5 +11,47 @@ function command(body,saved,name,value=null){
  global.document.execCommand(name,false,value);
  return selection.rangeCount&&body.contains(selection.anchorNode)?selection.getRangeAt(0).cloneRange():null;
 }
-global.EditorCore={history,viewport,command};
+function safeLink(value){
+ if(typeof value!=='string')return null;
+ let href=value.trim();if(/[\u0000-\u0020\u007f]/.test(href))return null;
+ if(/^www\./i.test(href))href='https://'+href;
+ if(!/^https?:\/\//i.test(href))return null;
+ try{const url=new URL(href);return ['http:','https:'].includes(url.protocol)&&url.hostname?url.href:null;}catch{return null;}
+}
+function setLink(anchor,value){
+ const href=safeLink(value);if(!href)return false;
+ anchor.href=href;anchor.target='_blank';anchor.rel='noopener noreferrer';anchor.className='editor-link';return true;
+}
+function linkify(root){
+ root.normalize();
+ const doc=root.ownerDocument,walker=doc.createTreeWalker(root,4),nodes=[];
+ while(walker.nextNode())nodes.push(walker.currentNode);
+ let added=0;
+ for(const node of nodes){
+  if(node.parentElement?.closest('a,pre,code,script,style,textarea,[data-board-image]'))continue;
+  const text=node.nodeValue,matches=[...text.matchAll(/(?:https?:\/\/|www\.)[^\s<>"'\u0000-\u001f]+/giu)];
+  if(!matches.length)continue;
+  const fragment=doc.createDocumentFragment();let offset=0,count=0;
+  for(const match of matches){
+   const start=match.index;if(start>0&&/[\p{L}\p{N}_@/]/u.test(text[start-1]))continue;
+   let label=match[0],previous;
+   do{previous=label;label=label.replace(/[.,!?;:。，！？、…’”»]+$/u,'');
+    for(const [open,close] of [['(',')'],['[',']'],['{','}']]){
+     while(label.endsWith(close)&&label.split(close).length>label.split(open).length)label=label.slice(0,-1);
+    }
+   }while(label!==previous);
+   const anchor=doc.createElement('a');if(!setLink(anchor,label))continue;
+   fragment.append(doc.createTextNode(text.slice(offset,start)));anchor.textContent=label;fragment.append(anchor);
+   offset=start+label.length;count++;
+  }
+  if(count){fragment.append(doc.createTextNode(text.slice(offset)));node.replaceWith(fragment);added+=count;}
+ }
+ return added;
+}
+function followEditableLink(event,root){
+ const anchor=event.target.closest?.('a.editor-link');if(!anchor||!root.contains(anchor)||event.button!==0||event.defaultPrevented)return;
+ const href=safeLink(anchor.getAttribute('href'));if(!href)return;
+ event.preventDefault();event.stopPropagation();global.open(href,'_blank','noopener,noreferrer');
+}
+global.EditorCore={history,viewport,command,links:{safeLink,setLink,linkify,followEditableLink}};
 })(window);
