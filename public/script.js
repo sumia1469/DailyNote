@@ -503,7 +503,7 @@ document.querySelector('[data-modal-close]').addEventListener('click', () => {
 /* ESC로 모달 닫기 */
 document.addEventListener('keydown', (e) => {
   const modal = document.getElementById('worklog-modal');
-  if (e.key === 'Escape' && modal.classList.contains('open')) {
+  if (e.key === 'Escape' && modal.classList.contains('open') && !document.getElementById('text-import-dialog').open) {
     closeWorklogModal();
   }
 })
@@ -1092,5 +1092,6 @@ async function duplicateWorklogs(sources) {
   }
 }
 document.getElementById('duplicate-worklog-btn').addEventListener('click', () => duplicateWorklogs(currentWorklogs.filter(item => selectedWorklogIds.has(String(item.id)))));
+
 
 

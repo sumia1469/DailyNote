@@ -68,3 +68,4 @@ async function seed(){
  assert.deepEqual(errors,[]);console.log(JSON.stringify({status:'passed',viewports:['1440x1000','390x844'],captures:22,output:out,checks:['centered titles','no overflow','notification detail reload/back','notification create/update','error preserves input','file upload','harness error/save','account footer PC/mobile','password X/Escape return','external return URL rejected','member admin hidden','logout and required-password close','no page errors']}));
 })().catch(error=>{console.error(error);process.exitCode=1;}).finally(async()=>{if(browser)await browser.close();if(server)await new Promise(resolve=>server.close(resolve));if(out.startsWith(tmp))console.log('Temporary captures: '+out);else fs.rmSync(tmp,{recursive:true,force:true});});
 
+
