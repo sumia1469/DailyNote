@@ -8,9 +8,9 @@ const rights=['boards','notifications','files','appearance','users','permissions
 const permissionKeys=[...rights,'boardRead','boardCreate','boardEdit','boardDelete','calendarRead','calendarCreate','calendarEdit','calendarDelete','worklogRead','worklogCreate','worklogEdit','worklogDelete','fileRead','fileUpload','fileDownload','fileDelete','notificationRead','memoRead','memoCreate','memoEdit','memoDelete'];
 const $=id=>document.getElementById(id);
 function status(message,error=false){$('admin-status').textContent=message;$('admin-status').classList.toggle('error',error);}
-async function busy(action){return AppLoading.run('처리 중입니다…',action);}
-async function api(path,method='GET',body,blob=false){
- const response=await fetch(path,{method,headers:{Authorization:'Bearer '+adminToken,...(body?{'Content-Type':'application/json'}:{})},...(body?{body:JSON.stringify(body)}:{})});
+async function busy(action,options){return AppLoading.run('처리 중입니다…',action,options);}
+async function api(path,method='GET',body,blob=false,appLoading='blocking'){
+ const response=await fetch(path,{method,appLoading,headers:{Authorization:'Bearer '+adminToken,...(body?{'Content-Type':'application/json'}:{})},...(body?{body:JSON.stringify(body)}:{})});
  if(response.status===401){localStorage.removeItem('token');location.replace('/');throw new Error('다시 로그인해 주세요.');}
  if(!response.ok){const error=await response.json().catch(()=>({}));throw new Error(error.message||'요청을 처리하지 못했습니다.');}
  return blob?response.blob():response.json();
@@ -22,8 +22,8 @@ function options(select,items,valueKey='id',labelKey='username'){
 }
 const userName=id=>directory.find(u=>Number(u.id)===Number(id))?.username||('사용자 '+id);
 function row(title,detail){const div=document.createElement('div');div.className='admin-row';const strong=document.createElement('strong');strong.textContent=title;const small=document.createElement('small');small.textContent=detail;const actions=document.createElement('div');actions.className='admin-actions';div.append(strong,small,actions);return {div,actions};}
-function button(label,action,danger=false){const b=document.createElement('button');b.type='button';b.className=danger?'danger-btn':'secondary-btn';b.textContent=label;b.addEventListener('click',()=>run(action));return b;}
-async function run(action){status('');try{await busy(action);}catch(e){status(e.message,true);}}
+function button(label,action,danger=false,options){const b=document.createElement('button');b.type='button';b.className=danger?'danger-btn':'secondary-btn';b.textContent=label;b.addEventListener('click',()=>run(action,options));return b;}
+async function run(action,options){status('');try{await busy(action,options);}catch(e){status(e.message,true);}}
 function empty(container){if(!container.children.length){const p=document.createElement('p');p.textContent='등록된 항목이 없습니다.';container.appendChild(p);}}
 function showPanel(key){UIShell.dropdown.close();if(activePanel!==key){AppLoading.clear();AppLoading.run('불러오는 중입니다…',()=>new Promise(requestAnimationFrame));}adminScroll.capture();activePanel=key;const menu=UIConfig.menus.admin.find(menu=>menu.id===key);UIShell.title($('admin-title'),menu?.title||'관리페이지');UIShell.actions('admin',key,me?.permissions||{},[$('admin-create'),$('admin-search')]);document.querySelectorAll('.admin-panel').forEach(panel=>panel.hidden=panel.id!==menu?.panel);document.querySelectorAll('[data-panel]').forEach(button=>{if(button.dataset.panel===key)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current');});adminScroll.activate(key);}
 
@@ -99,7 +99,7 @@ async function loadNotices(reset=false){
  const more=$('notice-load-more');if(more){more.disabled=true;more.textContent='불러오는 중…';}
  try{
   const params=new URLSearchParams({limit:'30',offset:String(offset),...noticeFilters});
-  const data=await api('/api/admin/notifications?'+params);
+  const data=await api('/api/admin/notifications?'+params,'GET',undefined,false,reset?'blocking':'background');
   if(version!==noticeVersion||activePanel!=='notifications')return;
   const items=Array.isArray(data)?data:data.items;
   const list=$('admin-notifications');noticeObserver?.disconnect();$('notice-load-more')?.remove();
@@ -110,8 +110,8 @@ async function loadNotices(reset=false){
   $('notice-summary').textContent=Array.isArray(data)?`${data.length}건`:`${data.filteredTotal} / ${data.total}개 게시글 · 현재 ${notices.length}건 표시`;
   empty(list);
   if(noticeNext!==null){
-   const trigger=button('더 불러오기',()=>loadNotices());trigger.id='notice-load-more';list.appendChild(trigger);
-   if('IntersectionObserver' in window){noticeObserver=new IntersectionObserver(entries=>{if(entries.some(entry=>entry.isIntersecting)&&!noticeLoading)run(()=>loadNotices());},{root:document.querySelector('.admin-shell'),rootMargin:'0px 0px 160px 0px'});noticeObserver.observe(trigger);}
+   const trigger=button('더 불러오기',()=>loadNotices(),false,{mode:'background'});trigger.id='notice-load-more';list.appendChild(trigger);
+   if('IntersectionObserver' in window){noticeObserver=new IntersectionObserver(entries=>{if(entries.some(entry=>entry.isIntersecting)&&!noticeLoading)run(()=>loadNotices(),{mode:'background'});},{root:document.querySelector('.admin-shell'),rootMargin:'0px 0px 160px 0px'});noticeObserver.observe(trigger);}
   }
  }catch(error){if(version===noticeVersion){const trigger=$('notice-load-more');if(trigger){trigger.disabled=false;trigger.textContent='다시 불러오기';}}throw error;}
  finally{if(version===noticeVersion)noticeLoading=false;}
@@ -150,5 +150,6 @@ if(!adminToken)location.replace('/');else run(refresh);
 
 
 window.AdminBoardContext={get user(){return me;},get activePanel(){return activePanel;},api,refresh};
+
 
 

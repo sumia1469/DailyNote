@@ -1,11 +1,11 @@
 /* Shared by every entry page. Local CSS only, and compatible with custom spinner skins. */
 .loading-overlay.app-loading {
   position:fixed; inset:0; width:auto; height:auto; max-width:none; max-height:none;
-  margin:0; border:0; padding:20px; display:grid; place-items:center; z-index:10000;
-  background:rgba(248,250,252,.7); color:var(--text,#263247); pointer-events:none;
+  margin:0; border:0; padding:20px; display:grid; place-items:center; z-index:2147483647;
+  background:rgba(248,250,252,.7); color:var(--text,#263247); pointer-events:auto;
 }
 .loading-overlay.app-loading[hidden] { display:none; }
-.app-loading::backdrop { background:transparent; pointer-events:none; }
+.app-loading::backdrop { background:transparent; pointer-events:auto; }
 .app-loading .loading-panel {
   width:min(300px,100%); padding:28px 24px; margin:0; text-align:center;
   border:0; border-radius:0; background:transparent; box-shadow:none;
@@ -17,3 +17,6 @@
 body[data-theme="dark"] .loading-overlay.app-loading { background:rgba(15,23,42,.75); color:#f1f5f9; }
 @keyframes app-loading-orbit { to { transform:rotate(360deg); } }
 @media (prefers-reduced-motion:reduce) { .app-loading .orbit-spinner { animation:none; } }
+
+
+.loading-overlay.app-loading { touch-action:none; overscroll-behavior:contain; outline:none; }
