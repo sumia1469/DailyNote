@@ -17,8 +17,8 @@
     "test:sections": "node scripts/verify-sections.cjs",
     "test:notices": "node scripts/verify-notice-pagination.cjs"
   },
-  "author": "Your Company",
-  "license": "MIT",
+  "author": "이노마인드랩스",
+  "license": "SEE LICENSE IN LICENSE",
   "dependencies": {
     "redis": "^5.0.0"
   },
