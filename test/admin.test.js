@@ -51,6 +51,24 @@ test('administration: rights, users, notification editing, shared appearance and
  assert.equal((await request('GET','/api/auth/me',null,member)).status,401);
  assert.equal((await request('POST','/api/auth/login',{username:'member',password:'test-member-123'})).status,403);
 });
+test('notice pagination limits payload and searches all records with permission checks',async()=>{
+ const owner=await ds.insert('users',{...makeUserRecord('paged-owner','test-paged-123'),role:'admin'});
+ const token=(await request('POST','/api/auth/login',{username:'paged-owner',password:'test-paged-123'})).data.token;
+ for(let i=0;i<75;i++)await ds.insert('notifications',{userId:owner.id,title:'pagination '+i,message:'page-body',isRead:i%2===0,createdAt:'2090-01-01T00:00:00Z'});
+ const base='/api/admin/notifications?limit=30&recipient='+owner.id+'&query=pagination';
+ const first=(await request('GET',base,null,token)).data;
+ assert.equal(first.items.length,30);assert.equal(first.filteredTotal,75);assert.equal(first.nextOffset,30);
+ const second=(await request('GET',base+'&offset=30',null,token)).data;
+ const last=(await request('GET',base+'&offset=60',null,token)).data;
+ assert.equal(second.items.length,30);assert.equal(last.items.length,15);assert.equal(last.nextOffset,null);
+ assert.equal(new Set([...first.items,...second.items,...last.items].map(n=>n.id)).size,75);
+ const search=(await request('GET',base.replace('query=pagination','query=pagination%200')+'&read=read',null,token)).data;
+ assert.equal(search.items.length,1);assert.equal(search.items[0].title,'pagination 0');
+ assert.equal((await request('GET',base)).status,401);
+ const member=await ds.insert('users',{...makeUserRecord('page-member','test-paged-123'),role:'member',permissions:{}});
+ const memberToken=(await request('POST','/api/auth/login',{username:member.username,password:'test-paged-123'})).data.token;
+ assert.equal((await request('GET',base,null,memberToken)).status,403);
+});
 test('registration waits for approval, rejects privileged fields and supports rejection',async()=>{
  const admin=(await request('POST','/api/auth/login',{username:'owner',password:'test-admin-123'})).data.token;
  const registration={username:'new-user',password:'new-password-123',passwordConfirmation:'new-password-123',role:'admin',active:true,permissions:{users:true}};

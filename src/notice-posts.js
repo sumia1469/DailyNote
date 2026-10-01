@@ -26,7 +26,23 @@ async function getUser(id,uid){await ensure();const all=await ds.findAll('notifi
 async function markRead(id,uid){await ensure();const all=await ds.findAll('notifications'),n=resolved(all,id);if(!visible(n,uid))return false;if(n.shared)await ds.insertOnce('notification_reads',readKey(n)+':'+uid,{releaseId:readKey(n),userId:uid,readAt:new Date().toISOString()});else await ds.update('notifications',n.id,{isRead:true});return true;}
 // Old broadcast copies share an exact timestamp and content; preserve their original audience.
 function groups(all){const map=new Map();for(const n of all){if(n.deleted||n.releaseId&&!n.shared)continue;const key=n.shared?'shared:'+n.id:JSON.stringify([n.createdAt||n.id,n.title||'',n.message]);if(!map.has(key))map.set(key,[]);map.get(key).push(n);}return [...map.values()];}
-async function listAdmin(){await ensure();const all=await ds.findAll('notifications'),reads=await ds.findAll('notification_reads'),users=(await ds.findAll('users')).filter(active);return groups(all).map(group=>{const n=group.reduce((a,b)=>a.id<b.id?a:b),audience=n.shared?users.map(u=>u.id):[...new Set(group.map(n=>n.userId))],readCount=audience.filter(uid=>n.shared?wasRead(n,uid,all,reads):group.some(old=>old.userId===uid&&old.isRead)).length;return {...n,readCount,audienceCount:audience.length,unreadCount:audience.length-readCount,isRead:audience.length>0&&readCount===audience.length};});}
+async function listAdmin(){
+ await ensure();
+ const [all,reads,users]=await Promise.all([ds.findAll('notifications'),ds.findAll('notification_reads'),ds.findAll('users')]);
+ const audience=users.filter(active).map(u=>u.id),activeIds=new Set(audience);
+ const readers=new Map();
+ for(const r of reads){if(!activeIds.has(r.userId))continue;if(!readers.has(r.releaseId))readers.set(r.releaseId,new Set());readers.get(r.releaseId).add(r.userId);}
+ const legacy=new Map();
+ for(const n of all){if(!n.shared&&n.releaseId&&n.isRead&&activeIds.has(n.userId)){if(!legacy.has(n.releaseId))legacy.set(n.releaseId,[]);legacy.get(n.releaseId).push(n);}}
+ return groups(all).map(group=>{
+  const n=group.reduce((a,b)=>a.id<b.id?a:b);
+  const targets=n.shared?audience:[...new Set(group.map(item=>item.userId))];
+  const seen=n.shared?new Set(readers.get(readKey(n))||[]):new Set(group.filter(item=>item.isRead).map(item=>item.userId));
+  if(n.shared&&n.releaseId)for(const old of legacy.get(n.releaseId)||[])if(old.message===n.message&&version(old)===version(n))seen.add(old.userId);
+  const readCount=seen.size;
+  return {...n,readCount,audienceCount:targets.length,unreadCount:targets.length-readCount,isRead:targets.length>0&&readCount===targets.length};
+ });
+}
 async function create(title,message){return ds.insert('notifications',{userId:0,shared:true,title,message,createdAt:new Date().toISOString()});}
 async function change(id,updates){await ensure();const all=await ds.findAll('notifications'),n=resolved(all,id);if(!n||n.deleted)return null;const group=n.shared?[n]:groups(all).find(g=>g.some(x=>x.id===n.id))||[n];const updatedAt=new Date().toISOString(),revision=randomUUID();for(const item of group)await ds.update('notifications',item.id,{...updates,updatedAt,revision,isRead:false});return {...n,...updates,updatedAt,revision,isRead:false};}
 async function remove(id){return !!await change(id,{deleted:true});}

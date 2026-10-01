@@ -14,7 +14,8 @@
     "test:imports": "node scripts/verify-text-import.cjs",
     "test:references": "node scripts/verify-references.cjs",
     "test:calendar": "node scripts/verify-calendar.cjs",
-    "test:sections": "node scripts/verify-sections.cjs"
+    "test:sections": "node scripts/verify-sections.cjs",
+    "test:notices": "node scripts/verify-notice-pagination.cjs"
   },
   "author": "Your Company",
   "license": "MIT",

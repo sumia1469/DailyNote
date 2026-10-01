@@ -87,7 +87,16 @@ async function adminRouter(req,res,auth) {
     }
   }
   if(area==='notifications') {
-    if(method==='GET'&&!id)return sendJson(res,200,await posts.listAdmin());
+    if(method==='GET'&&!id){
+      const records=await posts.listAdmin();
+      if(!url.searchParams.has('limit'))return sendJson(res,200,records);
+      const limit=Math.min(100,Math.max(1,Math.floor(Number(url.searchParams.get('limit'))||30)));
+      const offset=Math.max(0,Math.floor(Number(url.searchParams.get('offset'))||0));
+      const query=(url.searchParams.get('query')||'').trim().toLocaleLowerCase(),read=url.searchParams.get('read');
+      const filtered=records.filter(n=>(!read||(read==='read'?n.readCount>0:n.unreadCount>0))&&(!query||[n.title,n.message,n.shared?'공통 공지':'이전 개별 공지'].join(' ').toLocaleLowerCase().includes(query)))
+        .sort((a,b)=>Date.parse(b.createdAt)-Date.parse(a.createdAt)||b.id-a.id);
+      return sendJson(res,200,{items:filtered.slice(offset,offset+limit),total:records.length,filteredTotal:filtered.length,nextOffset:offset+limit<filtered.length?offset+limit:null});
+    }
     if(method==='POST'||method==='PUT'){
       const title=String(body.title||'').trim(),message=String(body.message||'').trim();
       if(title.length>120)return sendJson(res,400,{message:'공지 제목은 120자 이내로 입력하세요.'});

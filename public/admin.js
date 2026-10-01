@@ -1,6 +1,7 @@
 const adminScroll=ListScroll.mount(document.querySelector('.admin-shell'));
 const adminToken=localStorage.getItem('token');
 let me, directory=[], users=[], appearance={}, backgroundData=null, activePanel;
+let noticeVersion=0, noticeNext=null, noticeLoading=false, noticeObserver;
 let pending=0, notices=[], noticeFilters={query:'',recipient:'',read:''};
 const rights=['notifications','files','appearance','users','permissions'];
 const permissionKeys=[...rights,'calendarRead','calendarCreate','calendarEdit','calendarDelete','worklogRead','worklogCreate','worklogEdit','worklogDelete','fileRead','fileUpload','fileDownload','fileDelete','notificationRead','memoRead','memoCreate','memoEdit','memoDelete'];
@@ -29,37 +30,61 @@ function setPermissionForm(){const u=users.find(u=>String(u.id)===$('permission-
 function updatePermissionRole(){const admin=$('permission-role').value==='admin';for(const key of permissionKeys){const box=$('permission-form').elements.namedItem(key);box.disabled=admin;if(admin)box.checked=true;}}
 function preview(){const form=$('appearance-form').elements;const values={...appearance,fontFamily:form.fontFamily.value,fontSize:Number(form.fontSize.value),spacing:form.spacing.value,theme:form.theme.value,background:form.background.value};window.SiteSettings.apply(values);const image=values.background==='custom'?(backgroundData||values.backgroundUrl):values.background==='autumn'?'images/login-autumn.webp':null;$('background-preview').style.backgroundImage=image?`url("${image}")`:'none';}
 function setAppearance(values){appearance=values;for(const key of ['fontFamily','fontSize','spacing','theme','background'])$('appearance-form').elements.namedItem(key).value=values[key];preview();}
-async function refresh(){
+async function refresh(reload=true){
  me=await api('/api/auth/me');if(me.mustChangePassword){location.replace('/change-password.html');return;}$('admin-account').textContent=me.username+' · '+(me.role==='admin'?'관리자':'일반 사용자');
  const allowed=UIConfig.allowed('admin',me.permissions).map(menu=>menu.id);document.querySelectorAll('[data-panel]').forEach(b=>b.hidden=!allowed.includes(b.dataset.panel));
  if(!allowed.length){$('admin-create').hidden=true;$('admin-search').hidden=true;$('admin-title').textContent='관리페이지';document.querySelectorAll('.admin-panel').forEach(p=>p.hidden=true);status('관리페이지에 접근할 권한이 없습니다.',true);return;}
  showPanel(allowed.includes(activePanel)?activePanel:allowed[0]);
- if(['notifications','files','users','permissions'].some(key=>me.permissions[key]))directory=await api('/api/admin/directory');
- if(me.permissions.users||me.permissions.permissions){users=await api('/api/admin/'+(me.permissions.users?'users':'permissions'));options($('permission-user'),users);setPermissionForm();}
- if(me.permissions.notifications){
+ if(['files','users','permissions'].includes(activePanel))directory=await api('/api/admin/directory');
+ if((activePanel==='users'||activePanel==='permissions')&&(me.permissions.users||me.permissions.permissions)){users=await api('/api/admin/'+(me.permissions.users?'users':'permissions'));options($('permission-user'),users);setPermissionForm();}
+ if(activePanel==='notifications'&&me.permissions.notifications){
   options($('notification-user'),[{id:'all',username:'전체 사용자 공통 공지'}]);
   options($('notice-recipient'),[{id:'',username:'전체 공지'}]);
-  notices=await api('/api/admin/notifications');renderNotices();
+  if(reload||!notices.length)await loadNotices(true);
+  else if($('notice-load-more'))noticeObserver?.observe($('notice-load-more'));
  }
- if(me.permissions.files){const files=await api('/api/admin/files');const list=$('admin-files');list.replaceChildren();files.forEach(file=>{const r=row(file.originalName,userName(file.userId)+' · '+Math.ceil(file.sizeBytes/1024)+'KB');const input=document.createElement('input');input.value=file.originalName;input.setAttribute('aria-label',file.originalName+' 파일명 변경');input.maxLength=200;r.div.insertBefore(input,r.actions);r.actions.append(button('파일명 저장',async()=>{await api('/api/admin/files/'+file.id,'PUT',{originalName:input.value});await refresh();status('파일명을 변경했습니다.');}),button('다운로드',async()=>{const data=await FileTransfer.download(file,suffix=>api('/api/admin/files/'+file.id+suffix,'GET',undefined,true));const url=URL.createObjectURL(data),a=document.createElement('a');a.href=url;a.download=file.originalName;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}),button('삭제',async()=>{if(!confirm(file.originalName+' 파일을 삭제할까요?'))return;await api('/api/admin/files/'+file.id,'DELETE');await refresh();status('파일을 삭제했습니다.');},true));list.appendChild(r.div);});empty(list);}
- if(me.permissions.users){const pendingUsers=users.filter(user=>user.approval==='pending');$('approval-count').textContent=pendingUsers.length;const requests=$('admin-approvals');requests.replaceChildren();pendingUsers.forEach(user=>{const r=row(user.username,'승인 대기 · '+(user.createdAt?new Date(user.createdAt).toLocaleDateString('ko-KR'):''));r.actions.append(button('승인',async()=>{await api('/api/admin/users/'+user.id+'/approve','POST',{});await refresh();status('가입신청을 승인했습니다. 이제 로그인할 수 있습니다.');}),button('반려',async()=>{if(!confirm('이 가입신청을 반려할까요?'))return;await api('/api/admin/users/'+user.id+'/reject','POST',{});await refresh();status('가입신청을 반려했습니다.');},true));requests.appendChild(r.div);});empty(requests);const list=$('admin-users');list.replaceChildren();users.forEach(user=>{const r=row(user.username,(user.role==='admin'?'관리자':'일반 사용자')+' · '+(user.approval==='pending'?'승인 대기':user.approval==='rejected'?'반려':user.active?'활성':'비활성'));r.actions.append(button('수정',()=>openUserDialog(user)));if(me.role==='admin')r.actions.append(button('비밀번호 초기화',()=>{const form=$('password-reset-form');form.reset();form.elements.id.value=user.id;$('password-reset-account').textContent='대상 사용자: '+user.username;$('password-reset-error').textContent='';$('password-dialog').showModal();}));list.appendChild(r.div);});empty(list);}
- if(me.permissions.appearance){const values=await api('/api/admin/settings');backgroundData=null;$('background-file').value='';setAppearance(values);}
+ if(activePanel==='files'&&me.permissions.files){const files=await api('/api/admin/files');const list=$('admin-files');list.replaceChildren();files.forEach(file=>{const r=row(file.originalName,userName(file.userId)+' · '+Math.ceil(file.sizeBytes/1024)+'KB');const input=document.createElement('input');input.value=file.originalName;input.setAttribute('aria-label',file.originalName+' 파일명 변경');input.maxLength=200;r.div.insertBefore(input,r.actions);r.actions.append(button('파일명 저장',async()=>{await api('/api/admin/files/'+file.id,'PUT',{originalName:input.value});await refresh();status('파일명을 변경했습니다.');}),button('다운로드',async()=>{const data=await FileTransfer.download(file,suffix=>api('/api/admin/files/'+file.id+suffix,'GET',undefined,true));const url=URL.createObjectURL(data),a=document.createElement('a');a.href=url;a.download=file.originalName;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}),button('삭제',async()=>{if(!confirm(file.originalName+' 파일을 삭제할까요?'))return;await api('/api/admin/files/'+file.id,'DELETE');await refresh();status('파일을 삭제했습니다.');},true));list.appendChild(r.div);});empty(list);}
+ if(activePanel==='users'&&me.permissions.users){const pendingUsers=users.filter(user=>user.approval==='pending');$('approval-count').textContent=pendingUsers.length;const requests=$('admin-approvals');requests.replaceChildren();pendingUsers.forEach(user=>{const r=row(user.username,'승인 대기 · '+(user.createdAt?new Date(user.createdAt).toLocaleDateString('ko-KR'):''));r.actions.append(button('승인',async()=>{await api('/api/admin/users/'+user.id+'/approve','POST',{});await refresh();status('가입신청을 승인했습니다. 이제 로그인할 수 있습니다.');}),button('반려',async()=>{if(!confirm('이 가입신청을 반려할까요?'))return;await api('/api/admin/users/'+user.id+'/reject','POST',{});await refresh();status('가입신청을 반려했습니다.');},true));requests.appendChild(r.div);});empty(requests);const list=$('admin-users');list.replaceChildren();users.forEach(user=>{const r=row(user.username,(user.role==='admin'?'관리자':'일반 사용자')+' · '+(user.approval==='pending'?'승인 대기':user.approval==='rejected'?'반려':user.active?'활성':'비활성'));r.actions.append(button('수정',()=>openUserDialog(user)));if(me.role==='admin')r.actions.append(button('비밀번호 초기화',()=>{const form=$('password-reset-form');form.reset();form.elements.id.value=user.id;$('password-reset-account').textContent='대상 사용자: '+user.username;$('password-reset-error').textContent='';$('password-dialog').showModal();}));list.appendChild(r.div);});empty(list);}
+ if(activePanel==='appearance'&&me.permissions.appearance){const values=await api('/api/admin/settings');backgroundData=null;$('background-file').value='';setAppearance(values);}
 }
 
-function renderNotices(){
- const list=$('admin-notifications'),query=noticeFilters.query.toLocaleLowerCase(),recipient=noticeFilters.recipient,read=noticeFilters.read;
- const filtered=notices.filter(n=>(!recipient||String(n.userId)===recipient)&&(!read||(read==='read'?n.readCount>0:n.unreadCount>0))&&(!query||[n.title,n.message,n.shared?'공통 공지':'이전 개별 공지'].join(' ').toLocaleLowerCase().includes(query))).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt)||b.id-a.id);
- list.replaceChildren();$('notice-summary').textContent=`${filtered.length} / ${notices.length}개 게시글`;
- filtered.forEach(note=>{const date=note.createdAt?new Date(note.createdAt).toLocaleDateString('ko-KR'):'';const r=row(note.title||note.message,(note.shared?'공통 공지':'이전 개별 공지')+' · '+date+' · 열람 '+note.readCount+'/'+note.audienceCount+'명'+(note.updatedAt?' · 수정됨':''));
+function noticeRow(note){
+ const date=note.createdAt?new Date(note.createdAt).toLocaleDateString('ko-KR'):'';
+ const r=row(note.title||note.message,(note.shared?'공통 공지':'이전 개별 공지')+' · '+date+' · 열람 '+note.readCount+'/'+note.audienceCount+'명'+(note.updatedAt?' · 수정됨':''));
  if(note.title){const preview=document.createElement('p');preview.className='notice-preview';preview.textContent=note.message;r.div.insertBefore(preview,r.actions);}
- r.actions.append(button('수정',()=>openNotificationDialog(note)),button('삭제',async()=>{if(!confirm('이 공지 게시글을 삭제할까요?'))return;await api('/api/admin/notifications/'+note.id,'DELETE');await refresh();status('공지를 삭제했습니다.');},true));list.appendChild(r.div);});empty(list);
+ r.actions.append(button('수정',()=>openNotificationDialog(note)),button('삭제',async()=>{if(!confirm('이 공지 게시글을 삭제할까요?'))return;await api('/api/admin/notifications/'+note.id,'DELETE');await loadNotices(true);status('공지를 삭제했습니다.');},true));
+ return r.div;
+}
+async function loadNotices(reset=false){
+ if(!reset&&(noticeLoading||noticeNext===null||activePanel!=='notifications'))return;
+ if(reset){noticeVersion++;noticeNext=0;noticeObserver?.disconnect();}
+ const version=noticeVersion,offset=noticeNext;noticeLoading=true;
+ const more=$('notice-load-more');if(more){more.disabled=true;more.textContent='불러오는 중…';}
+ try{
+  const params=new URLSearchParams({limit:'30',offset:String(offset),...noticeFilters});
+  const data=await api('/api/admin/notifications?'+params);
+  if(version!==noticeVersion||activePanel!=='notifications')return;
+  const items=Array.isArray(data)?data:data.items;
+  const list=$('admin-notifications');noticeObserver?.disconnect();$('notice-load-more')?.remove();
+  if(reset){notices=[];list.replaceChildren();}
+  const ids=new Set(notices.map(n=>n.id)),fragment=document.createDocumentFragment();
+  for(const note of items){if(ids.has(note.id))continue;notices.push(note);fragment.appendChild(noticeRow(note));}
+  list.appendChild(fragment);noticeNext=Array.isArray(data)?null:data.nextOffset;
+  $('notice-summary').textContent=Array.isArray(data)?`${data.length}건`:`${data.filteredTotal} / ${data.total}개 게시글 · 현재 ${notices.length}건 표시`;
+  empty(list);
+  if(noticeNext!==null){
+   const trigger=button('더 불러오기',()=>loadNotices());trigger.id='notice-load-more';list.appendChild(trigger);
+   if('IntersectionObserver' in window){noticeObserver=new IntersectionObserver(entries=>{if(entries.some(entry=>entry.isIntersecting)&&!noticeLoading)run(()=>loadNotices());},{root:document.querySelector('.admin-shell'),rootMargin:'0px 0px 160px 0px'});noticeObserver.observe(trigger);}
+  }
+ }catch(error){if(version===noticeVersion){const trigger=$('notice-load-more');if(trigger){trigger.disabled=false;trigger.textContent='다시 불러오기';}}throw error;}
+ finally{if(version===noticeVersion)noticeLoading=false;}
 }
 $('admin-search').addEventListener('click',()=>{if(activePanel!=='notifications'||!me?.permissions.notifications)return;$('notice-search').value=noticeFilters.query;$('notice-recipient').value=noticeFilters.recipient;$('notice-read').value=noticeFilters.read;$('notice-search-dialog').showModal();$('notice-search').focus();});
-$('notice-search-form').addEventListener('submit',event=>{event.preventDefault();noticeFilters={query:$('notice-search').value.trim(),recipient:$('notice-recipient').value,read:$('notice-read').value};renderNotices();$('notice-search-dialog').close();});
-$('notice-search-all').addEventListener('click',()=>{noticeFilters={query:'',recipient:'',read:''};$('notice-search-form').reset();renderNotices();$('notice-search-dialog').close();});
+$('notice-search-form').addEventListener('submit',event=>{event.preventDefault();noticeFilters={query:$('notice-search').value.trim(),recipient:$('notice-recipient').value,read:$('notice-read').value};$('notice-search-dialog').close();adminScroll.activate('notifications',0);run(()=>loadNotices(true));});
+$('notice-search-all').addEventListener('click',()=>{noticeFilters={query:'',recipient:'',read:''};$('notice-search-form').reset();$('notice-search-dialog').close();adminScroll.activate('notifications',0);run(()=>loadNotices(true));});
 
 function fileData(file){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(new Error('파일을 읽지 못했습니다.'));reader.readAsDataURL(file);});}
-for(const b of document.querySelectorAll('[data-panel]'))b.addEventListener('click',()=>showPanel(b.dataset.panel));
+for(const b of document.querySelectorAll('[data-panel]'))b.addEventListener('click',()=>{noticeVersion++;noticeLoading=false;noticeObserver?.disconnect();showPanel(b.dataset.panel);run(()=>refresh(false));});
 $('notification-reset').addEventListener('click',()=>{$('notification-dialog').close();});
 function openNotificationDialog(note){const form=$('notification-form');form.reset();const f=form.elements;f.id.value=note?.id||'';f.userId.value='all';f.title.value=note?.title||'';f.message.value=note?.message||'';$('notice-target-hint').textContent=note&&!note.shared?'기존 개별 공지는 원래 게시 대상에게 수정 내용이 적용됩니다.':'모든 사용자가 함께 보는 공지입니다. 수정하면 사용자별 읽음 상태가 초기화됩니다.';$('notification-dialog-title').textContent=note?'공지 수정':'공지 등록';$('notification-form-error').textContent='';$('notification-dialog').showModal();$('notification-message').focus();}
 $('admin-create').addEventListener('click',()=>{if(!me?.permissions[activePanel])return;if(activePanel==='notifications')openNotificationDialog();else if(activePanel==='files'){$('admin-upload-form').reset();$('admin-upload-error').textContent='';$('admin-upload-dialog').showModal();}else if(activePanel==='users')openUserDialog();});
