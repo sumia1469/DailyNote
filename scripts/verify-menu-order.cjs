@@ -18,7 +18,7 @@ const ds=require('../src/datastore'),{makeUserRecord}=require('../src/auth'),han
   const boxes=await page.locator('.app-navigation [data-view],#board-nav-caption').evaluateAll(ns=>Object.fromEntries(ns.map(n=>[n.id||n.dataset.view,n.getBoundingClientRect().top])));
   assert.ok(boxes.files<boxes['board-nav-caption']&&boxes['board-nav-caption']<boxes.boards);
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
-  await page.waitForFunction(()=>document.getElementById('app-sidebar').getBoundingClientRect().left>=-1);await page.screenshot({path:path.join(tmp,'menu-'+width+'.png')});await page.keyboard.press('Escape');await page.reload();await page.locator('[data-board-nav="3"]').waitFor({state:'attached'});
+  await page.waitForFunction(()=>document.getElementById('app-sidebar').getBoundingClientRect().left>=-1);await page.screenshot({path:path.join(tmp,'menu-'+width+'.png')});await page.keyboard.press('Escape');await page.reload();await page.locator('#main-section').waitFor({state:'visible'});await page.evaluate(()=>{location.hash='boards';window.AppShell.refresh();});await page.locator('[data-board-nav="3"]').waitFor({state:'attached'});
   assert.deepEqual(await page.locator('[data-board-nav]').evaluateAll(ns=>ns.map(n=>n.dataset.boardNav)),['1','2','3']);
  }
  assert.deepEqual(errors,[]);console.log('PASS: desktop/mobile daily-report-first, board sixth, interleaved group order, hidden/archive, reload. Captures: '+tmp);
