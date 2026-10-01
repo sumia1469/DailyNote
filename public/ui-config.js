@@ -2,7 +2,7 @@
   const menus={
     user:[
       {id:'worklogs',title:'일일리스트',icon:'journal',panel:'worklog-section',read:['worklogRead','worklogCreate'],actions:[{id:'open-search-btn',kind:'search',label:'일지 검색',permission:'worklogRead'},{id:'open-worklog-btn',kind:'create',label:'새 일지 등록',permission:'worklogCreate'}]},
-      {id:"calendar",title:"캘린더",icon:"calendar",panel:"view-calendar",read:["calendarRead","calendarCreate"],actions:[{id:"open-calendar-btn",kind:"create",label:"일정 추가",permission:"calendarCreate",dialog:"calendar-event-dialog"}]},
+      {id:"calendar",title:"캘린더",icon:"calendar",panel:"view-calendar",read:["calendarRead","calendarCreate"],actions:[{id:"open-calendar-search-btn",kind:"search",label:"캘린더 조회",permission:"calendarRead",dialog:"calendar-search-dialog"},{id:"open-calendar-more-btn",kind:"more",label:"캘린더 메뉴",permission:"calendarRead",dialog:"calendar-more-dialog"},{id:"open-calendar-btn",kind:"create",label:"일정 추가",permission:"calendarCreate",dialog:"calendar-event-dialog"}]},
       {id:'memos',title:'메모',icon:'edit',panel:'view-memos',read:['memoRead','memoCreate'],actions:[{id:'open-memo-search-btn',kind:'search',label:'메모 검색',permission:'memoRead',dialog:'memo-search-dialog'},{id:'open-memo-btn',kind:'create',label:'새 메모 등록',permission:'memoCreate'}]},
       {id:'notifications',title:'공지사항',icon:'notice',panel:'view-notifications',read:['notificationRead'],actions:[]},
       {id:'files',title:'파일관리',icon:'files',panel:'view-files',read:['fileRead','fileUpload'],actions:[{id:'open-upload-btn',kind:'create',label:'파일 등록',permission:'fileUpload'}]}

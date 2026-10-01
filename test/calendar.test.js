@@ -34,3 +34,7 @@ test('calendar CRUD, persistence, own records, per-module rights and validation'
  await ds.update('users',member.id,{permissions:{calendarRead:false,calendarCreate:false,calendarEdit:false,calendarDelete:false}});for(const [method,url] of [['GET',query],['POST','/api/calendar'],['PUT','/api/calendar/'+id],['DELETE','/api/calendar/'+id]])assert.equal((await request(method,url,payload,token)).status,403);
  await ds.update('users',member.id,{permissions:{}});assert.equal((await request('DELETE','/api/calendar/'+id,null,token)).status,200);assert.equal((await request('GET','/api/calendar/'+id,null,token)).status,404);
 });
+
+test('legacy Redis empty objects and nested tasks remain readable',()=>{
+ assert.deepEqual(C.tasks({}),[]);assert.deepEqual(C.tasks([{task:'저장된 투두',children:{}},{task:'상위',children:[{task:'하위',children:{},checked:true}]}]),[{task:'저장된 투두',checked:false,children:[]},{task:'상위',checked:false,children:[{task:'하위',checked:true,children:[]}]}]);assert.equal(C.tasks('기존 내용\n다음 줄')[1].task,'다음 줄');
+});
