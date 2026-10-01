@@ -215,3 +215,8 @@ UIShell.actionMenu가 메뉴 위치·키보드 이동·aria-expanded를 관리�
 ## 공통 메뉴 로딩
 
 `loading.js`와 `loading.css`를 업무 어댑터보다 먼저 로드합니다. 같은 출처의 `/api/` fetch 요청을 공통 추적하며 응답 본문(JSON·파일)을 읽는 동안에도 표시합니다. `AppLoading.begin(message)`는 중복 호출에 안전한 종료 함수를 반환하고 `AppLoading.run(message, action)`은 finally에서 종료합니다. 동시 요청은 마지막 요청까지 유지하고 최소 360ms 표시합니다. 화면 전환·로그아웃은 `AppLoading.clear()`로 이전 화면 작업을 분리합니다. 네트워크 요청이 없는 메뉴 진입도 렌더링 동안 표시합니다. 폴링(`reminders=1`)과 메모 자동 저장은 인라인 상태를 유지합니다. 외부 요청·OCR 로컬 파일은 추적하지 않습니다. 포커스를 이동하지 않으며 메뉴 이동·취소를 막지 않습니다. 지원 브라우저에서는 manual popover로 모달 위에도 표시하며 미지원 환경은 fixed 레이어입니다. 디자인 스킨은 기존 spinner DOM을 유지하므로 별도로 변경할 수 있습니다. `npm run test:common-loading`으로 지연·동시 요청·실패·취소·화면 전환·PC/모바일을 확인합니다.
+
+
+## 작성 화면 배경과 스크롤
+
+일지·메모·공지·게시판·캘린더는 불투명한 공통 작성 배경을 사용합니다. 키보드로 visualViewport 높이·위치가 달라져도 뒤 목록이 비치지 않으며, 도구막대는 실제 편집 도구가 있는 메모·게시판만 유지합니다. 본문 ui-writing-paper/memo-paper 한 곳이 세로 스크롤을 담당하며 헤더는 분리됩니다. 기존 #worklog-form의 display:block·padding이 공통 flex 배치를 덮어쓰지 않도록 작성 화면에서 명시적으로 보정합니다. verify-writing-forms는 PC·모바일과 축소된 키보드 뷰포트에서 배경·본문 경계·일지 하단 이동·저장 실패 입력 보존을 검증합니다. 실제 iOS 키보드는 별도 확인 대상입니다.
