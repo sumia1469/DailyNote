@@ -75,3 +75,24 @@ test('registration waits for approval, rejects privileged fields and supports re
  assert.equal((await request('POST','/api/admin/users/'+rejectedUser.id+'/reject',{},admin)).data.approval,'rejected');
  const denied=await request('POST','/api/auth/login',rejected);assert.equal(denied.status,403);assert.match(denied.data.message,/반려/);
 });
+test('administrator password reset validates input and revokes existing sessions',async()=>{
+ const admin=(await request('POST','/api/auth/login',{username:'owner',password:'test-admin-123'})).data.token;
+ const user=await ds.findOne('users',u=>u.username==='new-user');
+ const oldSession=(await request('POST','/api/auth/login',{username:'new-user',password:'new-password-123'})).data.token;
+ const url='/api/admin/users/'+user.id+'/reset-password';
+ const body={password:'reset-password-456',passwordConfirmation:'reset-password-456'};
+ assert.equal((await request('POST',url,body,oldSession)).status,403);
+ const delegated=(await request('POST','/api/admin/users',{username:'delegated',password:'delegated-password'},admin)).data;
+ await request('PUT','/api/admin/permissions/'+delegated.id,{permissions:{users:true}},admin);
+ const manager=(await request('POST','/api/auth/login',{username:'delegated',password:'delegated-password'})).data.token;
+ assert.equal((await request('POST',url,body,manager)).status,403);
+ assert.equal((await request('POST',url,{password:'short',passwordConfirmation:'short'},admin)).status,400);
+ assert.equal((await request('POST',url,{...body,passwordConfirmation:'wrong'},admin)).status,400);
+ assert.equal((await request('GET','/api/auth/me',null,oldSession)).status,200);
+ assert.equal((await request('POST',url,body,admin)).status,200);
+ assert.equal((await request('GET','/api/auth/me',null,oldSession)).status,401);
+ assert.equal((await request('POST','/api/auth/login',{username:'new-user',password:'new-password-123'})).status,401);
+ const login=await request('POST','/api/auth/login',{username:'new-user',password:body.password});assert.equal(login.status,200);
+ assert.equal((await request('GET','/api/auth/me',null,login.data.token)).status,200);
+ const stored=await ds.findOne('users',u=>u.id===user.id);assert.notEqual(stored.password,body.password);assert.equal(stored.role,'member');assert.equal(stored.active,true);
+});

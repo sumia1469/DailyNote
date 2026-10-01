@@ -38,6 +38,7 @@ async function verifyToken(req) {
   if (!sess) return null;
   const user = await ds.findOne('users', u => u.id === sess.userId);
   if (!user || user.active === false) return null;
+  if (user.passwordResetAt && (!sess.createdAt || new Date(sess.createdAt).getTime() <= new Date(user.passwordResetAt).getTime())) return null;
   const {roleOf, rightsOf} = require('./permissions');
   return { userId: user.id, username: user.username, role: roleOf(user), permissions: rightsOf(user) };
 }
