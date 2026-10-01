@@ -946,3 +946,15 @@ if (token) {
 } else {
   showLoginScreen();
 }
+
+/* Independently collapse the notification and file cards. */
+document.querySelectorAll('.card-toggle').forEach(button => {
+  button.addEventListener('click', () => {
+    const expanded = button.getAttribute('aria-expanded') === 'true';
+    const body = document.getElementById(button.getAttribute('aria-controls'));
+    body.hidden = expanded;
+    button.setAttribute('aria-expanded', String(!expanded));
+    button.setAttribute('aria-label', button.dataset.cardTitle + (expanded ? ' 펼치기' : ' 접기'));
+    button.closest('.content-card').classList.toggle('is-collapsed', expanded);
+  });
+});

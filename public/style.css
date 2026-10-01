@@ -1033,3 +1033,27 @@ button:focus-visible { outline: 3px solid #93c5fd; outline-offset: 3px; }
 @media (prefers-reduced-motion: reduce) {
   .orbit-spinner { animation: none; }
 }
+
+/* Card-level collapse controls retain the header and hide the content. */
+.content-card > .section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+.content-card > .section-header > div { min-width: 0; }
+.card-toggle {
+  display: grid; place-items: center; flex: 0 0 auto;
+  width: 44px; height: 44px; padding: 0;
+  border: 1px solid var(--line); border-radius: 10px;
+  background: #f8fafc; color: #475569; cursor: pointer;
+}
+.card-toggle:hover { background: #eff6ff; color: var(--primary); }
+.card-toggle svg { transition: transform .18s ease; }
+.card-toggle[aria-expanded="false"] svg { transform: rotate(180deg); }
+.collapsible-card-body[hidden] { display: none; }
+#main-section > .content-card.is-collapsed { min-height: 0; }
+.content-card.is-collapsed > .section-header { margin-bottom: 0; padding-bottom: 0; border-bottom: 0; }
+@media (prefers-reduced-motion: reduce) {
+  .card-toggle svg { transition: none; }
+}
