@@ -1,8 +1,9 @@
 /* Writing is a page: common memo-like canvas on desktop and mobile. */
-body .ui-writing-screen{position:fixed;inset:auto;left:0;top:var(--writing-top,0px);width:100%;max-width:none;height:var(--writing-height,100dvh);max-height:none;margin:0;padding:0!important;border:0;border-radius:0;box-shadow:none;background:var(--card-bg,#fff);color:var(--text,#303035);overflow:hidden;box-sizing:border-box}
+body .ui-writing-screen{--ui-soft:var(--hover,#f1f1f1);--border-color:var(--line,#eee)}
+body .ui-writing-screen{position:fixed;inset:auto;left:0;top:var(--writing-top,0px);width:100%;max-width:none;height:var(--writing-height,100dvh);max-height:none;margin:0;padding:0!important;border:0;border-radius:0;box-shadow:none;background:var(--surface,#fff);color:var(--text,#303035);overflow:hidden;box-sizing:border-box}
 body dialog.ui-writing-screen[open]{display:flex;flex-direction:column}
 body dialog.ui-writing-screen::backdrop{background:var(--surface,var(--card-bg,#fff));backdrop-filter:none}
-body #worklog-modal.ui-writing-screen{z-index:1200;background:var(--card-bg,#fff)}
+body #worklog-modal.ui-writing-screen{z-index:1200;background:var(--surface,#fff)}
 body #worklog-modal.ui-writing-screen .modal-backdrop{display:none}
 body #worklog-modal.ui-writing-screen .modal-dialog{position:static;transform:none;flex:1;width:100%;max-width:none;height:100%;max-height:none;margin:0;padding:0;border:0;border-radius:0;box-shadow:none;overflow:hidden;background:inherit}
 body .ui-writing-screen>form,body .ui-writing-screen .modal-dialog>form{display:flex;flex-direction:column;width:100%;height:100%;min-height:0;margin:0;padding:0;border:0;border-radius:0;background:inherit;box-shadow:none;overflow:hidden}
@@ -12,7 +13,8 @@ body .ui-writing-header h2,body .ui-writing-memo .memo-editor-header h2{font-siz
 body .ui-writing-header .shell-icon{display:flex;align-items:center;justify-content:center;width:40px;height:42px;flex:0 0 40px;padding:8px;margin:0;background:transparent;border:0;box-shadow:none;color:inherit}
 body .ui-writing-screen .app-icon{width:22px;height:22px;margin:0;flex-shrink:0}
 body .ui-writing-header [type=submit]{width:auto;min-height:38px;margin:0;padding:8px 14px;border-radius:10px;white-space:nowrap;font-size:14px}
-body .ui-writing-paper,body .ui-writing-memo .memo-paper{flex:1;min-height:0;width:100%;max-width:920px;margin:0 auto;padding:28px 40px;box-sizing:border-box;overflow:auto;overscroll-behavior:contain;scroll-padding:24px;scrollbar-gutter:stable}
+/* The viewport owns scrolling; horizontal padding centers the 840px writing column. */
+body .ui-writing-paper,body .ui-writing-memo .memo-paper{flex:1;min-height:0;min-width:0;width:100%;max-width:none;margin:0;padding:28px max(40px,calc((100% - 840px)/2));box-sizing:border-box;overflow:auto;overscroll-behavior:contain;scroll-padding:24px;scrollbar-gutter:stable}
 body .ui-writing-paper label,body .ui-writing-paper .form-field>label{font-size:14px;font-weight:500;color:var(--muted,#71717a)}
 body .ui-writing-paper .form-field{margin:20px 0}
 body .ui-writing-paper input:not([type=checkbox]):not([type=file]),body .ui-writing-paper textarea,body .ui-writing-paper select{font:inherit;font-size:16px;max-width:100%;min-width:0;box-sizing:border-box;color:inherit;background:transparent;box-shadow:none}
@@ -62,7 +64,13 @@ body .ui-writing-screen,body .ui-writing-paper,body .ui-writing-memo .memo-paper
 body .ui-writing-paper,body .ui-writing-memo .memo-paper{flex:1 1 0%;overflow-x:hidden;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:max(24px,env(safe-area-inset-bottom));scroll-padding-bottom:32px}
 body .ui-writing-screen .ui-writing-header{position:relative;top:auto;background:var(--surface,var(--card-bg,#fff))}
 body .ui-writing-screen .memo-toolbar,body .ui-writing-screen .memo-format{background:var(--surface,var(--card-bg,#fff));flex-shrink:0}
-body #board-editor.ui-writing-screen{max-width:none;margin:0;left:0}body #board-editor.ui-writing-screen:not([data-editing=true]) .editor-tools{display:none}
+body .ui-writing-screen .editor-tools,body .ui-writing-screen .board-format{background:var(--surface,#fff);color:var(--text);border-color:var(--line)}
+body .ui-writing-screen .board-format button{background:var(--field,var(--surface));color:var(--text);border-color:var(--line)}
+body #board-editor.ui-writing-screen .board-toolbar button{color:var(--text)}
+body .ui-writing-memo .memo-save-state{background:var(--surface,#fff);color:var(--muted)}
+body .ui-writing-memo #memo-status{color:var(--muted)}
+body .ui-writing-memo #memo-retry{color:var(--danger,#b33)}
+body #board-editor.ui-writing-screen{max-width:none;margin:0;left:0;background:var(--surface,#fff)}body #board-editor.ui-writing-screen:not([data-editing=true]) .editor-tools{display:none}
 
 
 body .ui-writing-page>form,body #worklog-modal.ui-writing-page .modal-dialog{position:relative;z-index:1}
@@ -72,4 +80,3 @@ body #admin-upload-dialog.ui-writing-screen>form{align-items:stretch;flex-wrap:n
 body #user-dialog .ui-writing-paper input:not([type=hidden]),body #user-dialog .ui-writing-paper select,body #admin-upload-dialog .ui-writing-paper input[type=file]{width:100%;max-width:100%;min-width:0;font-size:16px;box-sizing:border-box}
 body #admin-upload-dialog .ui-writing-paper input[type=file]{display:block;padding:16px 0;overflow:hidden}
 body #user-dialog .ui-writing-paper small,body #admin-upload-dialog .ui-writing-paper small{display:block;margin-top:8px;line-height:1.6;overflow-wrap:anywhere}
-
