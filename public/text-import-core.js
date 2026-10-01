@@ -18,7 +18,14 @@
     // Cells are separated by spaces, not tabs (tabs mean child TODO items).
     return rows.map(row => row.map(cell => normalize(cell == null ? '' : cell)).join('  ')).join('\n');
   }
-  const api = {normalize, decode, combine, rowsToText};
+  function bodyText(text) {
+    return normalize(text).split('\n').map(line => {
+      // Strip recognizable ruling/checkbox shapes, never guessed Latin letters or meaningful punctuation.
+      if (/^\s*[─━═┄┅┈┉┌┐└┘├┤┬┴┼│┃║┏┓┗┛╔╗╚╝|_\-=+]{2,}\s*$/u.test(line)) return '';
+      return line.replace(/^\s*(?:(?:[│┃║]+|\|+(?=\s|\d+[.)]))|(?:\[\s*[xX✓✔ ]?\s*\])|(?:[☐☑☒□■▢✓✔]+)|(?:[[(]\s*[|│┃║](?:\s*[\])])?))\s*:?\s*/u,'').trimEnd();
+    }).join('\n').replace(/\n{3,}/g,'\n\n').trim();
+  }
+  const api = {normalize, decode, combine, rowsToText, bodyText};
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.TextImportCore = api;
 })(typeof self !== 'undefined' ? self : globalThis);
