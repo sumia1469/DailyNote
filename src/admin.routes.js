@@ -1,5 +1,5 @@
 const ds = require('./datastore');
-const {ensureReleaseNotifications} = require('./release-notifications');
+const posts=require('./notice-posts');
 const {sendJson, parseJsonBody} = require('./utils');
 const {makeUserRecord} = require('./auth');
 const {keys, basicKeys, roleOf, safeUser, rightsOf} = require('./permissions');
@@ -87,30 +87,15 @@ async function adminRouter(req,res,auth) {
     }
   }
   if(area==='notifications') {
-    if(method==='GET'&&!id) {
-      await ensureReleaseNotifications(await ds.findAll('users'));
-      return sendJson(res,200,await ds.findAll('notifications'));
-    }
-    if(method==='POST'||method==='PUT') {
-      const message=String(body.message||'').trim(),title=String(body.title||'').trim(),userId=Number(body.userId);
+    if(method==='GET'&&!id)return sendJson(res,200,await posts.listAdmin());
+    if(method==='POST'||method==='PUT'){
+      const title=String(body.title||'').trim(),message=String(body.message||'').trim();
       if(title.length>120)return sendJson(res,400,{message:'공지 제목은 120자 이내로 입력하세요.'});
-      if(method==='POST'&&body.userId==='all'){
-        if(!message||message.length>2000)return sendJson(res,400,{message:'공지 내용을 1~2000자로 입력하세요.'});
-        const targets=(await ds.findAll('users')).filter(u=>u.active!==false&&(!u.approval||u.approval==='approved'));
-        if(!targets.length)return sendJson(res,400,{message:'게시할 활성 사용자가 없습니다.'});
-        const createdAt=new Date().toISOString(),records=[];
-        for(const target of targets)records.push(await ds.insert('notifications',{userId:target.id,title,message,isRead:false,createdAt}));
-        return sendJson(res,201,{count:records.length,ids:records.map(n=>n.id)});
-      }
       if(!message||message.length>2000)return sendJson(res,400,{message:'공지 내용을 1~2000자로 입력하세요.'});
-      if(!await ds.findOne('users',u=>u.id===userId&&u.active!==false&&(!u.approval||u.approval==='approved')))return sendJson(res,400,{message:'공지를 받을 사용자를 선택하세요.'});
-      if(method==='PUT') {
-        const updated=await ds.update('notifications',id,{userId,title,message,isRead:false,updatedAt:new Date().toISOString()});
-        return sendJson(res,updated?200:404,updated||{message:'공지를 찾을 수 없습니다.'});
-      }
-      return sendJson(res,201,await ds.insert('notifications',{userId,title,message,isRead:false,createdAt:new Date().toISOString()}));
+      if(method==='POST'){const n=await posts.create(title,message);return sendJson(res,201,{...n,count:1,ids:[n.id]});}
+      const n=await posts.change(id,{title,message});return sendJson(res,n?200:404,n||{message:'공지를 찾을 수 없습니다.'});
     }
-    if(method==='DELETE'&&id){const ok=await ds.remove('notifications',id);return sendJson(res,ok?200:404,{message:ok?'공지를 삭제했습니다.':'공지를 찾을 수 없습니다.'});}
+    if(method==='DELETE'&&id){const ok=await posts.remove(id);return sendJson(res,ok?200:404,{message:ok?'공지를 삭제했습니다.':'공지를 찾을 수 없습니다.'});}
   }
   if(area==='files') {
     if(method==='GET'&&!id)return sendJson(res,200,(await ds.findAll('files')).filter(f=>f.status!=='uploading'));

@@ -1,15 +1,13 @@
 // src/notification.routes.js — 사진 기반 복원
 const url = require('url');
 const ds = require('./datastore');
-const {ensureReleaseNotifications} = require('./release-notifications');
+const posts=require('./notice-posts');
 const {sendJson, parseJsonBody} = require('./utils');
 async function listNoti(req, res, auth) {
-  await ensureReleaseNotifications([{id: auth.userId}]);
-  const all = await ds.findAll('notifications');
-  const mine = all.filter(n => n.userId === auth.userId);
+  const mine=await posts.listUser(auth.userId);
   sendJson(res, 200, mine.sort((a,b) => new Date(b.createdAt)-new Date(a.createdAt) || b.id-a.id));
 }
-async function detailNoti(req,res,auth,id){const note=await ds.findOne('notifications',note=>note.id===id&&note.userId===auth.userId);if(!note)return sendJson(res,404,{message:'Notification not found'});return sendJson(res,200,note);}
+async function detailNoti(req,res,auth,id){const note=await posts.getUser(id,auth.userId);if(!note)return sendJson(res,404,{message:'Notification not found'});return sendJson(res,200,note);}
 async function createNoti(req, res, auth) {
   const {userId, message} = await parseJsonBody(req);
   if (Number(userId) !== auth.userId && !auth.permissions.notifications) return sendJson(res, 403, {message: '공지 관리 권한이 필요합니다.'});
@@ -18,9 +16,7 @@ async function createNoti(req, res, auth) {
   sendJson(res, 201, {id: newNoti.id});
 }
 async function markRead(req, res, auth, id) {
-  const noti = await ds.findOne('notifications', n => n.id === id && n.userId === auth.userId);
-  if (!noti) return sendJson(res, 404, {message: 'Notification not found'});
-  await ds.update('notifications', id, {isRead: true});
+  if (!await posts.markRead(id,auth.userId)) return sendJson(res,404,{message:'Notification not found'});
   sendJson(res, 200, {message: 'Marked as read'});
 }
 async function notificationRouter(req, res, auth) {

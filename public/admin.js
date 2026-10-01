@@ -37,9 +37,8 @@ async function refresh(){
  if(['notifications','files','users','permissions'].some(key=>me.permissions[key]))directory=await api('/api/admin/directory');
  if(me.permissions.users||me.permissions.permissions){users=await api('/api/admin/'+(me.permissions.users?'users':'permissions'));options($('permission-user'),users);setPermissionForm();}
  if(me.permissions.notifications){
-  options($('notification-user'),directory.filter(u=>u.active&&(!u.approval||u.approval==='approved')));
-  const all=document.createElement('option');all.value='all';all.textContent='전체 활성 사용자';$('notification-user').prepend(all);
-  options($('notice-recipient'),[{id:'',username:'전체 대상'},...directory]);
+  options($('notification-user'),[{id:'all',username:'전체 사용자 공통 공지'}]);
+  options($('notice-recipient'),[{id:'',username:'전체 공지'}]);
   notices=await api('/api/admin/notifications');renderNotices();
  }
  if(me.permissions.files){const files=await api('/api/admin/files');const list=$('admin-files');list.replaceChildren();files.forEach(file=>{const r=row(file.originalName,userName(file.userId)+' · '+Math.ceil(file.sizeBytes/1024)+'KB');const input=document.createElement('input');input.value=file.originalName;input.setAttribute('aria-label',file.originalName+' 파일명 변경');input.maxLength=200;r.div.insertBefore(input,r.actions);r.actions.append(button('파일명 저장',async()=>{await api('/api/admin/files/'+file.id,'PUT',{originalName:input.value});await refresh();status('파일명을 변경했습니다.');}),button('다운로드',async()=>{const data=await FileTransfer.download(file,suffix=>api('/api/admin/files/'+file.id+suffix,'GET',undefined,true));const url=URL.createObjectURL(data),a=document.createElement('a');a.href=url;a.download=file.originalName;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}),button('삭제',async()=>{if(!confirm(file.originalName+' 파일을 삭제할까요?'))return;await api('/api/admin/files/'+file.id,'DELETE');await refresh();status('파일을 삭제했습니다.');},true));list.appendChild(r.div);});empty(list);}
@@ -49,11 +48,11 @@ async function refresh(){
 
 function renderNotices(){
  const list=$('admin-notifications'),query=noticeFilters.query.toLocaleLowerCase(),recipient=noticeFilters.recipient,read=noticeFilters.read;
- const filtered=notices.filter(n=>(!recipient||String(n.userId)===recipient)&&(!read||(read==='read')===!!n.isRead)&&(!query||[n.title,n.message,userName(n.userId)].join(' ').toLocaleLowerCase().includes(query))).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt)||b.id-a.id);
- list.replaceChildren();$('notice-summary').textContent=`${filtered.length} / ${notices.length}건 · 미열람 ${filtered.filter(n=>!n.isRead).length}건 (사용자별 게시 기록)`;
- filtered.forEach(note=>{const date=note.createdAt?new Date(note.createdAt).toLocaleDateString('ko-KR'):'';const r=row(note.title||note.message,userName(note.userId)+' · '+date+' · '+(note.isRead?'열람':'미열람')+(note.updatedAt?' · 수정됨':''));
+ const filtered=notices.filter(n=>(!recipient||String(n.userId)===recipient)&&(!read||(read==='read'?n.readCount>0:n.unreadCount>0))&&(!query||[n.title,n.message,n.shared?'공통 공지':'이전 개별 공지'].join(' ').toLocaleLowerCase().includes(query))).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt)||b.id-a.id);
+ list.replaceChildren();$('notice-summary').textContent=`${filtered.length} / ${notices.length}개 게시글`;
+ filtered.forEach(note=>{const date=note.createdAt?new Date(note.createdAt).toLocaleDateString('ko-KR'):'';const r=row(note.title||note.message,(note.shared?'공통 공지':'이전 개별 공지')+' · '+date+' · 열람 '+note.readCount+'/'+note.audienceCount+'명'+(note.updatedAt?' · 수정됨':''));
  if(note.title){const preview=document.createElement('p');preview.className='notice-preview';preview.textContent=note.message;r.div.insertBefore(preview,r.actions);}
- r.actions.append(button('수정',()=>openNotificationDialog(note)),button('삭제',async()=>{if(!confirm(userName(note.userId)+'에게 게시한 공지를 삭제할까요?'))return;await api('/api/admin/notifications/'+note.id,'DELETE');await refresh();status('공지를 삭제했습니다.');},true));list.appendChild(r.div);});empty(list);
+ r.actions.append(button('수정',()=>openNotificationDialog(note)),button('삭제',async()=>{if(!confirm('이 공지 게시글을 삭제할까요?'))return;await api('/api/admin/notifications/'+note.id,'DELETE');await refresh();status('공지를 삭제했습니다.');},true));list.appendChild(r.div);});empty(list);
 }
 $('admin-search').addEventListener('click',()=>{if(activePanel!=='notifications'||!me?.permissions.notifications)return;$('notice-search').value=noticeFilters.query;$('notice-recipient').value=noticeFilters.recipient;$('notice-read').value=noticeFilters.read;$('notice-search-dialog').showModal();$('notice-search').focus();});
 $('notice-search-form').addEventListener('submit',event=>{event.preventDefault();noticeFilters={query:$('notice-search').value.trim(),recipient:$('notice-recipient').value,read:$('notice-read').value};renderNotices();$('notice-search-dialog').close();});
@@ -62,7 +61,7 @@ $('notice-search-all').addEventListener('click',()=>{noticeFilters={query:'',rec
 function fileData(file){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(new Error('파일을 읽지 못했습니다.'));reader.readAsDataURL(file);});}
 for(const b of document.querySelectorAll('[data-panel]'))b.addEventListener('click',()=>showPanel(b.dataset.panel));
 $('notification-reset').addEventListener('click',()=>{$('notification-dialog').close();});
-function openNotificationDialog(note){const form=$('notification-form');form.reset();const f=form.elements;f.id.value=note?.id||'';f.userId.value=note?.userId||'all';const all=$('notification-user').querySelector('[value=all]');if(all)all.disabled=!!note;f.title.value=note?.title||'';f.message.value=note?.message||'';$('notice-target-hint').textContent=note?'수정은 선택한 사용자의 공지에 적용되며 다시 미열람으로 표시됩니다.':'전체 활성·승인 사용자에게 게시하거나 한 명을 선택하세요.';$('notification-dialog-title').textContent=note?'공지 수정':'공지 등록';$('notification-form-error').textContent='';$('notification-dialog').showModal();$('notification-message').focus();}
+function openNotificationDialog(note){const form=$('notification-form');form.reset();const f=form.elements;f.id.value=note?.id||'';f.userId.value='all';f.title.value=note?.title||'';f.message.value=note?.message||'';$('notice-target-hint').textContent=note&&!note.shared?'기존 개별 공지는 원래 게시 대상에게 수정 내용이 적용됩니다.':'모든 사용자가 함께 보는 공지입니다. 수정하면 사용자별 읽음 상태가 초기화됩니다.';$('notification-dialog-title').textContent=note?'공지 수정':'공지 등록';$('notification-form-error').textContent='';$('notification-dialog').showModal();$('notification-message').focus();}
 $('admin-create').addEventListener('click',()=>{if(!me?.permissions[activePanel])return;if(activePanel==='notifications')openNotificationDialog();else if(activePanel==='files'){$('admin-upload-form').reset();$('admin-upload-error').textContent='';$('admin-upload-dialog').showModal();}else if(activePanel==='users')openUserDialog();});
 function openUserDialog(user){const form=$('user-form');form.reset();const f=form.elements;f.id.value=user?.id||'';f.username.value=user?.username||'';f.active.value=String(user?.active!==false);f.password.required=!user;$('user-dialog-title').textContent=user?'사용자 수정':'사용자 등록';$('user-form-error').textContent='';$('user-dialog').showModal();}
 $('user-create').addEventListener('click',()=>openUserDialog());
@@ -79,4 +78,3 @@ $('background-file').addEventListener('change',()=>run(async()=>{const file=$('b
 $('appearance-default').addEventListener('click',()=>{backgroundData=null;$('background-file').value='';setAppearance({fontFamily:'system',fontSize:16,spacing:'normal',theme:'light',background:'autumn',backgroundUrl:appearance.backgroundUrl});status('기본값을 미리 보고 있습니다. 적용하려면 설정 저장을 누르세요.');});
 $('appearance-form').addEventListener('submit',e=>{e.preventDefault();run(async()=>{const f=e.target.elements;const saved=await api('/api/admin/settings','PUT',{fontFamily:f.fontFamily.value,fontSize:Number(f.fontSize.value),spacing:f.spacing.value,theme:f.theme.value,background:f.background.value,...(backgroundData?{imageData:backgroundData.split(',')[1]}:{})});backgroundData=null;$('background-file').value='';setAppearance(saved);status('화면·배경 설정을 저장했습니다.');});});
 if(!adminToken)location.replace('/');else run(refresh);
-

@@ -40,6 +40,7 @@ async function save(name) {
 }
 
 async function findAll(name) { return await load(name); }
+async function hasAnyDelivery(name,keys) { const wanted=new Set(keys);return (await load(name+'-deliveries')).some(item=>wanted.has(item.key)); }
 async function findOne(name, predicate) {
   const arr = await load(name);
   return arr.find(predicate);
@@ -103,7 +104,7 @@ async function deleteExpiredSessions() {
   }
 }
 module.exports = {
-  findAll, findOne, insert, insertOnce, update, remove,
+  findAll, findOne, insert, insertOnce, update, remove, hasAnyDelivery,
   findSessionByToken, insertSession, deleteExpiredSessions
 };
 

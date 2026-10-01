@@ -42,6 +42,7 @@ async function update(name,id,updates) {
  return result ? JSON.parse(result) : null;
 }
 async function remove(name,id) { return Boolean(await command('HDEL',prefix+name,String(id))); }
+async function hasAnyDelivery(name,keys) { return keys.length>0&&(await command('HMGET',prefix+name+':deliveries',...keys)).some(value=>value!==null); }
 async function insertOnce(name, key, obj) {
  const result = await command('EVAL', `if redis.call('HEXISTS',KEYS[3],ARGV[1])==1 then return false end; local id=redis.call('INCR',KEYS[2]); local o=cjson.decode(ARGV[2]); o.id=id; local s=cjson.encode(o); redis.call('HSET',KEYS[1],tostring(id),s); redis.call('HSET',KEYS[3],ARGV[1],tostring(id)); return s`,3,prefix+name,prefix+name+':id',prefix+name+':deliveries',key,JSON.stringify(obj));
  return result ? JSON.parse(result) : null;
@@ -61,4 +62,4 @@ async function initialize() {
  return initializing;
 }
 async function close() { if (client?.isOpen) await client.close(); client = null; }
-module.exports={close,findAll,findOne,insert,insertOnce,update,remove,insertSession,findSessionByToken,deleteExpiredSessions:async()=>{},command,initialize};
+module.exports={close,findAll,findOne,insert,insertOnce,update,remove,hasAnyDelivery,insertSession,findSessionByToken,deleteExpiredSessions:async()=>{},command,initialize};
