@@ -13,7 +13,6 @@ body {
   margin: 0;
   background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
-  margin: 20px;
   color: var(--text);
 }
 #main-section {
@@ -514,8 +513,12 @@ button {
   position: relative;
   z-index: 1;
   width: min(680px, 100%);
+  min-width: 0;
   max-height: calc(100vh - 40px);
+  max-height: calc(100dvh - 40px);
+  overflow-x: hidden;
   overflow-y: auto;
+  overscroll-behavior: contain;
   border-radius: 16px;
   background: #fff;
   box-shadow: 0 25px 60px rgba(15,23,42,0.28);
@@ -527,6 +530,7 @@ button {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
+  gap: 12px;
   padding: 21px 24px;
   border-bottom: 1px solid var(--line);
   background: #fff;
@@ -541,6 +545,7 @@ button {
   font-size: 13px;
 }
 .icon-btn {
+  flex: 0 0 auto;
   width: 36px;
   height: 36px;
   padding: 0;
@@ -554,10 +559,12 @@ button {
 #worklog-form {
   padding: 24px;
   display: block;
-  width: 90%;
-  margin: 20px;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
 }
 .form-field {
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 7px;
@@ -572,6 +579,9 @@ button {
 .form-field input,
 .form-field textarea {
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  font-size: 16px;
   padding: 11px 12px;
   margin: 0;
   border: 1px solid #cbd5e1;
@@ -586,6 +596,8 @@ button {
 }
 .form-field small {
   color: var(--muted);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
 }
 .form-grid {
   display: grid;
@@ -837,10 +849,60 @@ body.modal-open {
 .list-editor-toolbar button { min-height: 44px; padding: 9px 12px; touch-action: manipulation; }
 .list-editor-toolbar button:disabled { opacity: .45; cursor: default; }
 #todo, #next-day-plan { tab-size: 3; font-size: 16px; line-height: 1.6; }
-#worklog-form { width: auto; margin: 0; }
 @media (max-width: 600px) {
-  .modal { padding: 12px; }
-  .modal-dialog { max-height: calc(100dvh - 24px); }
+  .modal { padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)); }
+  .modal-dialog { max-height: calc(100vh - 24px); max-height: calc(100dvh - max(12px, env(safe-area-inset-top)) - max(12px, env(safe-area-inset-bottom))); }
+  .modal-header { padding: 16px; }
+  .modal-header h2 { font-size: 20px; }
   #worklog-form { padding: 16px; }
-  .list-editor-toolbar button { flex: 1 1 auto; }
+  .list-editor-toolbar { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  .list-editor-toolbar button { padding: 9px 4px; font-size: 13px; }
+  #todo { min-height: 160px; }
+  #next-day-plan { min-height: 128px; }
+  .modal-actions > button { flex: 1; min-height: 44px; }
+}
+
+/* Responsive sign-in card. */
+.login-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: 32px 20px;
+  background: radial-gradient(ellipse at top, #e4edff, transparent 65%), var(--background);
+}
+.login-card {
+  width: 100%;
+  max-width: 440px;
+  padding: 36px;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: var(--surface);
+  box-shadow: 0 16px 48px rgba(30, 58, 138, .09);
+}
+.login-title { margin-bottom: 32px; }
+.login-icon {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  margin-bottom: 20px;
+  border-radius: 16px;
+  background: #eff6ff;
+  font-size: 28px;
+}
+.login-title h1 { margin: 0 0 10px; font-size: 28px; letter-spacing: -1px; }
+.login-title p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.6; }
+#login-form { width: 100%; margin: 0; }
+#login-form .form-field { margin-bottom: 20px; }
+#login-form input { min-height: 50px; padding: 13px 14px; background: #f8fafc; border-radius: 12px; }
+.login-btn { width: 100%; min-height: 50px; margin-top: 4px; border-radius: 12px; font-size: 16px; }
+.login-message { margin: 18px 0 0; padding: 12px 14px; color: #b91c1c; background: #fef2f2; border-radius: 10px; font-size: 14px; line-height: 1.5; overflow-wrap: anywhere; }
+.login-message:empty { display: none; }
+button:focus-visible { outline: 3px solid #93c5fd; outline-offset: 3px; }
+@media (max-width: 480px) {
+  .login-section { padding: 24px 16px; }
+  .login-card { padding: 28px 24px; border-radius: 20px; }
+  .login-title h1 { font-size: 26px; }
 }

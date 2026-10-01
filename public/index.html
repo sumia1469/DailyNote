@@ -11,16 +11,16 @@
 <section id="login-section" class="login-section">
   <div class="login-card">
     <div class="login-title">
-      <span class="login-icon">🗓️</span>
+      <span class="login-icon" aria-hidden="true">🗓️</span>
       <div>
         <h1>일일 업무일지</h1>
-        <p>업무일지 관리 시스템</p>
+        <p>오늘의 업무를 기록하고, 내일을 준비하세요.</p>
       </div>
     </div>
     <form id="login-form">
       <div class="form-field">
         <label for="username">아이디</label>
-        <input type="text" id="username" name="username" placeholder="아이디를 입력하세요." autocomplete="username" required>
+        <input type="text" id="username" name="username" placeholder="아이디를 입력하세요" autocomplete="username" autocapitalize="none" spellcheck="false" required>
       </div>
       <div class="form-field">
         <label for="password">비밀번호</label>
@@ -28,7 +28,7 @@
       </div>
       <button type="submit" class="primary-btn login-btn">로그인</button>
     </form>
-    <p id="login-msg" class="login-message"></p>
+    <p id="login-msg" class="login-message" role="status" aria-live="polite"></p>
   </div>
 </section>
 <!-- 메인 화면 (로그인 후 표시) -->
@@ -101,7 +101,6 @@
 </section>
 <!-- 업무일지 등록·수정 팝업 -->
 <div id="worklog-modal" class="modal" aria-hidden="true">
-  <div id="worklog-title"></div>
   <div class="modal-backdrop" data-modal-close></div>
   <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="modal-title">
     <div class="modal-header">

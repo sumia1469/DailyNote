@@ -346,7 +346,7 @@ function getTodayString() {
 function openWorklogModal(worklog = null) {
   const modal = document.getElementById('worklog-modal');
   const form = document.getElementById('worklog-form');
-  const modalTitle = document.getElementById('worklog-title');
+  const modalTitle = document.getElementById('modal-title');
   const saveButton = document.getElementById('worklog-save-btn');
   form.reset();
   const isEdit = Boolean(worklog);
@@ -358,11 +358,13 @@ function openWorklogModal(worklog = null) {
   form.nextDayPlan.value = isEdit ? arrayToLines(worklog.nextDayPlan) : '';
   form.remarks.value = isEdit ? worklog.remarks || '' : '';
   form.memo.value = isEdit ? worklog.memo || '' : '';
+  [form.todo, form.nextDayPlan].forEach(input => input.dispatchEvent(new Event('input')));
   modal.classList.add('open');
+  modal.querySelector('.modal-dialog').scrollTop = 0;
   modal.setAttribute('aria-hidden', 'false');
   document.body.classList.add('modal-open');
   setTimeout(() => {
-    form.workDate.focus();
+    document.getElementById('modal-close-btn').focus({preventScroll: true});
   }, 0);
 }
 /* 업무일지 모달 닫기 */
