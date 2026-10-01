@@ -48,3 +48,4 @@ body .ui-writing-screen,body .ui-writing-paper,body .ui-writing-memo .memo-paper
 body .ui-writing-paper,body .ui-writing-memo .memo-paper{flex:1 1 0%;overflow-x:hidden;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:max(24px,env(safe-area-inset-bottom));scroll-padding-bottom:32px}
 body .ui-writing-screen .ui-writing-header{position:relative;top:auto;background:var(--surface,var(--card-bg,#fff))}
 body .ui-writing-screen .memo-toolbar,body .ui-writing-screen .memo-format{background:var(--surface,var(--card-bg,#fff));flex-shrink:0}
+body #board-editor.ui-writing-screen{max-width:none;margin:0;left:0}body #board-editor.ui-writing-screen:not([data-editing=true]) .editor-tools{display:none}

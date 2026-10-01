@@ -44,12 +44,23 @@
     }, {once:true});
     window.AppIcons?.render(menu);
   }
-  UIShell.actionMenu = actionMenu;
+  const sharedActionMenu=UIShell.actionMenu;
+  UIShell.actionMenu=sharedActionMenu?(menu,opener)=>{menu.classList.add('ui-action-menu');sharedActionMenu(menu,opener);}:actionMenu;
 
   function writingForm({id, formId, headerSelector, closeSelector, nativeHistory=false}) {
     const host = $(id), form = $(formId);
     if (!host || !form || host.dataset.writingBound) return;
     host.dataset.writingBound = 'true'; host.classList.add('ui-writing-screen');
+    // Boards already own their content/attachment history through EditorCore.
+    if (nativeHistory && form.querySelector('#board-undo')) {
+      host.querySelector(headerSelector).classList.add('ui-writing-header');
+      host.querySelector('.editor-history').classList.add('ui-writing-left');
+      host.querySelector('.editor-paper').classList.add('ui-writing-paper');
+      form.addEventListener('focusin', () => { host.dataset.editing='true'; });
+      form.addEventListener('focusout', () => queueMicrotask(() => { if(!form.contains(document.activeElement))host.dataset.editing='false'; }));
+      new MutationObserver(() => { if(!host.open)host.dataset.editing='false'; }).observe(host,{attributes:true,attributeFilter:['open']});
+      return;
+    }
     const container = host.querySelector('.modal-dialog') || host;
     const header = host.querySelector(headerSelector), closer = host.querySelector(closeSelector);
     header.classList.add('ui-writing-header');
