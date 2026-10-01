@@ -205,3 +205,7 @@ Node.js 설치 없이 포함된 runtime/node.exe를 사용하는 Windows x64 압
 
 관리자·가이드 메뉴 상단에 업무일지 복귀를 유지하고 하단에 설정을 배치합니다. 메뉴에 100dvh·세로 스크롤·safe-area를 적용하고 시작 가이드·바로가기 만들기를 설정 dialog에 표시합니다. 가이드의 안내 항목은 본문 섹션으로 이동합니다. 브라우저 하네스: scripts/verify-drawer-settings.cjs. 이번 실행 환경에서 Chromium 다운로드가 실패하여 실제 렌더링 검증은 미수행입니다.
 
+## 공통 메뉴 로딩
+
+`loading.js`와 `loading.css`를 업무 어댑터보다 먼저 로드합니다. 같은 출처의 `/api/` fetch 요청을 공통 추적하며 응답 본문(JSON·파일)을 읽는 동안에도 표시합니다. `AppLoading.begin(message)`는 중복 호출에 안전한 종료 함수를 반환하고 `AppLoading.run(message, action)`은 finally에서 종료합니다. 동시 요청은 마지막 요청까지 유지하고 최소 360ms 표시합니다. 화면 전환·로그아웃은 `AppLoading.clear()`로 이전 화면 작업을 분리합니다. 네트워크 요청이 없는 메뉴 진입도 렌더링 동안 표시합니다. 폴링(`reminders=1`)과 메모 자동 저장은 인라인 상태를 유지합니다. 외부 요청·OCR 로컬 파일은 추적하지 않습니다. 포커스를 이동하지 않으며 메뉴 이동·취소를 막지 않습니다. 지원 브라우저에서는 manual popover로 모달 위에도 표시하며 미지원 환경은 fixed 레이어입니다. 디자인 스킨은 기존 spinner DOM을 유지하므로 별도로 변경할 수 있습니다. `npm run test:common-loading`으로 지연·동시 요청·실패·취소·화면 전환·PC/모바일을 확인합니다.
+

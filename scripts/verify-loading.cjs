@@ -21,6 +21,8 @@ const variants=require('../public/loading-motion').variants;
    await page.evaluate(()=>document.querySelector('[data-panel="appearance"]').click());
    await page.locator('#panel-appearance').waitFor({state:'visible'});
    await page.waitForFunction(()=>document.querySelector('#loading-motion').value==='petal');
+   await page.waitForFunction(()=>document.getElementById('admin-loading').hidden);
+   await page.locator('.loading-motion-preview').scrollIntoViewIfNeeded();
    assert.equal(await page.locator('#loading-motion option').count(),10);
    for(const variant of variants){
     await page.selectOption('#loading-motion',variant.id);
@@ -55,3 +57,4 @@ const variants=require('../public/loading-motion').variants;
   console.log('Loading browser QA passed: 10 animated variants, save/reload, shared user/admin, PC/mobile, transparent panel, dark and reduced motion. Captures: '+path.join(tmp,'captures'));
  }finally{await browser.close();await new Promise(r=>server.close(r));}
 })().catch(e=>{console.error(e);process.exitCode=1});
+

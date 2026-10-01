@@ -19,6 +19,7 @@
     "test:brand": "node scripts/verify-brand.cjs",
     "test:boards": "node scripts/verify-boards.cjs",
     "test:loading": "node scripts/verify-loading.cjs",
+    "test:common-loading": "node scripts/verify-common-loading.cjs",
     "test:writing": "node scripts/verify-writing-forms.cjs"
   },
   "author": "이노마인드랩스",
