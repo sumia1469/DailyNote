@@ -46,7 +46,7 @@ body .card-section h3,body .card-info-title,body .card-info-list li { color:var(
 body .todo-item { background:var(--surface); border-color:var(--line); }
 body .card-body { background:var(--surface); }
 .sidebar-scrim { display:none; }
-body .login-section { background:var(--background) !important; background-image:none !important; }
+/* Login backgrounds belong to style.css and screen-settings.css. */
 body .login-card { box-shadow:none; background:var(--surface); border:0; }
 body .login-icon { background:var(--shell-sidebar); color:var(--text); }
 .login-title h1 { color:var(--text); }

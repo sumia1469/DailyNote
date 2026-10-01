@@ -259,3 +259,8 @@ UIShell.actionMenu가 메뉴 위치·키보드 이동·aria-expanded를 관리�
 
 
 캘린더 상단 …는 제목·닫기 버튼 없이 버튼 아래에 펼쳐지는 작은 드롭다운입니다. 알림·새로고침과 표시 항목 선택은 유지하며 체크 변경은 메뉴를 유지하고 즉시 달력에 반영합니다. 공통 UIShell.dropdown을 사용하며 방향키·Home·End로 체크박스까지 이동하고 Space로 선택합니다. PC·모바일 위치와 동작은 npm run test:calendar로 검증합니다.
+
+
+## 로그인 배경 설정 검증
+
+관리자 화면·배경 설정에서 저장한 가을 기본 배경·사용자 지정 이미지·배경 없음이 로그인 화면에 적용됩니다. 공통 셸 CSS는 로그인 배경을 덮어쓰지 않습니다. PC는 가로 기본 이미지, 모바일은 세로 기본 이미지를 사용합니다. `node scripts/verify-login-background.cjs`는 임시 데이터와 예시 계정으로 PC 1440×1000·모바일 390×844, 세 가지 배경과 light/white/dark 화면 모드, 이미지 로딩 및 새로고침을 검증합니다. 개발 환경에서 Playwright를 사용하며 필요하면 `PLAYWRIGHT_MODULE_PATH`·`BROWSER_EXECUTABLE_PATH`를 지정합니다.
