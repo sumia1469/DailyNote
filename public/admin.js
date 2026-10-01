@@ -1,3 +1,4 @@
+const adminScroll=ListScroll.mount(document.querySelector('.admin-shell'));
 const adminToken=localStorage.getItem('token');
 let me, directory=[], users=[], appearance={}, backgroundData=null, activePanel;
 let pending=0, notices=[], noticeFilters={query:'',recipient:'',read:''};
@@ -22,7 +23,7 @@ function row(title,detail){const div=document.createElement('div');div.className
 function button(label,action,danger=false){const b=document.createElement('button');b.type='button';b.className=danger?'danger-btn':'secondary-btn';b.textContent=label;b.addEventListener('click',()=>run(action));return b;}
 async function run(action){status('');try{await busy(action);}catch(e){status(e.message,true);}}
 function empty(container){if(!container.children.length){const p=document.createElement('p');p.textContent='등록된 항목이 없습니다.';container.appendChild(p);}}
-function showPanel(key){activePanel=key;const menu=UIConfig.menus.admin.find(menu=>menu.id===key);UIShell.title($('admin-title'),menu?.title||'관리페이지');UIShell.actions('admin',key,me?.permissions||{},[$('admin-create'),$('admin-search')]);document.querySelectorAll('.admin-panel').forEach(panel=>panel.hidden=panel.id!==menu?.panel);document.querySelectorAll('[data-panel]').forEach(button=>{if(button.dataset.panel===key)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current');});}
+function showPanel(key){adminScroll.capture();activePanel=key;const menu=UIConfig.menus.admin.find(menu=>menu.id===key);UIShell.title($('admin-title'),menu?.title||'관리페이지');UIShell.actions('admin',key,me?.permissions||{},[$('admin-create'),$('admin-search')]);document.querySelectorAll('.admin-panel').forEach(panel=>panel.hidden=panel.id!==menu?.panel);document.querySelectorAll('[data-panel]').forEach(button=>{if(button.dataset.panel===key)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current');});adminScroll.activate(key);}
 
 function setPermissionForm(){const u=users.find(u=>String(u.id)===$('permission-user').value);if(!u)return;$('permission-role').value=u.role;for(const key of permissionKeys){const box=$('permission-form').elements.namedItem(key);box.checked=u.permissions[key]===true;box.disabled=u.role==='admin';}}
 function updatePermissionRole(){const admin=$('permission-role').value==='admin';for(const key of permissionKeys){const box=$('permission-form').elements.namedItem(key);box.disabled=admin;if(admin)box.checked=true;}}
@@ -78,3 +79,4 @@ $('background-file').addEventListener('change',()=>run(async()=>{const file=$('b
 $('appearance-default').addEventListener('click',()=>{backgroundData=null;$('background-file').value='';setAppearance({fontFamily:'system',fontSize:16,spacing:'normal',theme:'light',background:'autumn',backgroundUrl:appearance.backgroundUrl});status('기본값을 미리 보고 있습니다. 적용하려면 설정 저장을 누르세요.');});
 $('appearance-form').addEventListener('submit',e=>{e.preventDefault();run(async()=>{const f=e.target.elements;const saved=await api('/api/admin/settings','PUT',{fontFamily:f.fontFamily.value,fontSize:Number(f.fontSize.value),spacing:f.spacing.value,theme:f.theme.value,background:f.background.value,...(backgroundData?{imageData:backgroundData.split(',')[1]}:{})});backgroundData=null;$('background-file').value='';setAppearance(saved);status('화면·배경 설정을 저장했습니다.');});});
 if(!adminToken)location.replace('/');else run(refresh);
+
