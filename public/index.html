@@ -144,6 +144,12 @@
       <div class="form-field">
         <label for="memo">메모</label>
         <textarea id="memo" name="memo" rows="3"></textarea>
+        <div class="list-editor-toolbar" data-editor="memo" role="group" aria-label="메모 목록 편집">
+          <button type="button" class="secondary-btn" data-action="outdent" aria-controls="memo">← 상위로</button>
+          <button type="button" class="secondary-btn" data-action="indent" aria-controls="memo">→ 하위로</button>
+          <button type="button" class="secondary-btn" data-action="add" aria-controls="memo">＋ 항목 추가</button>
+        </div>
+        <small>줄을 선택한 뒤 상위로·하위로 버튼을 누르세요. PC에서는 Tab·Shift+Tab을 사용할 수 있어요.</small>
       </div>
       <!-- 모달 하단버튼 -->
       <div class="modal-actions">

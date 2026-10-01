@@ -851,7 +851,7 @@ body.modal-open {
 .list-editor-toolbar { display: flex; flex-wrap: wrap; gap: 8px; }
 .list-editor-toolbar button { min-height: 44px; padding: 9px 12px; touch-action: manipulation; }
 .list-editor-toolbar button:disabled { opacity: .45; cursor: default; }
-#todo, #next-day-plan { tab-size: 3; font-size: 16px; line-height: 1.6; }
+#todo, #next-day-plan, #memo { tab-size: 3; font-size: 16px; line-height: 1.6; }
 @media (max-width: 600px) {
   .modal { padding: max(12px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left)); }
   .modal-dialog { max-height: calc(100vh - 24px); max-height: calc(100dvh - max(12px, env(safe-area-inset-top)) - max(12px, env(safe-area-inset-bottom))); }
@@ -983,3 +983,5 @@ button:focus-visible { outline: 3px solid #93c5fd; outline-offset: 3px; }
 .search-field input[type="date"]::-webkit-datetime-edit {
   padding: 0;
 }
+
+.card-info-list li { tab-size: 3; }

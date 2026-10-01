@@ -358,7 +358,7 @@ function openWorklogModal(worklog = null) {
   form.nextDayPlan.value = isEdit ? arrayToLines(worklog.nextDayPlan) : '';
   form.remarks.value = isEdit ? worklog.remarks || '' : '';
   form.memo.value = isEdit ? worklog.memo || '' : '';
-  [form.todo, form.nextDayPlan].forEach(input => input.dispatchEvent(new Event('input')));
+  [form.todo, form.nextDayPlan, form.memo].forEach(input => input.dispatchEvent(new Event('input')));
   modal.classList.add('open');
   modal.querySelector('.modal-dialog').scrollTop = 0;
   modal.setAttribute('aria-hidden', 'false');
@@ -596,8 +596,8 @@ function createInfoSection(title, value) {
     ? value
     : String(value || '')
       .split('\n')
-      .map(item => item.trim())
-      .filter(Boolean)
+      .map(item => item.trimEnd())
+      .filter(item => item.trim())
   if (values.length === 0) {
     const empty = document.createElement('p');
     empty.className = 'card-info-empty';
@@ -832,7 +832,7 @@ document.getElementById('reset-filter-btn').addEventListener('click', () => {
 })
 
 /* Touch controls and Tab / Shift+Tab use the same line-based editor. */
-;['todo', 'next-day-plan'].forEach(id => {
+;['todo', 'next-day-plan', 'memo'].forEach(id => {
   const textarea = document.getElementById(id);
   const toolbar = document.querySelector('[data-editor="' + id + '"]');
   function updateButtons() {
