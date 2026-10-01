@@ -49,3 +49,11 @@
 .user-admin-row{position:relative;padding-right:64px}
 .user-admin-row small{margin-bottom:0}
 .user-admin-more{position:absolute;top:12px;right:12px;width:40px;height:40px}
+
+/* Each file exposes its actions at the top right, including on narrow screens. */
+.file-admin-row{position:relative;padding-right:64px}
+.file-admin-row small{margin-bottom:0}
+.file-admin-more{position:absolute;top:12px;right:12px;width:40px;height:40px}
+.file-admin-rename{margin-top:14px}
+.file-admin-rename input{box-sizing:border-box;font-size:max(16px,var(--app-font-size,16px))}
+.file-admin-rename .dialog-error{margin-bottom:0}
