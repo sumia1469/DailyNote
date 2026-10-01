@@ -34,8 +34,8 @@ test('calendar keeps lookup and secondary settings in header popups',()=>{
 
 
 
-test('administrator and guide use footer settings and modal focus takes precedence over the drawer',()=>{
+test('administrator and guide use the shared anchored settings menu',()=>{
  for(const file of ['admin.html','onboarding.html']){const html=read(file);assert.ok(html.includes(file==='admin.html'?'class="sidebar-account-actions"':'class="ui-drawer-footer"'));assert.ok(html.includes('data-settings-open'));assert.ok(html.includes(file==='admin.html'?'account-menu.js':'drawer-settings.js'));assert.ok(html.includes('업무일지로 돌아가기'));assert.equal(html.includes('class="onboarding-link" href="local-start.html"'),false);}
- assert.ok(read('drawer-settings.js').includes('document.body.append(dialog)'));
- assert.ok(read('ui-shell.js').includes("document.querySelector?.('dialog[open]')"));
+ for(const file of ['drawer-settings.js','account-menu.js'])assert.ok(read(file).includes('UIShell.settingsMenu'));
+ assert.ok(read('ui-shell.js').includes('.ui-settings-menu:not([hidden])'));assert.equal(read('drawer-settings.js').includes('showModal'),false);
 });

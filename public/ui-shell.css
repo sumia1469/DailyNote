@@ -6,17 +6,15 @@ body #guide-navigation.is-open{transform:translateX(0)}
 body #guide-navigation::before{content:none}
 .admin-nav > *{flex-shrink:0}
 .ui-drawer-footer{margin-top:auto;padding-top:18px;border-top:1px solid var(--line)}
-body .admin-nav .ui-settings-trigger{display:flex;align-items:center;gap:12px;width:100%;min-height:48px;padding:12px;border:0;border-radius:12px;background:transparent;color:var(--text);font:inherit;cursor:pointer;text-align:left}
+body .admin-nav .ui-settings-trigger{display:flex;align-items:center;gap:12px;width:44px;height:44px;min-height:44px;padding:10px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--text);font:inherit;cursor:pointer;text-align:left}
 .ui-settings-trigger .app-icon{width:22px;height:22px;flex:none}
-.ui-settings-trigger:hover,.ui-settings-items a:hover{background:var(--line)}
-.ui-settings-dialog{box-sizing:border-box;width:min(320px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:auto;padding:16px;border:1px solid var(--line);border-radius:22px;background:var(--surface);color:var(--text);box-shadow:0 16px 64px rgba(0,0,0,.18)}
-.ui-settings-dialog::backdrop{background:rgba(0,0,0,.2);backdrop-filter:blur(2px)}
-.ui-settings-dialog h2{margin:0;font-size:18px}
-.ui-settings-dialog .shell-icon{width:44px;height:44px}
-.ui-settings-items{display:grid;gap:4px;margin-top:12px}
-.ui-settings-items a{display:flex;align-items:center;gap:12px;min-height:48px;box-sizing:border-box;padding:12px;border-radius:12px;color:var(--text);text-decoration:none;overflow-wrap:anywhere}
-.ui-settings-items .app-icon{width:22px;height:22px;flex:none}
-.ui-settings-items a:focus-visible,.ui-settings-trigger:focus-visible{outline:2px solid var(--text);outline-offset:2px}
+.ui-settings-trigger:hover{background:var(--line)}
+/* Settings are anchored dropdowns inside the drawer, with no modal backdrop. */
+body .ui-settings-menu{position:absolute;z-index:50;box-sizing:border-box;width:calc(100% - 24px);max-width:260px;overflow-y:auto;padding:6px;margin:0;border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--text);box-shadow:0 8px 28px rgba(0,0,0,.12)}
+body .ui-settings-menu a{display:flex;align-items:center;justify-content:flex-start;gap:12px;box-sizing:border-box;min-height:44px;padding:11px 12px;border-radius:9px;color:var(--text);font:inherit;font-size:14px;line-height:1.5;text-decoration:none;white-space:normal;text-align:left}
+body .ui-settings-menu a:hover,body .ui-settings-menu a:focus{background:var(--shell-sidebar)}
+body .ui-settings-menu a:focus-visible{outline:2px solid var(--text);outline-offset:-2px}
+.ui-settings-menu .app-icon{width:20px;height:20px;flex:none}
 .ui-guide section[id]{scroll-margin-top:92px}
 @media(prefers-reduced-motion:reduce){body #guide-navigation{transition:none}}
 :root { --ui-header-height:76px; --ui-action-size:42px; --ui-dialog-radius:24px; --ui-page-gap:24px; }
