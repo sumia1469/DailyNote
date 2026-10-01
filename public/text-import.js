@@ -4,6 +4,7 @@
   const $ = id => document.getElementById('import-' + id);
   const libraries = new Map();
   let target, opener, focusDestination, file, kind, job = 0, parser, ocr, pdfTask, busy = false;
+  let photoDrafts = null, photoMode = 'body';
   function loadScript(path, name) {
     if (window[name]) return Promise.resolve(window[name]);
     if (!libraries.has(path)) libraries.set(path, new Promise((resolve, reject) => {
@@ -17,7 +18,7 @@
   function setBusy(value) {
     busy = value; $('read').disabled = value || !file;
     $('apply').disabled = value || !$('preview').value.trim();
-    ['file','sheet','column','encoding','ocr-language','ocr-layout','ocr-rotation'].forEach(id => $(id).disabled = value);
+    ['file','sheet','column','encoding','ocr-language','ocr-layout','ocr-rotation','ocr-cleanup'].forEach(id => $(id).disabled = value);
     $('progress').hidden = !value;
     $('preview').readOnly = value;
   }
@@ -39,7 +40,7 @@
     throw Error('사진, 엑셀, TXT·CSV, PDF 또는 DOCX를 선택해 주세요. HWP·DOC·HEIC는 지원하지 않습니다.');
   }
   function selectFile() {
-    stop(); file = $('file').files[0]; kind = ''; $('preview').value = '';
+    stop(); file = $('file').files[0]; kind = ''; $('preview').value = '';photoDrafts=null;
     $('sheet-options').hidden = true; $('encoding-options').hidden = true; $('image-options').hidden = true;
     $('sheet').replaceChildren(); $('column').replaceChildren(new Option('모든 열', 'all'));
     $('status').textContent = ''; $('error').textContent = ''; $('read').disabled = !file;
@@ -193,6 +194,10 @@
       const text = TextImportCore.normalize(result.text || '');
       if (!text.trim()) throw Error(kind === 'pdf' ? '추출할 텍스트가 없습니다. 스캔 PDF는 페이지를 사진으로 저장한 뒤 사진에서 불러오기를 이용하세요.' : '읽어낸 텍스트가 없습니다. 다른 사진·시트·열을 선택해 주세요.');
       $('preview').value = text;
+      if(kind==='image'){
+        photoDrafts={raw:text,body:TextImportCore.bodyText(text)};photoMode=$('ocr-cleanup').value;
+        $('preview').value=photoDrafts[photoMode];
+      }
       $('status').textContent = result.lowConfidence
         ? `${file.name} · 인식 품질이 낮습니다. 글자 부분을 크게 잘라 다시 선택하거나 언어·배치·방향을 바꿔 주세요. 결과를 원본과 비교해 수정한 뒤 넣어 주세요.`
         : `${file.name} · 읽기 완료. 내용을 확인·수정한 뒤 넣어 주세요.`;
@@ -204,6 +209,7 @@
     if(!destination||destination.disabled||destination.readOnly)return;
     stop(); opener = button; target = destination;
     file = null; kind = ''; $('file').value = ''; $('preview').value = ''; $('error').textContent = '';
+    photoDrafts=null;photoMode='body';$('ocr-cleanup').value='body';
     $('sheet-options').hidden = true; $('encoding-options').hidden = true; $('image-options').hidden = true;
     $('title').textContent = (importKind === 'image' ? '사진' : '파일') + '에서 텍스트 불러오기';
     $('file').accept = importKind === 'image' ? '.png,.jpg,.jpeg,.webp,.bmp' : '.xlsx,.xls,.ods,.csv,.tsv,.txt,.md,.log,.json,.xml,.html,.htm,.docx,.pdf';
@@ -217,6 +223,11 @@
   $('file').addEventListener('change', selectFile);
   $('read').addEventListener('click', read);
   ['sheet','column','encoding','ocr-language','ocr-layout','ocr-rotation'].forEach(id => $(id).addEventListener('change', read));
+  $('ocr-cleanup').addEventListener('change',()=>{
+    if(busy||kind!=='image'||!photoDrafts)return;
+    photoDrafts[photoMode]=$('preview').value;photoMode=$('ocr-cleanup').value;
+    $('preview').value=photoDrafts[photoMode];$('apply').disabled=!$('preview').value.trim();
+  });
   $('preview').addEventListener('input',()=>{$('apply').disabled=busy||!$('preview').value.trim();});
   $('apply').addEventListener('click', () => {
     if (busy || !target || !$('preview').value.trim()) return;
