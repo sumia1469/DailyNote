@@ -3,12 +3,12 @@ const adminToken=localStorage.getItem('token');
 let licenseStatus;
 let me, directory=[], users=[], appearance={}, backgroundData=null, activePanel;
 let noticeVersion=0, noticeNext=null, noticeLoading=false, noticeObserver;
-let pending=0, notices=[], noticeFilters={query:'',recipient:'',read:''};
+let notices=[], noticeFilters={query:'',recipient:'',read:''};
 const rights=['boards','notifications','files','appearance','users','permissions'];
 const permissionKeys=[...rights,'boardRead','boardCreate','boardEdit','boardDelete','calendarRead','calendarCreate','calendarEdit','calendarDelete','worklogRead','worklogCreate','worklogEdit','worklogDelete','fileRead','fileUpload','fileDownload','fileDelete','notificationRead','memoRead','memoCreate','memoEdit','memoDelete'];
 const $=id=>document.getElementById(id);
 function status(message,error=false){$('admin-status').textContent=message;$('admin-status').classList.toggle('error',error);}
-async function busy(action){pending++;$('admin-loading').hidden=false;try{return await action();}finally{pending--;$('admin-loading').hidden=pending===0;}}
+async function busy(action){return AppLoading.run('처리 중입니다…',action);}
 async function api(path,method='GET',body,blob=false){
  const response=await fetch(path,{method,headers:{Authorization:'Bearer '+adminToken,...(body?{'Content-Type':'application/json'}:{})},...(body?{body:JSON.stringify(body)}:{})});
  if(response.status===401){localStorage.removeItem('token');location.replace('/');throw new Error('다시 로그인해 주세요.');}
@@ -25,7 +25,7 @@ function row(title,detail){const div=document.createElement('div');div.className
 function button(label,action,danger=false){const b=document.createElement('button');b.type='button';b.className=danger?'danger-btn':'secondary-btn';b.textContent=label;b.addEventListener('click',()=>run(action));return b;}
 async function run(action){status('');try{await busy(action);}catch(e){status(e.message,true);}}
 function empty(container){if(!container.children.length){const p=document.createElement('p');p.textContent='등록된 항목이 없습니다.';container.appendChild(p);}}
-function showPanel(key){adminScroll.capture();activePanel=key;const menu=UIConfig.menus.admin.find(menu=>menu.id===key);UIShell.title($('admin-title'),menu?.title||'관리페이지');UIShell.actions('admin',key,me?.permissions||{},[$('admin-create'),$('admin-search')]);document.querySelectorAll('.admin-panel').forEach(panel=>panel.hidden=panel.id!==menu?.panel);document.querySelectorAll('[data-panel]').forEach(button=>{if(button.dataset.panel===key)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current');});adminScroll.activate(key);}
+function showPanel(key){if(activePanel!==key){AppLoading.clear();AppLoading.run('불러오는 중입니다…',()=>new Promise(requestAnimationFrame));}adminScroll.capture();activePanel=key;const menu=UIConfig.menus.admin.find(menu=>menu.id===key);UIShell.title($('admin-title'),menu?.title||'관리페이지');UIShell.actions('admin',key,me?.permissions||{},[$('admin-create'),$('admin-search')]);document.querySelectorAll('.admin-panel').forEach(panel=>panel.hidden=panel.id!==menu?.panel);document.querySelectorAll('[data-panel]').forEach(button=>{if(button.dataset.panel===key)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current');});adminScroll.activate(key);}
 
 function renderLicenseStatus(){
  const list=$('admin-users');if(!list)return;
@@ -119,5 +119,3 @@ if(!adminToken)location.replace('/');else run(refresh);
 
 
 window.AdminBoardContext={get user(){return me;},get activePanel(){return activePanel;},api,refresh};
-
-

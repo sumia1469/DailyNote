@@ -12,7 +12,8 @@
   <link rel="stylesheet" href="calendar.css">
   <link rel="stylesheet" href="text-import.css"><link rel="stylesheet" href="references.css">
 <link rel="stylesheet" href="list-scroll.css"><link rel="apple-touch-icon" href="images/dailynote-192.png"><link rel="icon" href="brand/app-icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="brand/apple-touch-icon.png"><link rel="stylesheet" href="brand/brand.css"><link rel="stylesheet" href="boards.css">
-<link rel="stylesheet" href="loading-motion.css"></head>
+<link rel="stylesheet" href="loading-motion.css"><link rel="stylesheet" href="loading.css">
+</head>
 <body>
 <!-- 로그인 섹션 -->
 <section id="login-section" class="login-section">
@@ -294,6 +295,7 @@
 <dialog id="board-picker" class="journal-dialog"><div class="journal-dialog-header"><h2 id="board-picker-title">참조 추가</h2><button type="button" data-board-close="board-picker" class="shell-icon" data-icon="close" aria-label="닫기"></button></div><select id="board-picker-kind" aria-label="참조 종류"><option value="memos">메모</option><option value="worklogs">일지</option><option value="files">파일</option></select><input type="search" id="board-picker-query" aria-label="자료 검색" placeholder="검색"><p id="board-picker-status" role="status"></p><div id="board-picker-list"></div></dialog>
 <dialog id="board-drawing" class="journal-dialog"><div class="journal-dialog-header"><h2>그림 추가</h2><button type="button" data-board-close="board-drawing" class="shell-icon" data-icon="close" aria-label="닫기"></button></div><div class="board-toolbar"><input id="board-pen-color" type="color" value="#333333" aria-label="펜 색상"><input id="board-pen-size" type="range" min="1" max="20" value="4" aria-label="펜 굵기"><button type="button" id="board-draw-clear">지우기</button></div><canvas id="board-canvas" width="900" height="600" aria-label="그림 그리기"></canvas><p id="board-draw-error" role="status"></p><button type="button" id="board-draw-insert" class="primary-btn">본문에 넣기</button></dialog>
 <dialog id="board-image-view" class="journal-dialog"><button type="button" data-board-close="board-image-view" class="shell-icon" data-icon="close" aria-label="이미지 닫기"></button><img id="board-full-image" alt="게시글 이미지 확대"></dialog></div>
+<script src="loading.js"></script>
 <script src="list-editor.js"></script>
 <script src="todo-tree.js"></script>
 <script src="todo-inline.js"></script>

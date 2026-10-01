@@ -231,3 +231,12 @@ Node.js 설치 없이 포함된 runtime/node.exe를 사용하는 Windows x64 압
 
 구현: `src/license.js`는 판정·오류·상태를 정의하고 로컬 저장소는 사용자 쓰기를 직렬화합니다. Redis는 `src/user-seat-script.js`를 EVAL로 실행하여 한도 검사와 계정 저장을 하나의 원자적 작업으로 수행합니다. 모든 사용자 insert/update 경로가 저장 단계 검사를 공유합니다. 서버는 `LICENSE_USER_LIMIT` 코드와 한국어 문의 메시지를 HTTP 403으로 반환합니다. 로그인·토큰 검증은 승인되지 않은 계정도 차단합니다. 인증된 `GET /api/license`는 상태만 반환하며 클라이언트에서 한도를 수정하는 API는 없습니다. 테스트는 `test/license.test.js`에서 기존 초과·복구·신규/기존 API·승인·재활성화·동시 요청·저장 실패를 확인합니다.
 
+
+
+## 관리자·가이드 하단 설정 메뉴
+
+관리자의 account-menu.js를 유지하며, 비로그인 시작 가이드는 drawer-settings.js와 guide-shell.js로 설정 dialog와 안내 섹션 이동을 제공합니다. 설정 dialog는 drawer 밖에 생성하고 UIShell.dialogs를 사용합니다. scripts/verify-drawer-settings.cjs는 운영 데이터 없이 네 가지 화면 크기를 확인하는 브라우저 검증입니다.
+
+## 공통 메뉴 로딩
+
+`loading.js`와 `loading.css`를 업무 어댑터보다 먼저 로드합니다. 같은 출처의 `/api/` fetch 요청을 공통 추적하며 응답 본문(JSON·파일)을 읽는 동안에도 표시합니다. `AppLoading.begin(message)`는 중복 호출에 안전한 종료 함수를 반환하고 `AppLoading.run(message, action)`은 finally에서 종료합니다. 동시 요청은 마지막 요청까지 유지하고 최소 360ms 표시합니다. 화면 전환·로그아웃은 `AppLoading.clear()`로 이전 화면 작업을 분리합니다. 네트워크 요청이 없는 메뉴 진입도 렌더링 동안 표시합니다. 폴링(`reminders=1`)과 메모 자동 저장은 인라인 상태를 유지합니다. 외부 요청·OCR 로컬 파일은 추적하지 않습니다. 포커스를 이동하지 않으며 메뉴 이동·취소를 막지 않습니다. 지원 브라우저에서는 manual popover로 모달 위에도 표시하며 미지원 환경은 fixed 레이어입니다. 디자인 스킨은 기존 spinner DOM을 유지하므로 별도로 변경할 수 있습니다. `npm run test:common-loading`으로 지연·동시 요청·실패·취소·화면 전환·PC/모바일을 확인합니다.

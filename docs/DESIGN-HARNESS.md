@@ -193,3 +193,13 @@ Node.js 설치 없이 포함된 runtime/node.exe를 사용하는 Windows x64 압
 
 UIShell.anchoredMenu가 메뉴 위치·키보드 이동·aria-expanded를 관리하며 app-shell.css의 action-menu-title/items가 일지 메뉴 스타일을 공유합니다. scripts/verify-boards.cjs는 PC 1440×1000·모바일 390×844에서 위치·아이콘·키보드·닫기를 확인합니다.
 게시판 관리 목록은 제목 아래에 상태·분류·설명을 표시하고, 오른쪽 …에서 설정·게시판 열기·삭제를 선택합니다. 삭제 확인 팝업은 빈 게시판만 삭제하며 게시글이 있는 게시판은 보관 안내를 표시합니다. PC·모바일에서 팝업 경계·Escape·포커스 복귀를 확인합니다.
+
+
+
+## 관리자·가이드 하단 설정 메뉴
+
+관리자·가이드 메뉴 상단에 업무일지 복귀를 유지하고 하단에 설정을 배치합니다. 메뉴에 100dvh·세로 스크롤·safe-area를 적용하고 시작 가이드·바로가기 만들기를 설정 dialog에 표시합니다. 가이드의 안내 항목은 본문 섹션으로 이동합니다. 브라우저 하네스: scripts/verify-drawer-settings.cjs. 이번 실행 환경에서 Chromium 다운로드가 실패하여 실제 렌더링 검증은 미수행입니다.
+
+## 공통 메뉴 로딩
+
+`loading.js`와 `loading.css`를 업무 어댑터보다 먼저 로드합니다. 같은 출처의 `/api/` fetch 요청을 공통 추적하며 응답 본문(JSON·파일)을 읽는 동안에도 표시합니다. `AppLoading.begin(message)`는 중복 호출에 안전한 종료 함수를 반환하고 `AppLoading.run(message, action)`은 finally에서 종료합니다. 동시 요청은 마지막 요청까지 유지하고 최소 360ms 표시합니다. 화면 전환·로그아웃은 `AppLoading.clear()`로 이전 화면 작업을 분리합니다. 네트워크 요청이 없는 메뉴 진입도 렌더링 동안 표시합니다. 폴링(`reminders=1`)과 메모 자동 저장은 인라인 상태를 유지합니다. 외부 요청·OCR 로컬 파일은 추적하지 않습니다. 포커스를 이동하지 않으며 메뉴 이동·취소를 막지 않습니다. 지원 브라우저에서는 manual popover로 모달 위에도 표시하며 미지원 환경은 fixed 레이어입니다. 디자인 스킨은 기존 spinner DOM을 유지하므로 별도로 변경할 수 있습니다. `npm run test:common-loading`으로 지연·동시 요청·실패·취소·화면 전환·PC/모바일을 확인합니다.

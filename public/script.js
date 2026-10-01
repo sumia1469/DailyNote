@@ -15,47 +15,10 @@ function updateCopyButton() {
 }
 
 
-/* Shared progress indicator, including concurrent requests. */
-const loadingTasks = new Map();
-let loadingTaskId = 0;
-let loadingHideTimer;
-function startLoading(message = '처리 중입니다…') {
-  clearTimeout(loadingHideTimer);
-  const id = ++loadingTaskId;
-  loadingTasks.set(id, message);
-  const overlay = document.getElementById('loading-overlay');
-  overlay.hidden = false;
-  document.getElementById('loading-message').textContent = message;
-  document.getElementById('main-section').setAttribute('aria-busy', 'true');
-  document.getElementById('login-section').setAttribute('aria-busy', 'true');
-  return () => {
-    loadingTasks.delete(id);
-    if (loadingTasks.size) {
-      document.getElementById('loading-message').textContent = Array.from(loadingTasks.values()).at(-1);
-      return;
-    }
-    loadingHideTimer = setTimeout(() => {
-      overlay.hidden = true;
-      document.getElementById('main-section').removeAttribute('aria-busy');
-      document.getElementById('login-section').removeAttribute('aria-busy');
-    }, 180);
-  };
-}
-async function withLoading(message, action) {
-  const finish = startLoading(message);
-  try { return await action(); }
-  finally { finish(); }
-}
-async function loadingFetch(url, options = {}) {
-  const method = (options.method || 'GET').toUpperCase();
-  const message = url.includes('/auth/login') ? '로그인 중입니다…'
-    : method === 'DELETE' ? '삭제 중입니다…'
-    : url.includes('/upload') && method === 'POST' ? '파일을 업로드하고 있습니다…'
-    : method === 'POST' ? '등록 중입니다…'
-    : method === 'PUT' || method === 'PATCH' ? '수정 내용을 저장하고 있습니다…'
-    : '불러오는 중입니다…';
-  return withLoading(message, () => fetch(url, options));
-}
+/* Compatibility helpers delegate to the common loading module. */
+function startLoading(message) { return AppLoading.begin(message); }
+function withLoading(message, action) { return AppLoading.run(message, action); }
+function loadingFetch(url, options = {}) { return AppLoading.fetch(url, options); }
 
 /* 공통 fetch (Authorization 자동 삽입) */
 async function authFetch(url, options = {}) {
@@ -1053,6 +1016,7 @@ async function duplicateWorklogs(sources) {
   }
 }
 document.getElementById('duplicate-worklog-btn').addEventListener('click', () => duplicateWorklogs(currentWorklogs.filter(item => selectedWorklogIds.has(String(item.id)))));
+
 
 
 
