@@ -52,7 +52,7 @@ const ds=require('../src/datastore'),{makeUserRecord}=require('../src/auth'),han
  for(const category of ['개발','자료',''])await ds.insert('board_posts',{...seed,id:undefined,title:'분류탭 '+(category||'미분류'),category,attachments:[],references:[],mentions:[]});
  for(const viewport of [{width:1440,height:1000},{width:390,height:844}]){
   await page.setViewportSize(viewport);await page.goto(base+'/#boards/1');
-  await page.locator('#board-category-tabs').waitFor({state:'visible'});
+  await page.locator('#board-category-tabs').waitFor({state:'visible',timeout:5000}).catch(async e=>{console.error('TABS',await page.evaluate(()=>({url:location.href,title:document.getElementById('shell-title').textContent,status:document.getElementById('board-status').textContent,main:document.getElementById('main-section').hidden})),errors);throw e;});
   await page.locator('#board-search').click();await page.locator('#board-query').fill('분류탭');
   await page.locator('#board-search-categories').getByRole('radio',{name:'전체',exact:true}).click();
   await page.locator('#board-search-form button[type=submit]').click();
@@ -93,5 +93,6 @@ const ds=require('../src/datastore'),{makeUserRecord}=require('../src/auth'),han
  await page.goto(base+'/design-harness.html');await page.locator('#harness-category-tabs').getByRole('radio',{name:'Q&A',exact:true}).click();assert.equal(await page.locator('#harness-category-state').textContent(),'Q&A 게시글');
  assert.deepEqual(errors,[]);console.log('PASS boards: category tabs/list/search/editor, keyboard, reset/cancel, back/cache, stale-response guard, mobile horizontal strip, shared harness, admin create/menu, rich code, image, references, mentions, duplicate, direct URL/reload/back, search, XLSX, PC/mobile layout, missing post, management more/settings/open/delete, title/details layout, Escape/focus, nonempty deletion blocked');
 })().catch(e=>{console.error(e);process.exitCode=1;}).finally(async()=>{await browser?.close();if(server)await new Promise(r=>server.close(r));fs.rmSync(tmp,{recursive:true,force:true});});
+
 
 
