@@ -2,6 +2,8 @@
   'use strict';
   if (window.AppLoading) return;
   const nativeFetch = window.fetch.bind(window), tasks = new Map();
+  const backgroundTasks = new Set();
+  function beginBackground() { const id = ++sequence; backgroundTasks.add(id); return () => backgroundTasks.delete(id); }
   let sequence = 0, epoch = 0, timer, shownAt = 0, overlay;
   function mount() {
     if (overlay) return overlay;
@@ -50,7 +52,7 @@
     };
   }
   async function run(message, action) { const finish = begin(message); try { return await action(); } finally { finish(); } }
-  function clear() { epoch++; tasks.clear(); clearTimeout(timer); hide(); }
+  function clear() { epoch++; tasks.clear(); backgroundTasks.clear(); clearTimeout(timer); hide(); }
   function messageFor(url, method) {
     if (url.includes('/auth/login')) return '로그인 중입니다…';
     if (method === 'DELETE') return '삭제 중입니다…';
@@ -65,7 +67,9 @@
     const method = String(options.method || input?.method || 'GET').toUpperCase();
     // Polling and editor autosaves keep their existing inline status indicators.
     if (url.origin !== location.origin || !url.pathname.startsWith('/api/') || url.searchParams.get('reminders') === '1' || (url.pathname.startsWith('/api/memos') && ['POST','PUT','PATCH'].includes(method))) return nativeFetch(input, options);
-    const requestEpoch = epoch, message = messageFor(url.pathname, method), finish = begin(message);
+    const requestEpoch = epoch, message = messageFor(url.pathname, method);
+    const start = method === 'GET' && window.PullRefresh?.refreshing ? beginBackground : begin;
+    const finish = start(message);
     try {
       const response = await nativeFetch(input, options);
       // Headers can arrive before a large JSON/file body. Hold the indicator through body reads.
@@ -75,14 +79,14 @@
         const consume = response[key].bind(response);
         response[key] = async (...args) => {
           reading = true; clearTimeout(release);
-          const bodyFinish = requestEpoch === epoch ? begin(message) : () => {};
+          const bodyFinish = requestEpoch === epoch ? start(message) : () => {};
           try { return await consume(...args); } finally { finish(); bodyFinish(); }
         };
       }
       return response;
     } catch (error) { finish(); throw error; }
   }
-  window.AppLoading = {begin, run, clear, fetch:trackedFetch, get pending() { return tasks.size; }};
+  window.AppLoading = {begin, run, clear, fetch:trackedFetch, get pending() { return tasks.size + backgroundTasks.size; }};
   window.fetch = trackedFetch;
   window.addEventListener('pagehide', clear);
 })();

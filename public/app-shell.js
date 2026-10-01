@@ -3,7 +3,19 @@
   const detail=document.getElementById('view-notification-detail'),back=document.getElementById('notification-back'),opener=document.getElementById('sidebar-open');
   const controls=['board-search','board-more','board-create','open-calendar-search-btn','open-calendar-more-btn','open-calendar-btn','open-search-btn','open-worklog-btn','open-upload-btn','open-memo-btn','open-memo-search-btn'].map(id=>document.getElementById(id));
   const scroll=ListScroll.mount(document.getElementById('main-section'));
-  let user=null,allowed=[],ready=false;
+  let user=null,allowed=[],ready=false,revision=0;
+  scroll.setRefresh(async()=>{
+    const route=location.hash.slice(1),key=route.split('/')[0];
+    const notice=route.match(/^notifications\/(\d+)$/),ref=route.match(/^(files|memos|worklogs)\/([1-9]\d*)$/);
+    if(notice)return window.NotificationPage.load(notice[1],true);
+    if(ref)return window.References.loadDetail(ref[1],ref[2],true);
+    if(key==='calendar')return window.CalendarApp.refresh();
+    if(key==='memos')return window.MemoApp.refresh();
+    if(key==='boards')return window.BoardApp.refresh();
+    if(key==='files')return loadFiles(true);
+    if(key==='notifications')return loadNoti(true);
+    if(key==='worklogs'){await loadList(currentFilterDate,true);window.WorklogSearch?.refresh();}
+  },()=>ready&&!document.querySelector('[data-todo-saving],[data-todo-editing]'));
   function openReference(hash){
     history.replaceState({...history.state,referenceScroll:scroll.top},'',location.href);
     history.pushState({referenceReturn:location.hash},'',hash);
@@ -17,6 +29,7 @@
   const drawer=UIShell.drawer({nav:document.getElementById('app-sidebar'),opener,closer:document.getElementById('sidebar-close'),scrim:document.getElementById('sidebar-scrim'),select:'[data-view]'});
   function show(){
     if(!ready)return;
+    revision++;
     AppLoading.clear();
     AppLoading.run('화면을 불러오는 중입니다…',()=>new Promise(requestAnimationFrame));
     scroll.capture();
@@ -41,6 +54,6 @@
   back.addEventListener('click',goBack);window.addEventListener('hashchange',show);
   window.addEventListener('popstate',event=>{if(!event.state?.referenceImage)show();});
   const list=document.getElementById('noti-list');new MutationObserver(()=>{const count=list.querySelectorAll('.notification-item.unread').length,badge=document.getElementById('notification-count');badge.textContent=count;badge.hidden=!count;}).observe(list,{childList:true,subtree:true});
-  window.AppShell={scroll,refresh:show,openReference,goBack,configure(value){user=value;window.References.configure(value);allowed=UIConfig.allowed('user',user.permissions||{}).map(menu=>menu.id);document.querySelectorAll('[data-view]').forEach(node=>node.hidden=!allowed.includes(node.dataset.view));document.getElementById('board-nav-caption').hidden=!allowed.includes('boards');window.AccountMenu.configure(user);ready=true;show();},reset(){AppLoading.clear();window.AccountMenu.reset();scroll.reset();window.CalendarApp?.reset();window.References.reset();window.MemoApp?.reset();window.BoardApp?.reset();ready=false;user=null;allowed=[];window.NotificationPage?.cancel();drawer.close();window.JournalControls?.close();}};
+  window.AppShell={scroll,get revision(){return revision;},refresh:show,openReference,goBack,configure(value){user=value;window.References.configure(value);allowed=UIConfig.allowed('user',user.permissions||{}).map(menu=>menu.id);document.querySelectorAll('[data-view]').forEach(node=>node.hidden=!allowed.includes(node.dataset.view));document.getElementById('board-nav-caption').hidden=!allowed.includes('boards');window.AccountMenu.configure(user);ready=true;show();},reset(){revision++;AppLoading.clear();window.AccountMenu.reset();scroll.reset();window.CalendarApp?.reset();window.References.reset();window.MemoApp?.reset();window.BoardApp?.reset();ready=false;user=null;allowed=[];window.NotificationPage?.cancel();drawer.close();window.JournalControls?.close();}};
   UIShell.dialogs();
 })();
