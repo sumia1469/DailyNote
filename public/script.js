@@ -80,6 +80,7 @@ async function authFetch(url, options = {}) {
 function showLoginScreen() {
   document.getElementById('login-section').style.display = 'flex';
   document.getElementById('main-section').style.display = 'none';
+  window.AppShell?.reset();
   const passwordInput = document.getElementById('password');
   if (passwordInput) {
     passwordInput.value = '';
@@ -110,6 +111,7 @@ async function showMainScreen() {
   document.getElementById('open-worklog-btn').hidden=!canUse('worklogCreate');
   document.getElementById('duplicate-worklog-btn').hidden=!canUse('worklogCreate')||!canUse('worklogRead');
   updateCopyButton();
+  window.AppShell?.configure(user);
   return true;
 }
 
@@ -1098,3 +1100,4 @@ document.getElementById('duplicate-worklog-btn').addEventListener('click', async
     updateCopyButton();
   }
 });
+

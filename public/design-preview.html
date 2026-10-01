@@ -221,7 +221,20 @@
 <script src="icons.js"></script>
 <script src="screen-settings.js"></script>
 <script src="app-shell.js"></script>
-<script src="script.js"></script>
+<script>
+document.getElementById('login-section').style.display='none';
+document.getElementById('main-section').style.display='block';
+document.getElementById('admin-page-btn').hidden=false;
+document.getElementById('sidebar-new').disabled=true;
+document.getElementById('open-worklog-btn').disabled=true;
+document.getElementById('logout-btn').disabled=true;
+AppShell.configure({username:'미리보기',permissions:{}});
+document.getElementById('worklog-list').innerHTML=`<article class="worklog-card"><div class="card-header"><div class="card-date-wrap"><strong>2026년 10월 1일</strong><span class="progress-badge">1 / 4 완료</span></div></div><div class="card-body"><section class="card-section"><h3>TODO</h3><div class="todo-list"><label class="todo-item completed"><input type="checkbox" checked disabled><span>업무 현황 및 우선순위 확인</span></label><label class="todo-item"><input type="checkbox" disabled><span>화면 개선 작업</span></label><label class="todo-item" style="margin-left:24px"><input type="checkbox" disabled><span>모바일 메뉴 동작 점검</span></label><label class="todo-item"><input type="checkbox" disabled><span>오늘의 업무 정리</span></label></div></section><section class="card-section"><h3>익일 계획</h3><ul class="plan-tree"><li>진행 중인 업무 검토</li><li>다음 일정 확인</li></ul></section></div><div class="card-footer"><section class="card-info-section"><h3 class="card-info-title">메모</h3><ul class="card-info-list"><li>디자인 미리보기용 예시 데이터입니다.</li><li>실제 화면에서는 TODO를 눌러 바로 수정할 수 있습니다.</li></ul></section></div></article>`;
+document.getElementById('noti-list').innerHTML='<li class="notification-item"><span>알림 화면이 별도로 표시됩니다.</span></li>';
+document.getElementById('file-list').innerHTML='<li class="file-item"><span>파일관리 화면이 별도로 표시됩니다.</span></li>';
+document.querySelectorAll('form').forEach(form=>form.addEventListener('submit',e=>e.preventDefault()));
+document.querySelector('.worklog-header p').textContent='ChatGPT 스타일 · 디자인 미리보기';
+</script>
 </body>
 </html>
 
