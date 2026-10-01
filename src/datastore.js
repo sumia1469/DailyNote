@@ -9,7 +9,14 @@ function filePath(name) {
   return path.join(DATA_DIR, `${name}.json`);
 }
 
+let usersLoading;
 async function load(name) {
+  if (name !== 'users') return loadFile(name);
+  if (cache.users !== undefined) return cache.users;
+  if (!usersLoading) usersLoading = loadFile(name).finally(() => { usersLoading = null; });
+  return usersLoading;
+}
+async function loadFile(name) {
   if (cache[name] !== undefined) return cache[name];
   const fp = filePath(name);
   try {
