@@ -17,6 +17,8 @@
   const drawer=UIShell.drawer({nav:document.getElementById('app-sidebar'),opener,closer:document.getElementById('sidebar-close'),scrim:document.getElementById('sidebar-scrim'),select:'[data-view]'});
   function show(){
     if(!ready)return;
+    AppLoading.clear();
+    AppLoading.run('화면을 불러오는 중입니다…',()=>new Promise(requestAnimationFrame));
     scroll.capture();
     document.getElementById('change-password-link').href='/change-password.html?returnTo='+encodeURIComponent(location.pathname+location.hash);
     const route=location.hash.slice(1),boardRoute=/^boards(?:\/\d+(?:\/posts\/\d+)?)?$/.test(route),boardDetail=/^boards\/\d+\/posts\/\d+$/.test(route),detailId=route.match(/^notifications\/(\d+)$/)?.[1],ref=route.match(/^(files|memos|worklogs)\/([1-9]\d*)$/);
@@ -39,9 +41,6 @@
   back.addEventListener('click',goBack);window.addEventListener('hashchange',show);
   window.addEventListener('popstate',event=>{if(!event.state?.referenceImage)show();});
   const list=document.getElementById('noti-list');new MutationObserver(()=>{const count=list.querySelectorAll('.notification-item.unread').length,badge=document.getElementById('notification-count');badge.textContent=count;badge.hidden=!count;}).observe(list,{childList:true,subtree:true});
-  window.AppShell={scroll,refresh:show,openReference,goBack,configure(value){user=value;window.References.configure(value);allowed=UIConfig.allowed('user',user.permissions||{}).map(menu=>menu.id);document.querySelectorAll('[data-view]').forEach(node=>node.hidden=!allowed.includes(node.dataset.view));window.AccountMenu.configure(user);ready=true;show();},reset(){window.AccountMenu.reset();scroll.reset();window.CalendarApp?.reset();window.References.reset();window.MemoApp?.reset();window.BoardApp?.reset();ready=false;user=null;allowed=[];window.NotificationPage?.cancel();drawer.close();window.JournalControls?.close();}};
+  window.AppShell={scroll,refresh:show,openReference,goBack,configure(value){user=value;window.References.configure(value);allowed=UIConfig.allowed('user',user.permissions||{}).map(menu=>menu.id);document.querySelectorAll('[data-view]').forEach(node=>node.hidden=!allowed.includes(node.dataset.view));window.AccountMenu.configure(user);ready=true;show();},reset(){AppLoading.clear();window.AccountMenu.reset();scroll.reset();window.CalendarApp?.reset();window.References.reset();window.MemoApp?.reset();window.BoardApp?.reset();ready=false;user=null;allowed=[];window.NotificationPage?.cancel();drawer.close();window.JournalControls?.close();}};
   UIShell.dialogs();
 })();
-
-
-
