@@ -954,3 +954,32 @@ button:focus-visible { outline: 3px solid #93c5fd; outline-offset: 3px; }
   .file-list li { padding: 8px; }
   .upload-section .file-item { padding: 8px; gap: 8px; }
 }
+
+/* Keep native iOS date controls within the form's content width. */
+#worklog-form input[type="date"],
+.search-field input[type="date"] {
+  display: block;
+  -webkit-appearance: none;
+  appearance: none;
+  box-sizing: border-box;
+  width: 100%;
+  inline-size: 100%;
+  min-width: 0;
+  min-inline-size: 0;
+  max-width: 100%;
+  max-inline-size: 100%;
+  min-height: 46px;
+  background: #fff;
+  color: var(--text);
+  text-align: left;
+  font-size: 16px;
+}
+#worklog-form input[type="date"]::-webkit-date-and-time-value,
+.search-field input[type="date"]::-webkit-date-and-time-value {
+  min-width: 0;
+  text-align: left;
+}
+#worklog-form input[type="date"]::-webkit-datetime-edit,
+.search-field input[type="date"]::-webkit-datetime-edit {
+  padding: 0;
+}
