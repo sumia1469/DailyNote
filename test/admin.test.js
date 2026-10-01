@@ -68,6 +68,9 @@ test('notice pagination limits payload and searches all records with permission 
  const member=await ds.insert('users',{...makeUserRecord('page-member','test-paged-123'),role:'member',permissions:{}});
  const memberToken=(await request('POST','/api/auth/login',{username:member.username,password:'test-paged-123'})).data.token;
  assert.equal((await request('GET',base,null,memberToken)).status,403);
+ // Release this scenario's two seats before subsequent independent admin scenarios.
+ await ds.update('users',owner.id,{active:false});
+ await ds.update('users',member.id,{active:false});
 });
 test('registration waits for approval, rejects privileged fields and supports rejection',async()=>{
  const admin=(await request('POST','/api/auth/login',{username:'owner',password:'test-admin-123'})).data.token;
