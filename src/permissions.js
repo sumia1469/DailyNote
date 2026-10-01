@@ -1,5 +1,5 @@
 const adminKeys = ['notifications', 'files', 'appearance', 'users', 'permissions'];
-const basicKeys = ['worklogRead','worklogCreate','worklogEdit','worklogDelete','fileRead','fileUpload','fileDownload','fileDelete','notificationRead','memoRead','memoCreate','memoEdit','memoDelete'];
+const basicKeys = ['calendarRead','calendarCreate','calendarEdit','calendarDelete','worklogRead','worklogCreate','worklogEdit','worklogDelete','fileRead','fileUpload','fileDownload','fileDelete','notificationRead','memoRead','memoCreate','memoEdit','memoDelete'];
 const keys = [...adminKeys,...basicKeys];
 function roleOf(user) { return user.role || (Number(user.id) === 1 ? 'admin' : 'member'); }
 function rightsOf(user) {

@@ -13,6 +13,7 @@
     "test:files": "node scripts/verify-large-files.cjs",
     "test:imports": "node scripts/verify-text-import.cjs",
     "test:references": "node scripts/verify-references.cjs",
+    "test:calendar": "node scripts/verify-calendar.cjs",
     "test:sections": "node scripts/verify-sections.cjs"
   },
   "author": "Your Company",
