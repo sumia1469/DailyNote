@@ -46,3 +46,5 @@
 .todo-drag-ghost .todo-drag-handle {display:none}
 .todo-drop-slot {height:30px;box-sizing:border-box;border:1px dashed #2563eb;border-radius:8px;background:#2563eb0d;display:flex;align-items:center;justify-content:center;color:#2563eb;font-size:12px;pointer-events:none}
 body.todo-drag-active {user-select:none;-webkit-user-select:none;cursor:grabbing}
+
+body.todo-drag-active .todo-list,body.todo-drag-active .todo-item,body.todo-drag-active .todo-text-btn,body.todo-drag-active .reference-link {-webkit-user-select:none!important;user-select:none!important;-webkit-touch-callout:none;-webkit-user-drag:none}
