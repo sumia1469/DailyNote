@@ -45,7 +45,29 @@ async function findOne(name, predicate) {
   const arr = await load(name);
   return arr.find(predicate);
 }
+let userQueue = Promise.resolve();
+function mutateUser(id, changes) {
+  const operation = userQueue.then(async () => {
+    const users = await load('users');
+    const index = id === null ? -1 : users.findIndex(user => user.id === id);
+    if (id !== null && index === -1) return null;
+    const previous = index === -1 ? null : users[index];
+    const next = previous ? {...previous, ...changes} : {...changes, id:users.reduce((m,u)=>Math.max(m,Number(u.id)||0),0)+1};
+    require('./license').assertSeatChange(users, previous, next);
+    const saved = users.slice();
+    if (previous) saved[index] = next; else saved.push(next);
+    // Publish the cache only after durable save. Failed writes do not consume a seat.
+    const temp = filePath('users') + '.tmp';
+    await fs.promises.writeFile(temp, JSON.stringify(saved,null,2), 'utf-8');
+    await fs.promises.rename(temp, filePath('users'));
+    cache.users = saved;
+    return next;
+  });
+  userQueue = operation.catch(() => {});
+  return operation;
+}
 async function insert(name, obj) {
+  if (name === 'users') return mutateUser(null, obj);
   const arr = await load(name);
   const maxId = arr.reduce((m, o) => (o.id > m ? o.id : m), 0);
   obj.id = maxId + 1;
@@ -54,6 +76,7 @@ async function insert(name, obj) {
   return obj;
 }
 async function update(name, id, updates) {
+  if (name === 'users') return mutateUser(id, updates);
   const arr = await load(name);
   const idx = arr.findIndex(o => o.id === id);
   if (idx === -1) return null;

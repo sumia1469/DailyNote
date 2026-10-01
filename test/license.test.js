@@ -1,0 +1,72 @@
+const {test,after}=require('node:test');
+const assert=require('node:assert/strict');
+const fs=require('node:fs'),os=require('node:os'),path=require('node:path');
+const {Readable,Writable}=require('node:stream');
+const root=fs.mkdtempSync(path.join(os.tmpdir(),'dailynote-license-'));
+process.env.DATA_DIR=root;
+delete process.env.REDIS_URL;delete process.env.UPSTASH_REDIS_REST_URL;delete process.env.VERCEL;
+const ds=require('../src/datastore'),handler=require('../src/server');
+const {makeUserRecord}=require('../src/auth');
+const license=require('../src/license');
+after(()=>fs.rmSync(root,{recursive:true,force:true}));
+async function request(method,url,body,token){
+ const req=Readable.from(body?[JSON.stringify(body)]:[]);Object.assign(req,{method,url,headers:token?{authorization:'Bearer '+token}:{}});
+ const chunks=[];const res=new Writable({write(c,e,cb){chunks.push(c);cb();}});
+ res.writeHead=status=>{res.status=status;res.headersSent=true;};
+ const done=new Promise(resolve=>res.on('finish',resolve));await handler(req,res);await done;
+ return {status:res.status,data:JSON.parse(Buffer.concat(chunks).toString())};
+}
+test('legacy excess blocks login and sessions; admin recovery, every activation path and concurrent capacity',async()=>{
+ const password='test-license-password';
+ const seeded=Array.from({length:7},(_,index)=>({...makeUserRecord('user'+(index+1),password),id:index+1,role:index?'member':'admin',active:true}));
+ fs.writeFileSync(path.join(root,'users.json'),JSON.stringify(seeded));
+ await ds.insert('work_logs',{userId:2,workDate:'2026-10-02',memo:'preserve me'});
+ const admin=(await request('POST','/api/auth/login',{username:'user1',password})).data.token;
+ assert.ok(admin);
+ assert.equal((await request('POST','/api/auth/login',{username:'user2',password})).data.code,'LICENSE_USER_LIMIT');
+ await ds.insertSession({token:'existing-member',userId:2,username:'user2',createdAt:new Date().toISOString(),expiresAt:new Date(Date.now()+3600000).toISOString()});
+ assert.equal((await request('GET','/api/worklogs',null,'existing-member')).data.code,'LICENSE_USER_LIMIT');
+ assert.equal((await request('POST','/api/worklogs',{workDate:'2026-10-02'},admin)).status,403);
+ assert.equal((await request('GET','/api/admin/users',null,admin)).status,200);
+ assert.equal((await request('GET','/api/license')).status,401);
+ assert.equal((await request('GET','/api/license',null,admin)).data.overLimit,true);
+ assert.equal((await request('GET','/api/admin/users',null,'existing-member')).status,403);
+ assert.equal((await request('PUT','/api/admin/users/7',{username:'user7',active:false},admin)).status,200);
+ assert.equal((await request('GET','/api/license',null,admin)).data.activeUserCount,6);
+ assert.equal((await request('GET','/api/worklogs',null,'existing-member')).data[0].memo,'preserve me');
+ assert.equal((await request('POST','/api/auth/login',{username:'user2',password})).status,200);
+ const blocked=await request('POST','/api/admin/users',{username:'overflow',password,limit:100,license:true},admin);
+ assert.equal(blocked.status,403);assert.equal(blocked.data.limit,6);assert.equal(blocked.data.contact,'sumia1469@gmail.com');
+ assert.equal(await ds.findOne('users',u=>u.username==='overflow'),undefined);
+ assert.equal((await request('POST','/api/users',{username:'legacy-overflow',password},admin)).status,403);
+ assert.equal((await request('PUT','/api/admin/users/7',{username:'user7',active:true},admin)).status,403);
+ const pending=await ds.insert('users',{...makeUserRecord('pending',password),role:'member',active:false,approval:'pending'});
+ assert.equal((await request('POST',`/api/admin/users/${pending.id}/approve`,{},admin)).status,403);
+ assert.equal((await ds.findOne('users',u=>u.id===pending.id)).approval,'pending');
+ const inactive=await request('POST','/api/admin/users',{username:'inactive',password,active:false},admin);
+ assert.equal(inactive.status,201);assert.equal((await license.status()).activeUserCount,6);
+ assert.equal((await request('POST','/api/auth/register',{username:'register-overflow',password,passwordConfirmation:password},admin)).status,403);
+ assert.equal((await request('PUT','/api/admin/users/6',{username:'user6',active:false},admin)).status,200);
+ const concurrent=await Promise.all(Array.from({length:3},(_,i)=>request('POST','/api/admin/users',{username:'concurrent'+i,password},admin)));
+ assert.deepEqual(concurrent.map(r=>r.status).sort(),[201,403,403]);
+ assert.equal((await license.status()).activeUserCount,6);
+ const added=concurrent.find(r=>r.status===201).data;
+ await request('PUT',`/api/admin/users/${added.id}`,{username:added.username,active:false},admin);
+ const approvals=await Promise.all([request('POST',`/api/admin/users/${pending.id}/approve`,{},admin),request('PUT',`/api/admin/users/${inactive.data.id}`,{username:'inactive',active:true},admin)]);
+ assert.deepEqual(approvals.map(r=>r.status).sort(),[200,403]);
+ assert.equal((await license.status()).activeUserCount,6);
+ assert.equal(JSON.parse(fs.readFileSync(path.join(root,'users.json'))).filter(license.usesSeat).length,6);
+ const abnormal=await ds.insert('users',{...makeUserRecord('not-approved',password),active:true,approval:'pending'});
+ assert.equal((await request('POST','/api/auth/login',{username:'not-approved',password})).status,403);
+ assert.equal(license.usesSeat(abnormal),false);
+ await ds.update('users',pending.id,{active:false});
+ // A disk failure must not consume a seat or leave an enabled account in memory.
+ const before=(await license.status()).activeUserCount;
+ const write=fs.promises.writeFile;
+ fs.promises.writeFile=async()=>{throw new Error('test disk failure');};
+ try{await assert.rejects(ds.insert('users',{username:'unsaved',active:false}),/test disk failure/);}
+ finally{fs.promises.writeFile=write;}
+ assert.equal(await ds.findOne('users',u=>u.username==='unsaved'),undefined);
+ assert.equal((await license.status()).activeUserCount,before);
+ assert.equal((await ds.findAll('work_logs')).length,1);
+});
