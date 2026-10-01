@@ -4,6 +4,13 @@
 let token = localStorage.getItem('token') || '';
 let currentWorklogs = [];
 let currentFilterDate = '';
+const selectedWorklogIds = new Set();
+let duplicatingWorklogs = false;
+function updateCopyButton() {
+  const button = document.getElementById('duplicate-worklog-btn');
+  button.disabled = duplicatingWorklogs || selectedWorklogIds.size === 0;
+  button.textContent = duplicatingWorklogs ? '복제 중…' : selectedWorklogIds.size ? `선택 일지 복제 (${selectedWorklogIds.size})` : '선택 일지 복제';
+}
 
 
 /* Shared progress indicator, including concurrent requests. */
@@ -80,6 +87,11 @@ function showLoginScreen() {
 function showMainScreen() {
   document.getElementById('login-section').style.display = 'none';
   document.getElementById('main-section').style.display = 'grid';
+  authFetch('/api/auth/me').then(async response => {
+    if (!response.ok) return;
+    const user = await response.json();
+    document.getElementById('admin-page-btn').hidden = !Object.values(user.permissions || {}).some(Boolean);
+  }).catch(() => { document.getElementById('admin-page-btn').hidden = true; });
 }
 
 /* 로그인 — 성공 시 토큰 저장 → UI 전환 */
@@ -129,8 +141,11 @@ document
 
 /* 로그아웃 */
 document.getElementById('logout-btn').addEventListener('click', () => {
+  document.getElementById('admin-page-btn').hidden = true;
   token = '';
   currentWorklogs = [];
+  selectedWorklogIds.clear();
+  updateCopyButton();
   currentFilterDate = '';
   localStorage.removeItem('token');
   closeWorklogModal();
@@ -709,6 +724,9 @@ function createPlanTree(items, depth = 0) {
  * 업무 일지 목록 화면 생성
  **/
 function renderWorklogs(worklogs) {
+  const availableIds = new Set((Array.isArray(worklogs) ? worklogs : []).map(item => String(item.id)));
+  for (const id of selectedWorklogIds) if (!availableIds.has(id)) selectedWorklogIds.delete(id);
+  updateCopyButton();
   const container =
     document.getElementById(
       'worklog-list'
@@ -732,11 +750,28 @@ function renderWorklogs(worklogs) {
     /*업무일지 카드*/
     const card = document.createElement('article');
     card.className = 'worklog-card';
+    card.classList.toggle('is-selected', selectedWorklogIds.has(String(worklog.id)));
     /*카드헤더*/
     const cardHeader = document.createElement('div')
     cardHeader.className = 'card-header';
     const dateWrap = document.createElement('div');
     dateWrap.className = 'card-date-wrap';
+    const selectLabel = document.createElement('label');
+    selectLabel.className = 'worklog-select';
+    const selectBox = document.createElement('input');
+    selectBox.type = 'checkbox';
+    selectBox.checked = selectedWorklogIds.has(String(worklog.id));
+    selectBox.setAttribute('aria-label', `${worklog.workDate} 일지 선택`);
+    const selectText = document.createElement('span');
+    selectText.textContent = '선택';
+    selectBox.addEventListener('change', () => {
+      if (selectBox.checked) selectedWorklogIds.add(String(worklog.id));
+      else selectedWorklogIds.delete(String(worklog.id));
+      card.classList.toggle('is-selected', selectBox.checked);
+      updateCopyButton();
+    });
+    selectLabel.append(selectBox, selectText);
+    dateWrap.appendChild(selectLabel);
     const workDate = document.createElement('div');
     workDate.className = 'card-date';
     workDate.textContent = worklog.workDate || '-';
@@ -957,4 +992,54 @@ document.querySelectorAll('.card-toggle').forEach(button => {
     button.setAttribute('aria-label', button.dataset.cardTitle + (expanded ? ' 펼치기' : ' 접기'));
     button.closest('.content-card').classList.toggle('is-collapsed', expanded);
   });
+});
+
+function askCopyMode() {
+  const dialog = document.getElementById('copy-confirm-dialog');
+  return new Promise(resolve => {
+    const finish = value => { dialog.close(); resolve(value); };
+    document.getElementById('copy-yes-btn').onclick = () => finish(true);
+    document.getElementById('copy-no-btn').onclick = () => finish(false);
+    document.getElementById('copy-cancel-btn').onclick = () => finish(null);
+    dialog.oncancel = event => { event.preventDefault(); finish(null); };
+    dialog.showModal();
+  });
+}
+/* Duplicate only the selected journal cards using today's date. */
+document.getElementById('duplicate-worklog-btn').addEventListener('click', async () => {
+  if (duplicatingWorklogs) return;
+  const sources = currentWorklogs.filter(item => selectedWorklogIds.has(String(item.id)));
+  if (!sources.length) return;
+  duplicatingWorklogs = true;
+  updateCopyButton();
+  const message = document.getElementById('worklog-action-msg');
+  message.textContent = '';
+  let success = 0;
+  const failed = [];
+  const today = getTodayString();
+  try {
+    const removeChecked = await askCopyMode();
+    if (removeChecked === null) return;
+    await withLoading('선택한 일지를 오늘 날짜로 복제하고 있습니다…', async () => {
+      for (const source of sources) {
+        try {
+          const response = await authFetch('/api/worklogs', {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(WorklogCopy.makeCopy(source, today, removeChecked))
+          });
+          if (!response.ok) throw new Error((await response.json()).message || '복제 실패');
+          success++;
+          selectedWorklogIds.delete(String(source.id));
+        } catch (error) { failed.push(error.message); }
+      }
+      if (!failed.length) {
+        document.getElementById('filter-date').value = today;
+        await loadList(today);
+      } else await loadList(currentFilterDate);
+    });
+    message.textContent = failed.length ? `${success}개 복제 완료, ${failed.length}개 실패: ${failed[0]}` : `${success}개 일지를 오늘(${today}) 날짜로 복제했습니다.`;
+  } finally {
+    duplicatingWorklogs = false;
+    updateCopyButton();
+  }
 });

@@ -12,7 +12,7 @@ async function loginHandler(req, res) {
   const { username, password } = await require('./utils').parseJsonBody(req);
   if (!username || !password) return sendJson(res, 400, { message: 'Missing credentials' });
   const user = await ds.findOne('users', u => u.username === username);
-  if (!user) return sendJson(res, 401, { message: 'Invalid user' });
+  if (!user || user.active === false) return sendJson(res, 401, { message: 'Invalid user' });
   const saltBuf = Buffer.from(user.salt, 'hex');
   const hashBuf = hashPassword(password, saltBuf);
   const storedBuf = Buffer.from(user.password, 'hex');
@@ -35,7 +35,10 @@ async function verifyToken(req) {
   await ds.deleteExpiredSessions();
   const sess = await ds.findSessionByToken(token);
   if (!sess) return null;
-  return { userId: sess.userId, username: sess.username };
+  const user = await ds.findOne('users', u => u.id === sess.userId);
+  if (!user || user.active === false) return null;
+  const {roleOf, rightsOf} = require('./permissions');
+  return { userId: user.id, username: user.username, role: roleOf(user), permissions: rightsOf(user) };
 }
 
 function makeUserRecord(username, password) {

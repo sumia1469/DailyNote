@@ -1,0 +1,57 @@
+const adminToken=localStorage.getItem('token');
+let me, directory=[], users=[], appearance={}, backgroundData=null, activePanel;
+let pending=0;
+const rights=['notifications','files','appearance','users','permissions'];
+const $=id=>document.getElementById(id);
+function status(message,error=false){$('admin-status').textContent=message;$('admin-status').classList.toggle('error',error);}
+async function busy(action){pending++;$('admin-loading').hidden=false;try{return await action();}finally{pending--;$('admin-loading').hidden=pending===0;}}
+async function api(path,method='GET',body,blob=false){
+ const response=await fetch(path,{method,headers:{Authorization:'Bearer '+adminToken,...(body?{'Content-Type':'application/json'}:{})},...(body?{body:JSON.stringify(body)}:{})});
+ if(response.status===401){localStorage.removeItem('token');location.replace('/');throw new Error('다시 로그인해 주세요.');}
+ if(!response.ok){const error=await response.json().catch(()=>({}));throw new Error(error.message||'요청을 처리하지 못했습니다.');}
+ return blob?response.blob():response.json();
+}
+function options(select,items,valueKey='id',labelKey='username'){
+ const selected=select.value;select.replaceChildren();
+ for(const item of items){const option=document.createElement('option');option.value=item[valueKey];option.textContent=item[labelKey]+(item.active===false?' (비활성)':'');select.appendChild(option);}
+ if(items.some(i=>String(i[valueKey])===selected))select.value=selected;
+}
+const userName=id=>directory.find(u=>Number(u.id)===Number(id))?.username||('사용자 '+id);
+function row(title,detail){const div=document.createElement('div');div.className='admin-row';const strong=document.createElement('strong');strong.textContent=title;const small=document.createElement('small');small.textContent=detail;const actions=document.createElement('div');actions.className='admin-actions';div.append(strong,small,actions);return {div,actions};}
+function button(label,action,danger=false){const b=document.createElement('button');b.type='button';b.className=danger?'danger-btn':'secondary-btn';b.textContent=label;b.addEventListener('click',()=>run(action));return b;}
+async function run(action){status('');try{await busy(action);}catch(e){status(e.message,true);}}
+function empty(container){if(!container.children.length){const p=document.createElement('p');p.textContent='등록된 항목이 없습니다.';container.appendChild(p);}}
+function showPanel(key){activePanel=key;document.querySelectorAll('.admin-panel').forEach(p=>p.hidden=p.id!=='panel-'+key);document.querySelectorAll('[data-panel]').forEach(b=>{if(b.dataset.panel===key)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});}
+function setPermissionForm(){const u=users.find(u=>String(u.id)===$('permission-user').value);if(!u)return;$('permission-role').value=u.role;for(const key of rights){const box=$('permission-form').elements.namedItem(key);box.checked=u.permissions[key]===true;box.disabled=u.role==='admin';}}
+function updatePermissionRole(){const admin=$('permission-role').value==='admin';for(const key of rights){const box=$('permission-form').elements.namedItem(key);box.disabled=admin;if(admin)box.checked=true;}}
+function preview(){const form=$('appearance-form').elements;const values={...appearance,fontFamily:form.fontFamily.value,fontSize:Number(form.fontSize.value),spacing:form.spacing.value,theme:form.theme.value,background:form.background.value};window.SiteSettings.apply(values);const image=values.background==='custom'?(backgroundData||values.backgroundUrl):values.background==='autumn'?'images/login-autumn.webp':null;$('background-preview').style.backgroundImage=image?`url("${image}")`:'none';}
+function setAppearance(values){appearance=values;for(const key of ['fontFamily','fontSize','spacing','theme','background'])$('appearance-form').elements.namedItem(key).value=values[key];preview();}
+async function refresh(){
+ me=await api('/api/auth/me');$('admin-account').textContent=me.username+' · '+(me.role==='admin'?'관리자':'일반 사용자');
+ const allowed=rights.filter(key=>me.permissions[key]);document.querySelectorAll('[data-panel]').forEach(b=>b.hidden=!allowed.includes(b.dataset.panel));
+ if(!allowed.length){document.querySelectorAll('.admin-panel').forEach(p=>p.hidden=true);status('관리페이지에 접근할 권한이 없습니다.',true);return;}
+ if(!allowed.includes(activePanel))showPanel(allowed[0]);
+ if(['notifications','files','users','permissions'].some(key=>me.permissions[key]))directory=await api('/api/admin/directory');
+ if(me.permissions.users||me.permissions.permissions){users=await api('/api/admin/'+(me.permissions.users?'users':'permissions'));options($('permission-user'),users);setPermissionForm();}
+ if(me.permissions.notifications){
+  options($('notification-user'),directory.filter(u=>u.active));const notes=await api('/api/admin/notifications');const list=$('admin-notifications');list.replaceChildren();
+  notes.sort((a,b)=>b.id-a.id).forEach(note=>{const r=row(note.message,userName(note.userId)+' · '+(note.isRead?'읽음':'안 읽음'));r.actions.append(button('수정',()=>{const f=$('notification-form').elements;f.id.value=note.id;f.userId.value=note.userId;f.message.value=note.message;$('notification-message').focus();}),button('삭제',async()=>{if(!confirm('이 알림을 삭제할까요?'))return;await api('/api/admin/notifications/'+note.id,'DELETE');await refresh();status('알림을 삭제했습니다.');},true));list.appendChild(r.div);});empty(list);
+ }
+ if(me.permissions.files){const files=await api('/api/admin/files');const list=$('admin-files');list.replaceChildren();files.forEach(file=>{const r=row(file.originalName,userName(file.userId)+' · '+Math.ceil(file.sizeBytes/1024)+'KB');const input=document.createElement('input');input.value=file.originalName;input.setAttribute('aria-label',file.originalName+' 파일명 변경');input.maxLength=200;r.div.insertBefore(input,r.actions);r.actions.append(button('파일명 저장',async()=>{await api('/api/admin/files/'+file.id,'PUT',{originalName:input.value});await refresh();status('파일명을 변경했습니다.');}),button('다운로드',async()=>{const data=await api('/api/admin/files/'+file.id,'GET',undefined,true);const url=URL.createObjectURL(data),a=document.createElement('a');a.href=url;a.download=file.originalName;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}),button('삭제',async()=>{if(!confirm(file.originalName+' 파일을 삭제할까요?'))return;await api('/api/admin/files/'+file.id,'DELETE');await refresh();status('파일을 삭제했습니다.');},true));list.appendChild(r.div);});empty(list);}
+ if(me.permissions.users){const list=$('admin-users');list.replaceChildren();users.forEach(user=>{const r=row(user.username,(user.role==='admin'?'관리자':'일반 사용자')+' · '+(user.active?'활성':'비활성'));r.actions.append(button('수정',()=>{const f=$('user-form').elements;f.id.value=user.id;f.username.value=user.username;f.password.value='';f.active.value=String(user.active);$('manage-username').focus();}));list.appendChild(r.div);});empty(list);}
+ if(me.permissions.appearance){const values=await api('/api/admin/settings');backgroundData=null;$('background-file').value='';setAppearance(values);}
+}
+function fileData(file){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(new Error('파일을 읽지 못했습니다.'));reader.readAsDataURL(file);});}
+for(const b of document.querySelectorAll('[data-panel]'))b.addEventListener('click',()=>showPanel(b.dataset.panel));
+$('notification-reset').addEventListener('click',()=>{$('notification-form').reset();$('notification-form').elements.id.value='';});
+$('user-reset').addEventListener('click',()=>{$('user-form').reset();$('user-form').elements.id.value='';});
+$('notification-form').addEventListener('submit',e=>{e.preventDefault();run(async()=>{const f=e.target.elements;await api('/api/admin/notifications'+(f.id.value?'/'+f.id.value:''),f.id.value?'PUT':'POST',{userId:Number(f.userId.value),message:f.message.value});e.target.reset();f.id.value='';await refresh();status('알림을 저장했습니다.');});});
+$('user-form').addEventListener('submit',e=>{e.preventDefault();run(async()=>{const f=e.target.elements;if(!f.id.value&&!f.password.value)throw new Error('새 사용자 비밀번호를 입력하세요.');await api('/api/admin/users'+(f.id.value?'/'+f.id.value:''),f.id.value?'PUT':'POST',{username:f.username.value,password:f.password.value,active:f.active.value==='true'});e.target.reset();f.id.value='';await refresh();status('사용자를 저장했습니다.');});});
+$('permission-user').addEventListener('change',setPermissionForm);$('permission-role').addEventListener('change',updatePermissionRole);
+$('permission-form').addEventListener('submit',e=>{e.preventDefault();run(async()=>{const f=e.target.elements;const permissions=Object.fromEntries(rights.map(key=>[key,f.namedItem(key).checked]));await api('/api/admin/permissions/'+f.userId.value,'PUT',{role:f.role.value,permissions});await refresh();if(rights.some(key=>me.permissions[key]))status('권한을 저장했습니다.');});});
+$('admin-upload-form').addEventListener('submit',e=>{e.preventDefault();run(async()=>{const file=$('admin-file').files[0];if(!file)return;if(file.size>3*1024*1024)throw new Error('파일은 최대 3MB까지 올릴 수 있습니다.');const data=await fileData(file);await api('/api/upload','POST',{filename:file.name,mime:file.type,data:data.split(',')[1]});e.target.reset();await refresh();status('파일을 업로드했습니다.');});});
+$('appearance-form').addEventListener('change',e=>{if(e.target.id!=='background-file')preview();});
+$('background-file').addEventListener('change',()=>run(async()=>{const file=$('background-file').files[0];if(!file)return;if(file.size>1024*1024)throw new Error('배경 이미지는 최대 1MB입니다.');if(!['image/png','image/jpeg','image/webp'].includes(file.type))throw new Error('PNG·JPG·WebP 이미지를 선택하세요.');backgroundData=await fileData(file);$('screen-background').value='custom';preview();}));
+$('appearance-default').addEventListener('click',()=>{backgroundData=null;$('background-file').value='';setAppearance({fontFamily:'system',fontSize:16,spacing:'normal',theme:'light',background:'autumn',backgroundUrl:appearance.backgroundUrl});status('기본값을 미리 보고 있습니다. 적용하려면 설정 저장을 누르세요.');});
+$('appearance-form').addEventListener('submit',e=>{e.preventDefault();run(async()=>{const f=e.target.elements;const saved=await api('/api/admin/settings','PUT',{fontFamily:f.fontFamily.value,fontSize:Number(f.fontSize.value),spacing:f.spacing.value,theme:f.theme.value,background:f.background.value,...(backgroundData?{imageData:backgroundData.split(',')[1]}:{})});backgroundData=null;$('background-file').value='';setAppearance(saved);status('화면·배경 설정을 저장했습니다.');});});
+if(!adminToken)location.replace('/');else run(refresh);

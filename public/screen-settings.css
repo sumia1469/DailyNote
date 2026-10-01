@@ -1,0 +1,50 @@
+body { font-size: var(--app-font-size,16px); font-family:var(--app-font-family,system-ui,sans-serif); }
+.form-field label { font-size:calc(var(--app-font-size,16px) * .875); }
+.todo-item span, .plan-tree, .card-info-list { line-height:1.6; }
+.form-field input, .form-field textarea { font-size: max(16px,var(--app-font-size,16px)); }
+body[data-theme="white"] { --background:#fff; --surface:#fff; }
+body[data-theme="dark"] { --background:#101827; --surface:#1c2738; --text:#e7edf5; --muted:#a9b8cc; --line:#3b4a5e; }
+body[data-theme="dark"] .content-card,
+body[data-theme="dark"] .worklog-section,
+body[data-theme="dark"] .worklog-card,
+body[data-theme="dark"] .search-panel,
+body[data-theme="dark"] .modal-dialog,
+body[data-theme="dark"] .modal-header,
+body[data-theme="dark"] .card-info-section,
+body[data-theme="dark"] .login-card,
+body[data-theme="dark"] .loading-panel,
+body[data-theme="dark"] .admin-card { background:var(--surface); color:var(--text); border-color:var(--line); }
+body[data-theme="dark"] .card-header,
+body[data-theme="dark"] .card-footer,
+body[data-theme="dark"] .todo-item,
+body[data-theme="dark"] .file-item,
+body[data-theme="dark"] .empty-state,
+body[data-theme="dark"] .secondary-btn,
+body[data-theme="dark"] .card-toggle,
+body[data-theme="dark"] input,
+body[data-theme="dark"] textarea,
+body[data-theme="dark"] select { background:#172133 !important; color:var(--text) !important; border-color:var(--line) !important; }
+body[data-theme="dark"] .form-field label,
+body[data-theme="dark"] .card-section h3,
+body[data-theme="dark"] .card-info-list li,
+body[data-theme="dark"] .login-title p,
+body[data-theme="dark"] .empty-state strong,
+body[data-theme="dark"] .card-info-title { color:var(--text); }
+body[data-theme="dark"] .todo-parent { background:#233754; }
+body[data-theme="dark"] .todo-item.completed span { color:#a9b8cc; }
+body[data-spacing="compact"] .card-header,
+body[data-spacing="compact"] .card-body,
+body[data-spacing="compact"] .card-footer { padding:10px; }
+body[data-spacing="compact"] .todo-list { gap:5px; }
+body[data-spacing="compact"] .todo-item { padding:5px 8px; }
+body[data-spacing="comfortable"] .card-header,
+body[data-spacing="comfortable"] .card-body,
+body[data-spacing="comfortable"] .card-footer { padding:20px; }
+body[data-spacing="comfortable"] .todo-list { gap:14px; }
+body[data-spacing="comfortable"] .todo-item { padding:12px; }
+body[data-background="none"] .login-section { background-image:none; background-color:var(--background); }
+body[data-background="custom"] .login-section { background-image:linear-gradient(rgba(0,0,0,.08),rgba(0,0,0,.15)),var(--custom-background); background-position:center; }
+.main-actions { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+.main-actions a { text-decoration:none; background:#fff; color:#1e3a8a; }
+.main-actions a[hidden] { display:none; }
+@media(max-width:600px){.main-actions{width:100%;}.main-actions > *{flex:1;text-align:center;}}

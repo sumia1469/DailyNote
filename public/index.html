@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>일일 업무일지 - 사용자·파일·알림</title>
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="screen-settings.css">
 </head>
 <body>
 <!-- 로그인 섹션 -->
@@ -41,7 +42,10 @@
         <p>오늘의 업무와 다음 계획을 관리합니다.</p>
       </div>
     </div>
-    <button type="button" class="secondary-btn" id="logout-btn">로그아웃</button>
+    <div class="main-actions">
+      <a href="admin.html" id="admin-page-btn" class="secondary-btn" hidden>관리페이지</a>
+      <button type="button" class="secondary-btn" id="logout-btn">로그아웃</button>
+    </div>
   </header>
   <!-- 알림 -->
   <section class="content-card notification-section">
@@ -87,10 +91,12 @@
         <h2>🖊️ 새 일지 등록</h2>
         <p>업무 진행 상황과 다음 계획을 관리합니다.</p>
       </div>
-      <button type="button" id="open-worklog-btn" class="primary-btn">
-        + 새 일지 등록
-      </button>
+      <div class="worklog-header-actions">
+        <button type="button" id="duplicate-worklog-btn" class="secondary-btn" disabled>선택 일지 복제</button>
+        <button type="button" id="open-worklog-btn" class="primary-btn">+ 새 일지 등록</button>
+      </div>
     </div>
+    <p id="worklog-action-msg" class="worklog-action-msg" role="status" aria-live="polite"></p>
     <div class="search-panel">
       <div class="search-field">
         <label for="filter-date">업무일자</label>
@@ -169,6 +175,15 @@
     </form>
   </div>
 </div>
+<dialog id="copy-confirm-dialog" class="copy-confirm-dialog" aria-labelledby="copy-confirm-title">
+  <h2 id="copy-confirm-title">체크된 항목을 삭제해서 등록할까요?</h2>
+  <p>예: 체크된 TODO를 제외하고 오늘 날짜로 복제합니다.<br>아니요: 내용과 체크 상태를 그대로 복제합니다.<br>원본 일지는 유지됩니다.</p>
+  <div class="copy-confirm-actions">
+    <button type="button" class="secondary-btn" id="copy-no-btn">아니요, 그대로 복제</button>
+    <button type="button" class="primary-btn" id="copy-yes-btn">예, 체크 항목 제외</button>
+    <button type="button" class="secondary-btn" id="copy-cancel-btn">취소</button>
+  </div>
+</dialog>
 <div id="loading-overlay" class="loading-overlay" hidden>
   <div class="loading-panel" role="status" aria-live="polite" aria-atomic="true">
     <div class="orbit-spinner" aria-hidden="true">
@@ -186,6 +201,8 @@
   </div>
 </div>
 <script src="list-editor.js"></script>
+<script src="worklog-copy.js"></script>
+<script src="screen-settings.js"></script>
 <script src="script.js"></script>
 </body>
 </html>

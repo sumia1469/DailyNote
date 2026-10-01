@@ -45,7 +45,12 @@ async function userRouter(req, res, auth) {
   const parts = parsed.pathname.split('/').filter(Boolean);
   const id = parts[2] ? Number(parts[2]) : null;
   const method = req.method.toUpperCase();
-  // 원본: 모든 인증된 사용자를 관리자라고 가정합니다.
+  if (!(auth.permissions.users || auth.permissions.permissions) && !(method === 'PUT' && id === auth.userId)) return sendJson(res, 403, {message: '사용자 관리 권한이 필요합니다.'});
+  if (method === 'PUT' && id && auth.role !== 'admin') {
+    const target = await ds.findOne('users', user => user.id === id);
+    if (target && require('./permissions').roleOf(target) === 'admin') return sendJson(res, 403, {message: '관리자 계정은 관리자만 수정할 수 있습니다.'});
+  }
+  if (method === 'DELETE' && id) return sendJson(res, 400, {message: '관리페이지에서 계정을 비활성화하세요.'});
   if (method === 'GET' && !id) return listUsers(req, res, auth);
   if (method === 'POST' && !id) return createUser(req, res, auth);
   if (method === 'PUT' && id) return updateUser(req, res, auth, id);

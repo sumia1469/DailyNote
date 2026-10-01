@@ -1,0 +1,129 @@
+const ds = require('./datastore');
+const {sendJson, parseJsonBody} = require('./utils');
+const {makeUserRecord} = require('./auth');
+const {keys, roleOf, safeUser} = require('./permissions');
+const storage = require('./file-storage');
+const defaults = {fontFamily:'system',fontSize:16, spacing:'normal', theme:'light', background:'autumn'};
+const publicSettings = record => ({...defaults, ...(record?.values || {}),
+  backgroundUrl:record?.imageData ? '/api/background/1?v=' + encodeURIComponent(record.updatedAt) : null});
+async function settingsHandler(req,res) {
+  const settings = await ds.findOne('site_settings', s => s.id === 1);
+  if (new URL(req.url,'http://localhost').pathname === '/api/background/1') {
+    if (!settings?.imageData) return sendJson(res,404,{message:'배경 이미지가 없습니다.'});
+    const buffer=Buffer.from(settings.imageData,'base64');
+    res.writeHead(200, {'Content-Type':settings.imageMime,'Content-Length':buffer.length,'Cache-Control':'public, max-age=300'});
+    return res.end(buffer);
+  }
+  sendJson(res,200,publicSettings(settings));
+}
+async function adminRouter(req,res,auth) {
+  const url=new URL(req.url,'http://localhost');
+  const [, , area, rawId]=url.pathname.split('/').filter(Boolean);
+  const id=rawId ? Number(rawId) : null;
+  const right=area==='settings'?'appearance':area;
+  if (area === 'directory' && req.method === 'GET' && ['notifications','files','users','permissions'].some(key => auth.permissions[key])) return sendJson(res,200,(await ds.findAll('users')).map(u=>({id:u.id,username:u.username,active:u.active!==false})));
+  if (!auth.permissions[right]) return sendJson(res,403,{message:'이 관리 기능에 접근할 권한이 없습니다.'});
+  const method=req.method;
+  const body=['POST','PUT'].includes(method)?await parseJsonBody(req):{};
+  if (area==='users' || area==='permissions') {
+    if(method==='GET'&&!id) return sendJson(res,200,(await ds.findAll('users')).map(safeUser));
+    const existing=id?await ds.findOne('users',u=>u.id===id):null;
+    if(id&&!existing)return sendJson(res,404,{message:'사용자를 찾을 수 없습니다.'});
+    if (area==='users' && existing && roleOf(existing)==='admin' && auth.role!=='admin' && method!=='GET') return sendJson(res,403,{message:'관리자 계정은 관리자만 수정할 수 있습니다.'});
+    if(method==='POST'||method==='PUT') {
+      const updates={};
+      if(area==='users') {
+        const username=String(body.username||'').trim();
+        if(!username||username.length>80)return sendJson(res,400,{message:'아이디는 1~80자로 입력하세요.'});
+        if((await ds.findAll('users')).some(u=>u.username===username&&u.id!==id))return sendJson(res,409,{message:'이미 사용 중인 아이디입니다.'});
+        updates.username=username;
+        if(method==='POST'&&!body.password)return sendJson(res,400,{message:'비밀번호를 입력하세요.'});
+        if(body.password) {
+          if(typeof body.password!=='string'||body.password.length<8)return sendJson(res,400,{message:'비밀번호는 8자 이상 입력하세요.'});
+          Object.assign(updates,makeUserRecord(username,body.password));
+        }
+        if(body.active!==undefined)updates.active=body.active===true;
+      }
+      if(body.role!==undefined || body.permissions!==undefined || area==='permissions') {
+        if(!auth.permissions.permissions)return sendJson(res,403,{message:'권한 설정 권한이 필요합니다.'});
+        if(body.role!==undefined) {
+          if(!['admin','member'].includes(body.role))return sendJson(res,400,{message:'잘못된 사용자 역할입니다.'});
+          updates.role=body.role;
+        }
+        if(body.permissions!==undefined)updates.permissions=Object.fromEntries(keys.map(key=>[key,body.permissions?.[key]===true]));
+      }
+      if(existing) {
+        if(existing.id===auth.userId&&updates.active===false)return sendJson(res,400,{message:'현재 로그인한 계정은 비활성화할 수 없습니다.'});
+        if(roleOf(existing)==='admin'&&(updates.role==='member'||updates.active===false)) {
+          const others=(await ds.findAll('users')).filter(u=>u.id!==id&&roleOf(u)==='admin'&&u.active!==false);
+          if(!others.length)return sendJson(res,400,{message:'활성 관리자는 최소 한 명 필요합니다.'});
+        }
+        return sendJson(res,200,safeUser(await ds.update('users',id,updates)));
+      }
+      if(area==='permissions')return sendJson(res,400,{message:'사용자를 선택하세요.'});
+      return sendJson(res,201,safeUser(await ds.insert('users',{role:'member',permissions:{},active:true,...updates,createdAt:new Date().toISOString()})));
+    }
+  }
+  if(area==='notifications') {
+    if(method==='GET'&&!id)return sendJson(res,200,await ds.findAll('notifications'));
+    if(method==='POST'||method==='PUT') {
+      const message=String(body.message||'').trim(),userId=Number(body.userId);
+      if(!message||message.length>2000)return sendJson(res,400,{message:'알림 내용을 1~2000자로 입력하세요.'});
+      if(!await ds.findOne('users',u=>u.id===userId&&u.active!==false))return sendJson(res,400,{message:'알림을 받을 사용자를 선택하세요.'});
+      if(method==='PUT') {
+        const updated=await ds.update('notifications',id,{userId,message,isRead:false});
+        return sendJson(res,updated?200:404,updated||{message:'알림을 찾을 수 없습니다.'});
+      }
+      return sendJson(res,201,await ds.insert('notifications',{userId,message,isRead:false,createdAt:new Date().toISOString()}));
+    }
+    if(method==='DELETE'&&id){const ok=await ds.remove('notifications',id);return sendJson(res,ok?200:404,{message:ok?'알림을 삭제했습니다.':'알림을 찾을 수 없습니다.'});}
+  }
+  if(area==='files') {
+    if(method==='GET'&&!id)return sendJson(res,200,await ds.findAll('files'));
+    const file=await ds.findOne('files',f=>f.id===id);
+    if(!file)return sendJson(res,404,{message:'파일을 찾을 수 없습니다.'});
+    if(method==='DELETE') {
+      if(file.storedName)await storage.remove(file.storedName);
+      await ds.remove('files',id);
+      return sendJson(res,200,{message:'파일을 삭제했습니다.'});
+    }
+    if(method==='PUT') {
+      const name=String(body.originalName||'').trim();
+      if(!name||name.length>200)return sendJson(res,400,{message:'파일명은 1~200자로 입력하세요.'});
+      return sendJson(res,200,await ds.update('files',id,{originalName:name}));
+    }
+    if(method==='GET') {
+      const buffer=await storage.read(file.storedName);
+      if(!buffer)return sendJson(res,404,{message:'파일을 찾을 수 없습니다.'});
+      res.writeHead(200,{'Content-Type':file.mimeType||'application/octet-stream','Content-Disposition':`attachment; filename*=UTF-8''${encodeURIComponent(file.originalName)}`});
+      return res.end(buffer);
+    }
+  }
+  if(area==='settings') {
+    const current=await ds.findOne('site_settings',s=>s.id===1);
+    if(method==='GET')return sendJson(res,200,publicSettings(current));
+    if(method==='PUT') {
+      const values={...defaults,...current?.values};
+      if(body.fontFamily!==undefined){if(!['system','sans','serif'].includes(body.fontFamily))return sendJson(res,400,{message:'잘못된 폰트입니다.'});values.fontFamily=body.fontFamily;}
+      if(body.fontSize!==undefined){const n=Number(body.fontSize);if(![14,16,18,20].includes(n))return sendJson(res,400,{message:'잘못된 글자 크기입니다.'});values.fontSize=n;}
+      if(body.spacing!==undefined){if(!['compact','normal','comfortable'].includes(body.spacing))return sendJson(res,400,{message:'잘못된 간격입니다.'});values.spacing=body.spacing;}
+      if(body.theme!==undefined){if(!['light','white','dark'].includes(body.theme))return sendJson(res,400,{message:'잘못된 화면 모드입니다.'});values.theme=body.theme;}
+      if(body.background!==undefined){if(!['autumn','custom','none'].includes(body.background))return sendJson(res,400,{message:'잘못된 배경입니다.'});values.background=body.background;}
+      const record={values,updatedAt:new Date().toISOString()};
+      if(body.imageData) {
+        if(typeof body.imageData!=='string'||body.imageData.length>1500000)return sendJson(res,400,{message:'배경 이미지는 1MB 이하로 올려 주세요.'});
+        const image=Buffer.from(body.imageData,'base64');
+        const mime=image.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10]))?'image/png'
+          :image[0]===255&&image[1]===216?'image/jpeg'
+          :image.toString('ascii',0,4)==='RIFF'&&image.toString('ascii',8,12)==='WEBP'?'image/webp':null;
+        if(!mime||image.length>1024*1024)return sendJson(res,400,{message:'PNG·JPG·WebP 이미지(1MB 이하)를 선택하세요.'});
+        record.imageData=image.toString('base64');record.imageMime=mime;
+      }
+      if(values.background==='custom'&&!record.imageData&&!current?.imageData)return sendJson(res,400,{message:'배경 이미지를 먼저 선택하세요.'});
+      const saved=current?await ds.update('site_settings',1,record):await ds.insert('site_settings',record);
+      return sendJson(res,200,publicSettings(saved));
+    }
+  }
+  return sendJson(res,404,{message:'관리 API를 찾을 수 없습니다.'});
+}
+module.exports={adminRouter,settingsHandler};
