@@ -138,10 +138,13 @@ document.getElementById('logout-btn').addEventListener('click', () => {
 });
 
 /* 공지 — GET /api/notifications */
-async function loadNoti() {
+let noticeLoadJob=0,fileLoadJob=0,worklogLoadJob=0;
+async function loadNoti(strict=false) {
+  const job=++noticeLoadJob,owner=token,route=location.hash,revision=window.AppShell?.revision;
+  const stale=()=>job!==noticeLoadJob||owner!==token||route!==location.hash||revision!==window.AppShell?.revision;
   if(!canUse('notificationRead'))return;
   const notificationList = document.getElementById('noti-list');
-  notificationList.innerHTML = '';
+  if(strict!==true)notificationList.innerHTML = '';
 
   try {
     const res = await authFetch('/api/notifications');
@@ -150,6 +153,8 @@ async function loadNoti() {
       throw new Error('공지를 불러오지 못했습니다.');
     }
     const notifications = await res.json();
+    if(stale())return;
+    notificationList.replaceChildren();
     if (!Array.isArray(notifications) || notifications.length === 0) {
       const emptyItem = document.createElement('li');
       emptyItem.className = 'notification-empty';
@@ -202,6 +207,8 @@ async function loadNoti() {
       notificationList.appendChild(item);
     });
   } catch (error) {
+    if(stale())return;
+    if(strict===true)throw error;
     const errorItem = document.createElement('li');
     errorItem.className = 'notification-empty';
     errorItem.textContent = error.message;
@@ -211,7 +218,7 @@ async function loadNoti() {
 
 window.NotificationPage = (function(){
   let version=0;
-  return {cancel(){version++;},async load(id){
+  return {cancel(){version++;},async load(id,strict=false){
     const current=++version,state=document.getElementById('notification-page-state'),message=document.getElementById('notification-page-message'),date=document.getElementById('notification-page-date'),title=document.getElementById('notification-page-title');
     title.textContent='';title.hidden=true;state.textContent='공지를 불러오는 중입니다…';message.textContent='';date.textContent='';date.removeAttribute('datetime');
     try{
@@ -220,7 +227,7 @@ window.NotificationPage = (function(){
       const note=await response.json();if(current!==version)return;message.textContent=note.message||'';title.textContent=note.title||'';title.hidden=!note.title;
       if(note.createdAt){date.textContent=new Date(note.createdAt).toLocaleString('ko-KR');date.dateTime=note.createdAt;}state.textContent='';
       if(!note.isRead){const read=await authFetch('/api/notifications/'+encodeURIComponent(id),{method:'PUT'});if(current!==version)return;if(!read.ok)state.textContent='읽음 처리에 실패했습니다. 공지 목록에서 다시 시도해 주세요.';else await loadNoti();}
-    }catch(error){if(current===version)state.textContent=error.message;}
+    }catch(error){if(current===version){state.textContent=error.message;if(strict===true)throw error;}}
   }};
 })();
 
@@ -251,16 +258,20 @@ document.getElementById('upload-form').addEventListener('submit', async e => {
 });
 
 /* 파일 목록 — GET /api/files */
-async function loadFiles() {
+async function loadFiles(strict=false) {
+  const job=++fileLoadJob,owner=token,route=location.hash,revision=window.AppShell?.revision;
+  const stale=()=>job!==fileLoadJob||owner!==token||route!==location.hash||revision!==window.AppShell?.revision;
   if(!canUse('fileRead'))return;
   const fileList = document.getElementById('file-list');
-  fileList.replaceChildren();
+  if(strict!==true)fileList.replaceChildren();
   try {
     const response = await authFetch('/api/files');
     if (!response.ok) {
       throw new Error('파일 목록을 불러오지 못했습니다.');
     }
     const files = await response.json();
+    if(stale())return;
+    fileList.replaceChildren();
     // 같은 ID가 중복 반환돼도 한번만 표시
     const uniqueFiles = Array.from(
       new Map(
@@ -341,6 +352,8 @@ async function loadFiles() {
       fileList.appendChild(item);
     });
   } catch (error) {
+    if(stale())return;
+    if(strict===true)throw error;
     const errorItem = document.createElement('li');
     errorItem.className = 'file-empty';
     errorItem.textContent = error.message;
@@ -839,12 +852,14 @@ function renderWorklogs(worklogs) {
 /**
  * 업무일지 목록 조회 - 여기부터 2026-09-10
  **/
-async function loadList(date = '') {
+async function loadList(date = '',strict=false) {
+  const job=++worklogLoadJob,owner=token,route=location.hash,revision=window.AppShell?.revision;
+  const stale=()=>job!==worklogLoadJob||owner!==token||route!==location.hash||revision!==window.AppShell?.revision;
   if(!canUse('worklogRead'))return;
   currentFilterDate = date;
   JournalControls.updateFilter(date);
   const container = document.getElementById('worklog-list');
-  container.innerHTML = `
+  if(strict!==true)container.innerHTML = `
     <div class="empty-state">
       <strong>업무일지를 불러오는 중입니다.</strong>
       <span>잠시만 기다려주세요.</span>
@@ -858,9 +873,13 @@ async function loadList(date = '') {
     if (!response.ok) {
       throw new Error('업무일지 목록을 불러오지 못했습니다.');
     }
-    currentWorklogs = await response.json();
+    const records = await response.json();
+    if(stale())return;
+    currentWorklogs = records;
     renderWorklogs(currentWorklogs)
   } catch (error) {
+    if(stale())return;
+    if(strict===true)throw error;
     container.innerHTML = '';
     const errorState = document.createElement('div');
     errorState.className = 'empty-state';
