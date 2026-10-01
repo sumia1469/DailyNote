@@ -7,45 +7,8 @@
     b.setAttribute('aria-label', label); b.title = label;
     return b;
   }
-  // A shared anchored menu. Its backdrop only catches outside taps; it never blurs the page.
-  function actionMenu(menu, opener) {
-    menu.classList.add('ui-action-menu');
-    opener.setAttribute('aria-haspopup', 'menu'); opener.setAttribute('aria-expanded', 'true');
-    const items = [...menu.querySelectorAll('button,a')].filter(x => !x.closest('.journal-dialog-header'));
-    items.forEach(x => x.setAttribute('role', 'menuitem'));
-    function place() {
-      const v = window.visualViewport, left = v?.offsetLeft || 0, top = v?.offsetTop || 0;
-      const width = v?.width || innerWidth, height = v?.height || innerHeight;
-      const r = opener.getBoundingClientRect(), gap = 8;
-      menu.style.maxHeight = Math.max(80, height - 24) + 'px';
-      menu.style.left = Math.max(left + 12, Math.min(left + width - menu.offsetWidth - 12, r.right - menu.offsetWidth)) + 'px';
-      const below = r.bottom + gap;
-      const y = below + menu.offsetHeight <= top + height - 12 ? below : r.top - menu.offsetHeight - gap;
-      menu.style.top = Math.max(top + 12, Math.min(top + height - menu.offsetHeight - 12, y)) + 'px';
-    }
-    if (!menu.dataset.menuBound) {
-      menu.dataset.menuBound = 'true';
-      menu.addEventListener('keydown', e => {
-        const nodes = [...menu.querySelectorAll('[role=menuitem]')].filter(x => !x.disabled && !x.hidden);
-        let i = nodes.indexOf(document.activeElement), next;
-        if (e.key === 'ArrowDown') next = (i + 1) % nodes.length;
-        if (e.key === 'ArrowUp') next = (i - 1 + nodes.length) % nodes.length;
-        if (e.key === 'Home') next = 0;
-        if (e.key === 'End') next = nodes.length - 1;
-        if (next !== undefined) { e.preventDefault(); e.stopImmediatePropagation(); nodes[next]?.focus(); }
-      }, true);
-    }
-    menu.showModal(); place();
-    window.addEventListener('resize', place); window.visualViewport?.addEventListener('resize', place);
-    menu.addEventListener('close', () => {
-      window.removeEventListener('resize', place); window.visualViewport?.removeEventListener('resize', place);
-      opener.setAttribute('aria-expanded', 'false');
-      requestAnimationFrame(() => { if (!document.querySelector('dialog[open]') && opener.isConnected) opener.focus({preventScroll:true}); });
-    }, {once:true});
-    window.AppIcons?.render(menu);
-  }
-  const sharedActionMenu=UIShell.actionMenu;
-  UIShell.actionMenu=sharedActionMenu?(menu,opener)=>{menu.classList.add('ui-action-menu');sharedActionMenu(menu,opener);}:actionMenu;
+  // Keep the existing adapter entry point on the common nonmodal dropdown.
+  UIShell.actionMenu = (menu, opener) => { window.AppIcons?.render(menu); UIShell.dropdown.open(menu, opener); };
 
   function writingForm({id, formId, headerSelector, closeSelector, nativeHistory=false}) {
     const host = $(id), form = $(formId);

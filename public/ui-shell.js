@@ -40,25 +40,54 @@
     new MutationObserver(()=>{if(nav.inert||!nav.classList.contains('is-open'))close(false);}).observe(nav,{attributes:true,attributeFilter:['inert','class']});
     return {menu,open,close};
   }
-  // Compatibility adapter for existing board action dialogs: use a nonmodal menu.
-  function actionMenu(dialog,opener){
-    dialog._menuOpener=opener;
-    if(!dialog.dataset.actionMenuBound){
-      dialog.dataset.actionMenuBound='true';
-      dialog.addEventListener('close',()=>{dialog._menuOpener?.setAttribute('aria-expanded','false');if(!document.querySelector('dialog[open]'))dialog._menuOpener?.focus();});
-      dialog.addEventListener('keydown',event=>{const items=Array.from(dialog.querySelectorAll('button:not([hidden]),a:not([hidden])')).filter(item=>!item.disabled),index=items.indexOf(document.activeElement);let next;if(event.key==='Escape'){event.preventDefault();dialog.close();return;}if(event.key==='ArrowDown')next=(index+1)%items.length;else if(event.key==='ArrowUp')next=(index-1+items.length)%items.length;else if(event.key==='Home')next=0;else if(event.key==='End')next=items.length-1;if(next!==undefined){event.preventDefault();items[next]?.focus();}});
-      document.addEventListener('pointerdown',event=>{if(dialog.open&&!dialog.contains(event.target)&&!dialog._menuOpener?.contains(event.target))dialog.close();});
-    }
-    opener.setAttribute('aria-haspopup','menu');opener.setAttribute('aria-expanded','true');dialog.setAttribute('role','menu');
-    dialog.querySelectorAll('button,a').forEach(item=>item.setAttribute('role','menuitem'));
-    if(!dialog.open)dialog.show();
-    dialog.style.position='fixed';dialog.style.inset='auto';dialog.style.margin='0';
-    const anchor=opener.getBoundingClientRect(),box=dialog.getBoundingClientRect();
-    dialog.style.left=Math.max(12,Math.min(anchor.right-box.width,innerWidth-box.width-12))+'px';
-    dialog.style.top=Math.max(12,Math.min(anchor.bottom+8,innerHeight-box.height-12))+'px';
-    dialog.querySelector('button:not([hidden]):not(:disabled),a:not([hidden])')?.focus();
+  // Action menus are nonmodal, anchored dropdowns. Forms retain modal dialogs.
+  let currentMenu=null;
+  function menuItems(menu){return [...menu.querySelectorAll('button,a[href],select,input')].filter(n=>!n.disabled&&!n.hidden&&n.getClientRects().length);}
+  function closeDropdown(restore=false){
+    if(!currentMenu)return;
+    const {menu,opener}=currentMenu;currentMenu=null;
+    if(menu instanceof HTMLDialogElement){if(menu.open)menu.close();}else menu.hidden=true;
+    opener.setAttribute('aria-expanded','false');
+    if(restore&&opener.isConnected)opener.focus({preventScroll:true});
   }
-  window.UIShell={title,actions,drawer,dialogs,searchDialog,settingsMenu,actionMenu};
+  function openDropdown(menu,opener){
+    if(currentMenu?.menu===menu&&currentMenu.opener===opener){closeDropdown(true);return;}
+    bindDropdownEvents();closeDropdown();menu.classList.add('ui-dropdown');
+    menu.setAttribute('role','menu');menu.setAttribute('aria-modal','false');
+    opener.setAttribute('aria-haspopup','menu');opener.setAttribute('aria-controls',menu.id);opener.setAttribute('aria-expanded','true');
+    menu.hidden=false;
+    if(menu instanceof HTMLDialogElement)menu.show();
+    currentMenu={menu,opener};
+    const viewport=window.visualViewport, left=viewport?.offsetLeft||0,top=viewport?.offsetTop||0;
+    const width=viewport?.width||innerWidth,height=viewport?.height||innerHeight;
+    menu.style.maxHeight=Math.max(44,height-24)+'px';
+    const r=opener.getBoundingClientRect(),m=menu.getBoundingClientRect();
+    menu.style.left=Math.max(left+12,Math.min(left+width-m.width-12,r.right-m.width))+'px';
+    const y=r.bottom+6+m.height<=top+height-12?r.bottom+6:r.top-m.height-6;
+    menu.style.top=Math.max(top+12,Math.min(top+height-m.height-12,y))+'px';
+    menuItems(menu).forEach(n=>{if(n.matches('button,a'))n.setAttribute('role','menuitem');});
+    menuItems(menu)[0]?.focus({preventScroll:true});
+    if(!menu.dataset.dropdownBound){menu.dataset.dropdownBound='true';menu.addEventListener('close',()=>{if(currentMenu?.menu===menu&&!menu.open)closeDropdown();});}
+  }
+  let dropdownEventsBound=false;
+  function bindDropdownEvents(){if(dropdownEventsBound)return;dropdownEventsBound=true;
+  document.addEventListener('pointerdown',event=>{if(currentMenu&&!currentMenu.menu.contains(event.target)&&!currentMenu.opener.contains(event.target))closeDropdown();},true);
+  document.addEventListener('focusin',event=>{if(currentMenu&&!currentMenu.menu.contains(event.target)&&!currentMenu.opener.contains(event.target))closeDropdown();});
+  document.addEventListener('keydown',event=>{
+    if(!currentMenu)return;
+    if(event.key==='Escape'){event.preventDefault();event.stopImmediatePropagation();closeDropdown(true);return;}
+    if(event.key==='Tab'){closeDropdown();return;}
+    if(event.target.matches('input,select,textarea'))return;
+    const nodes=menuItems(currentMenu.menu),i=nodes.indexOf(document.activeElement);
+    const next=event.key==='ArrowDown'?(i+1)%nodes.length:event.key==='ArrowUp'?(i+nodes.length-1)%nodes.length:event.key==='Home'?0:event.key==='End'?nodes.length-1:null;
+    if(next!==null){event.preventDefault();event.stopImmediatePropagation();nodes[next]?.focus();}
+  },true);
+  window.addEventListener('resize',()=>closeDropdown());
+  document.addEventListener('scroll',event=>{if(currentMenu&&!currentMenu.menu.contains(event.target))closeDropdown();},true);
+  window.addEventListener('hashchange',()=>closeDropdown());
+  }
+  window.UIShell={title,actions,drawer,dialogs,searchDialog,settingsMenu,actionMenu:openDropdown,dropdown:{open:openDropdown,close:closeDropdown}};
 })();
+
 
 

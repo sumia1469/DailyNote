@@ -13,7 +13,7 @@
     });
   }
   [search,menu,deletion,upload].forEach(outside);
-  menu.addEventListener('close', () => { activeButton?.setAttribute('aria-expanded','false'); });
+  menu.addEventListener('close', () => { if(!menu.open)activeButton?.setAttribute('aria-expanded','false'); });
   menu.addEventListener('keydown', event => {
     const buttons = Array.from(menu.querySelectorAll('button'));
     const index = buttons.indexOf(document.activeElement);
@@ -63,7 +63,7 @@
     },
     addCardMenu(card,worklog,actions,rights){
       const id=String(worklog.id);fold(card,id);
-      const trigger=document.createElement('button');trigger.type='button';trigger.className='shell-icon card-menu-trigger';trigger.dataset.icon='more';trigger.setAttribute('aria-label',(worklog.workDate||'')+' 일지 메뉴');trigger.setAttribute('aria-haspopup','dialog');trigger.setAttribute('aria-expanded','false');
+      const trigger=document.createElement('button');trigger.type='button';trigger.className='shell-icon card-menu-trigger';trigger.dataset.icon='more';trigger.setAttribute('aria-label',(worklog.workDate||'')+' 일지 메뉴');trigger.setAttribute('aria-haspopup','menu');trigger.setAttribute('aria-expanded','false');
       card.querySelector('.card-actions').append(trigger);
       trigger.addEventListener('click',()=>{
         activeButton=trigger;trigger.setAttribute('aria-expanded','true');
@@ -76,7 +76,7 @@
         item('엑셀 다운로드','download',()=>WorklogExcel.download(worklog));
         item(collapsed.has(id)?'내용 펼치기':'내용 접기','journal',()=>{if(collapsed.has(id))collapsed.delete(id);else collapsed.add(id);fold(card,id);});
         if(rights.remove)item('삭제','trash',actions.remove,true);
-        AppIcons.render(items);UIShell.actionMenu(menu,trigger);
+        AppIcons.render(items);UIShell.dropdown.open(menu,trigger);
       });
     }
   };

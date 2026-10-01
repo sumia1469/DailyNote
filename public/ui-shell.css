@@ -86,3 +86,18 @@ body .sidebar-account-actions .shell-icon { scroll-margin-bottom:8px; }
 body .ui-header.ui-header-wide,body #main-section .ui-header.ui-header-wide{grid-template-columns:142px minmax(0,1fr) 142px}
 @media(max-width:600px){body .ui-header.ui-header-wide,body #main-section .ui-header.ui-header-wide{padding-left:12px;padding-right:12px;grid-template-columns:134px minmax(0,1fr) 134px;gap:4px}}
 @media(max-width:360px){body .ui-header.ui-header-wide,body #main-section .ui-header.ui-header-wide{grid-template-columns:112px minmax(0,1fr) 112px}.ui-header-wide .ui-actions{gap:4px}.ui-header-wide .ui-actions .shell-icon{width:34px!important;height:34px!important}}
+
+
+/* Button-anchored action menus: no scrim, centering or focus trap. */
+.ui-dropdown{position:fixed!important;right:auto!important;bottom:auto!important;margin:0!important;width:min(280px,calc(100vw - 24px))!important;max-width:calc(100vw - 24px)!important;box-sizing:border-box;padding:8px!important;border:1px solid var(--line,#e4e4e7);border-radius:14px!important;background:var(--shell-card,#fff);color:var(--text,#27272a);box-shadow:0 8px 28px #0002;overflow:auto;z-index:10000}
+.ui-dropdown[hidden],dialog.ui-dropdown:not([open]){display:none!important}
+.ui-dropdown .journal-dialog-header,.ui-dropdown .calendar-more-heading,.ui-dropdown>p:first-child{display:none}
+.ui-dropdown button,.ui-dropdown a{display:flex;align-items:center;gap:10px;width:100%;min-height:44px;padding:10px 12px;border:0;border-radius:8px;background:transparent;color:inherit;text-align:left;text-decoration:none;font:inherit;cursor:pointer}
+.ui-dropdown button:hover,.ui-dropdown a:hover,.ui-dropdown button:focus-visible,.ui-dropdown a:focus-visible{background:var(--ui-soft,#f4f4f5)}
+.ui-dropdown .menu-danger,.ui-dropdown .board-admin-danger{color:#b42318}
+.ui-dropdown #board-menu-items,.ui-dropdown .board-admin-menu-items{display:grid;gap:2px;margin:0}
+.ui-dropdown #board-menu-error:empty{display:none}
+.ui-dropdown .app-icon{width:20px;height:20px;flex-shrink:0}
+.board-post-row{display:flex;align-items:flex-start;gap:12px}
+.board-post-link{display:block;flex:1;min-width:0;color:inherit;text-decoration:none;overflow-wrap:anywhere}
+.board-post-more{flex-shrink:0;margin-left:auto}
