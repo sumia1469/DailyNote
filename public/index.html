@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="app-shell.css">
   <link rel="stylesheet" href="ui-shell.css">
   <link rel="stylesheet" href="memo.css">
+  <link rel="stylesheet" href="calendar.css">
   <link rel="stylesheet" href="text-import.css"><link rel="stylesheet" href="references.css">
 </head>
 <body>
@@ -46,6 +47,7 @@
     <p class="nav-caption">업무 공간</p>
     <nav class="app-navigation">
       <a href="#worklogs" data-view="worklogs" data-icon="journal">일일리스트</a>
+      <a href="#calendar" data-view="calendar" data-icon="calendar">캘린더</a>
       <a href="#memos" data-view="memos" data-icon="edit">메모</a>
       <a href="#notifications" data-view="notifications" data-icon="notice">공지사항 <span class="nav-badge" id="notification-count" hidden></span></a>
       <a href="#files" data-view="files" data-icon="files">파일관리</a>
@@ -62,6 +64,7 @@
     <button type="button" class="shell-icon mobile-menu" id="sidebar-open" aria-label="메뉴 열기" aria-expanded="false" aria-controls="app-sidebar" data-icon="menu"></button>
     <div class="main-title ui-title"><h1 id="shell-title">일일리스트</h1><small>DailyNote</small></div>
     <div class="main-actions ui-actions">
+      <button type="button" id="open-calendar-btn" class="shell-icon" aria-label="일정 추가" title="일정 추가" data-icon="plus" hidden></button>
       <button type="button" id="open-memo-search-btn" class="shell-icon" aria-label="메모 검색" title="메모 검색" data-icon="search" hidden></button>
       <button type="button" id="open-memo-btn" class="shell-icon" aria-label="새 메모 등록" title="새 메모 등록" data-icon="plus" hidden></button>
       <button type="button" id="open-search-btn" class="shell-icon" aria-label="일지 검색" title="일지 검색" data-icon="search"></button>
@@ -71,6 +74,16 @@
   </header>
   <button type="button" id="notification-back" class="shell-icon ui-back" aria-label="공지 목록으로 돌아가기" data-icon="back" hidden></button>
   <p id="no-access" class="empty-state" hidden>사용 가능한 메뉴가 없습니다. 관리자에게 권한을 요청해 주세요.</p>
+  <section id="view-calendar" class="calendar-page" hidden>
+    <div class="calendar-toolbar">
+      <div class="calendar-navigation"><button type="button" id="calendar-today">오늘</button><button type="button" id="calendar-prev" aria-label="이전 기간">‹</button><button type="button" id="calendar-next" aria-label="다음 기간">›</button><h2 id="calendar-period"></h2></div>
+      <div class="calendar-tools"><label class="calendar-jump-label"><span class="sr-only">날짜 이동</span><input type="date" id="calendar-jump" min="1900-01-01" max="2100-12-31" aria-label="날짜 이동"></label><div class="calendar-view-switch" role="group" aria-label="캘린더 보기"><button type="button" data-calendar-view="month" aria-pressed="true">월간</button><button type="button" data-calendar-view="week" aria-pressed="false">주간</button><button type="button" data-calendar-view="day" aria-pressed="false">일간</button></div></div>
+    </div>
+    <div class="calendar-filters" aria-label="표시할 내용"><label><input type="checkbox" data-calendar-filter="events" checked> 일정</label><label><input type="checkbox" data-calendar-filter="worklogs" checked> 일일 투두</label><label><input type="checkbox" data-calendar-filter="memos" checked> 메모</label><label><input type="checkbox" data-calendar-filter="files" checked> 파일</label><button type="button" id="calendar-notify">기기 알림 켜기</button><span>한국 시간</span></div>
+    <p id="calendar-status" role="status" aria-live="polite"></p>
+    <div class="calendar-layout"><div id="calendar-grid" class="calendar-grid" aria-label="일정 달력"></div><aside id="calendar-agenda" class="calendar-agenda" aria-label="선택한 날짜의 내용"></aside></div>
+    <p class="calendar-footnote">메모는 작성일, 파일은 등록일, 일일 투두는 업무일자에 표시됩니다. 일정 알림은 로그인한 앱이 열려 있을 때 동작합니다.</p>
+  </section>
   <section id="view-memos" hidden><div id="memo-selection-bar" class="memo-selection-bar" hidden><label><input type="checkbox" id="memo-select-all"> 전체 선택</label><span id="memo-selection-count" role="status">0개 선택</span><button type="button" id="memo-delete-selected" data-icon="trash" disabled>선택 삭제</button><button type="button" id="memo-clear-selection" disabled>선택 해제</button></div><p id="memo-list-status" role="status"></p><div id="memo-list" class="memo-list"></div></section>
   <!-- 공지 -->
   <section id="view-notifications" class="content-card notification-section" hidden>
@@ -247,6 +260,22 @@
     <small>잠시만 기다려 주세요.</small>
   </div>
 </div>
+<dialog id="calendar-event-dialog" class="journal-dialog calendar-event-dialog" aria-labelledby="calendar-event-heading">
+  <div class="journal-dialog-header"><h2 id="calendar-event-heading">일정 추가</h2><button type="button" id="calendar-event-close" class="shell-icon" data-icon="close" aria-label="일정 닫기"></button></div>
+  <form id="calendar-event-form">
+    <div class="form-field"><label for="calendar-title">제목</label><input id="calendar-title" maxlength="200" required></div>
+    <div class="calendar-form-row"><div class="form-field"><label for="calendar-kind">종류</label><select id="calendar-kind"><option value="schedule">일정</option><option value="dayoff">휴무·휴가</option></select></div><div class="form-field"><label for="calendar-color">색상</label><select id="calendar-color"><option value="blue">파랑</option><option value="green">초록</option><option value="orange">주황</option><option value="purple">보라</option><option value="red">빨강</option></select></div></div>
+    <label class="calendar-allday"><input type="checkbox" id="calendar-allday"> 종일</label>
+    <div class="calendar-form-row"><div class="form-field"><label for="calendar-start">시작</label><input id="calendar-start" type="datetime-local" required></div><div class="form-field"><label for="calendar-end">종료</label><input id="calendar-end" type="datetime-local" required></div></div>
+    <p id="calendar-date-help">한국 시간 기준으로 등록됩니다.</p>
+    <div class="form-field"><label for="calendar-reminder">알림</label><select id="calendar-reminder"><option value="">없음</option><option value="0">시작 시</option><option value="5">5분 전</option><option value="10">10분 전</option><option value="30">30분 전</option><option value="60">1시간 전</option><option value="1440">1일 전</option></select></div>
+    <div class="form-field"><label for="calendar-description">일정 메모</label><textarea id="calendar-description" rows="4" maxlength="5000"></textarea></div>
+    <p id="calendar-event-error" class="calendar-error" role="alert"></p>
+    <div class="calendar-form-actions"><button type="button" id="calendar-event-delete" class="danger-btn" hidden>삭제</button><button type="button" id="calendar-event-cancel">취소</button><button type="submit" id="calendar-event-save" class="primary-btn">저장</button></div>
+  </form>
+</dialog>
+<div id="calendar-reminders" class="calendar-reminders" aria-live="polite"></div>
+
 <script src="list-editor.js"></script>
 <script src="todo-tree.js"></script>
 <script src="todo-inline.js"></script>
@@ -257,6 +286,7 @@
 <script src="screen-settings.js"></script>
 <script src="ui-config.js"></script>
 <script src="ui-shell.js"></script>
+<script src="calendar-core.js"></script><script src="calendar-holidays.js"></script><script src="calendar.js"></script>
 <script src="reference-core.js"></script><script src="references.js"></script><script src="app-shell.js"></script>
 <script src="worklog-excel.js"></script>
 <script src="journal-controls.js"></script>
