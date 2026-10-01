@@ -3,3 +3,18 @@
 #board-title{width:100%}.board-menu button{text-align:left}.board-manage-form input,.board-manage-form textarea{font-size:16px;width:100%;box-sizing:border-box}.board-manage-form input[type=checkbox]{width:auto}#board-form-error,#board-manage-error{overflow-wrap:anywhere}
 
 #board-editor input:not([type=file]),#board-editor select,#board-search-dialog input,#board-search-dialog select,.board-manage-form input:not([type=checkbox]),.board-manage-form textarea{border:1px solid #d4d4d8;border-radius:10px;background:#fff;color:#27272a;padding:10px 12px;min-height:42px;box-sizing:border-box}#board-editor input:focus,#board-body:focus{outline:2px solid #a1a1aa;outline-offset:2px}
+
+/* Board management: title and details stack, with a single trailing action. */
+.board-admin-row{display:grid;grid-template-columns:minmax(0,1fr) 42px;align-items:start;gap:16px;padding:20px 16px;flex-wrap:nowrap}
+.board-admin-content{min-width:0;display:grid;gap:6px}.board-admin-title{display:block;font-size:18px;line-height:1.45;overflow-wrap:anywhere}
+.board-admin-row .board-admin-meta{display:block;flex:none;font-size:14px;line-height:1.6;overflow-wrap:anywhere}
+.board-admin-description{margin:2px 0 0;font-size:14px;line-height:1.6;color:var(--muted,#71717a);white-space:pre-wrap;overflow-wrap:anywhere}
+.board-admin-more{width:42px;height:42px;margin:0;flex-shrink:0}.board-admin-more .app-icon{width:22px;height:22px}
+.board-admin-popup{width:min(380px,calc(100vw - 32px));box-sizing:border-box;padding:20px;max-height:calc(100dvh - 32px);overflow:auto}
+.board-admin-popup .journal-dialog-header h2{font-size:18px;min-width:0;overflow-wrap:anywhere}
+.board-admin-menu-items{display:grid;gap:6px;margin-top:12px}
+.board-admin-menu-items button,.board-admin-menu-items a{display:flex;align-items:center;justify-content:flex-start;gap:12px;width:100%;min-height:48px;box-sizing:border-box;padding:12px 14px;border:0;border-radius:12px;background:transparent;color:inherit;text-align:left;text-decoration:none;font-size:16px;cursor:pointer}
+.board-admin-menu-items button:hover,.board-admin-menu-items a:hover{background:var(--ui-soft,#f4f4f5)}
+.board-admin-menu-items .board-admin-danger,#board-admin-delete-error{color:#b42318}.board-admin-menu-items .app-icon{width:20px;height:20px;flex-shrink:0}
+.board-admin-popup p{overflow-wrap:anywhere}.board-admin-popup .journal-dialog-actions button{min-height:44px}
+@media(max-width:600px){.board-admin-row{padding:18px 8px;gap:12px}}
