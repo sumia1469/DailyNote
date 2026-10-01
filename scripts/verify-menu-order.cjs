@@ -8,7 +8,7 @@ const ds=require('../src/datastore'),{makeUserRecord}=require('../src/auth'),han
  await ds.insert('site_settings',{values:{background:'none'}});
  for(const [name,group,order,inMenu,active] of [['첫 게시판','A',6,true,true],['둘째 게시판','B',7,true,true],['마지막 게시판','A',8,true,true],['숨김 게시판','A',0,false,true],['보관 게시판','A',0,true,false]])await ds.insert('boards',{name,group,order,inMenu,active,categories:[],description:''});
  server=http.createServer(handler);await new Promise(r=>server.listen(0,'127.0.0.1',r));const base='http://127.0.0.1:'+server.address().port;
- browser=await chromium.launch({executablePath:process.env.BROWSER_EXECUTABLE_PATH,args:['--no-sandbox']});const page=await browser.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
+ browser=await chromium.launch({executablePath:process.env.BROWSER_EXECUTABLE_PATH,args:['--no-sandbox']});const page=await browser.newPage();const errors=[];page.on('pageerror',e=>{errors.push(e.message);console.error('PAGE ERROR',e.message);});
  await page.goto(base);await page.locator('#username').fill('순서검토');await page.locator('#password').fill('local-menu-password');await page.locator('.login-btn').click();await page.locator('#main-section').waitFor({state:'visible'});assert.ok(page.url().endsWith('#worklogs'));
  for(const [width,height] of [[1440,1000],[390,844]]){
   await page.setViewportSize({width,height});await page.goto(base+'/#boards');await page.locator('[data-board-nav="3"]').waitFor({state:'attached'});

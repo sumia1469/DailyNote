@@ -45,7 +45,7 @@
     dialog._menuOpener=opener;
     if(!dialog.dataset.actionMenuBound){
       dialog.dataset.actionMenuBound='true';
-      dialog.addEventListener('close',()=>{dialog._menuOpener?.setAttribute('aria-expanded','false');dialog._menuOpener?.focus();});
+      dialog.addEventListener('close',()=>{dialog._menuOpener?.setAttribute('aria-expanded','false');if(!document.querySelector('dialog[open]'))dialog._menuOpener?.focus();});
       dialog.addEventListener('keydown',event=>{const items=Array.from(dialog.querySelectorAll('button:not([hidden]),a:not([hidden])')).filter(item=>!item.disabled),index=items.indexOf(document.activeElement);let next;if(event.key==='Escape'){event.preventDefault();dialog.close();return;}if(event.key==='ArrowDown')next=(index+1)%items.length;else if(event.key==='ArrowUp')next=(index-1+items.length)%items.length;else if(event.key==='Home')next=0;else if(event.key==='End')next=items.length-1;if(next!==undefined){event.preventDefault();items[next]?.focus();}});
       document.addEventListener('pointerdown',event=>{if(dialog.open&&!dialog.contains(event.target)&&!dialog._menuOpener?.contains(event.target))dialog.close();});
     }

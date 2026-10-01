@@ -56,11 +56,10 @@
       <a href="#boards" data-view="boards" data-icon="notice">공유게시판</a>
       <div id="board-navigation"></div>
     </nav>
-    <button type="button" class="sidebar-account profile-trigger" id="profile-open" aria-label="본인 프로필 수정" aria-haspopup="dialog"><span class="profile-avatar" id="account-avatar" aria-hidden="true"></span><div><strong id="shell-account">내 업무 공간</strong><small id="account-username">DailyNote</small></div></button>
+    <div class="sidebar-account-footer"><button type="button" class="sidebar-account profile-trigger" id="profile-open" aria-label="본인 프로필 수정" aria-haspopup="dialog"><span class="profile-avatar" id="account-avatar" aria-hidden="true"></span><div><strong id="shell-account">내 업무 공간</strong><small id="account-username">DailyNote</small></div></button>
     <div class="sidebar-account-actions" aria-label="계정 메뉴">
-      <button type="button" id="account-settings-open" class="shell-icon" title="설정" aria-label="설정" aria-haspopup="dialog" aria-expanded="false" data-icon="appearance"></button>
-      <button type="button" id="logout-btn" class="shell-icon" title="로그아웃" aria-label="로그아웃" data-icon="logout"></button>
-    </div>
+      <button type="button" id="account-settings-open" class="shell-icon" title="설정" aria-label="설정" aria-haspopup="menu" aria-expanded="false" data-icon="appearance"></button>
+    </div></div>
   </aside>
   <header class="main-header ui-header">
     <button type="button" class="shell-icon mobile-menu" id="sidebar-open" aria-label="메뉴 열기" aria-expanded="false" aria-controls="app-sidebar" data-icon="menu"></button>
@@ -320,3 +319,4 @@
 <script src="text-import.js"></script><script src="editor-add-menu.js"></script>
 </body>
 </html>
+
