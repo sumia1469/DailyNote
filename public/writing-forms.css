@@ -66,3 +66,10 @@ body #board-editor.ui-writing-screen{max-width:none;margin:0;left:0}body #board-
 
 
 body .ui-writing-page>form,body #worklog-modal.ui-writing-page .modal-dialog{position:relative;z-index:1}
+
+/* Account and upload forms share the same paper and fixed header as memo writing. */
+body #admin-upload-dialog.ui-writing-screen>form{align-items:stretch;flex-wrap:nowrap;gap:0}
+body #user-dialog .ui-writing-paper input:not([type=hidden]),body #user-dialog .ui-writing-paper select,body #admin-upload-dialog .ui-writing-paper input[type=file]{width:100%;max-width:100%;min-width:0;font-size:16px;box-sizing:border-box}
+body #admin-upload-dialog .ui-writing-paper input[type=file]{display:block;padding:16px 0;overflow:hidden}
+body #user-dialog .ui-writing-paper small,body #admin-upload-dialog .ui-writing-paper small{display:block;margin-top:8px;line-height:1.6;overflow-wrap:anywhere}
+

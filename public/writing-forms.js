@@ -64,7 +64,7 @@
       document.body.classList.add('ui-writing-open');
       host.setAttribute('open',''); host.setAttribute('aria-hidden','false'); host.classList.add('open');
       host.querySelector('.ui-writing-paper,.memo-paper')?.scrollTo(0,0);
-      requestAnimationFrame(() => host.querySelector('input:not([type=hidden]):not([type=checkbox]):not([type=file]),textarea,[contenteditable],button')?.focus({preventScroll:true}));
+      requestAnimationFrame(() => host.querySelector('input:not([type=hidden]):not([type=checkbox]),textarea,[contenteditable],button')?.focus({preventScroll:true}));
     };
     host.close = () => {
       if (!host.open) return;
@@ -116,7 +116,7 @@
     const state = {...history.state}; delete state.writingPage; history.replaceState(state,'',url);
   }
 
-  function writingForm({id, formId, headerSelector, closeSelector, nativeHistory=false}) {
+  function writingForm({id, formId, headerSelector, closeSelector, nativeHistory=false, recordHistory=true}) {
     let host = $(id); const form = $(formId);
     if (!host || !form || host.dataset.writingBound) return;
     host = pageHost(host);
@@ -141,7 +141,7 @@
     left.append(closer);
     const undo = nativeHistory ? form.querySelector('[data-board-command=undo]') : icon('undo','실행 취소');
     const redo = nativeHistory ? form.querySelector('[data-board-command=redo]') : icon('redo','다시 실행');
-    [undo,redo].forEach((b,i) => { b.classList.add('shell-icon'); b.dataset.icon = i ? 'redo' : 'undo'; b.textContent = ''; left.append(b); });
+    [undo,redo].forEach((b,i) => { b.classList.add('shell-icon'); b.dataset.icon = i ? 'redo' : 'undo'; b.textContent = ''; if (recordHistory) left.append(b); });
     // Keep the submit inside the form: existing adapters query it and own validation/saving.
     const save = form.querySelector('[type=submit]'); right.append(save);
     header.replaceChildren(left,heading,right);
@@ -174,7 +174,7 @@
     const busy = () => save.disabled;
     function update() { if (!nativeHistory) { const a=cursor<=0||busy(),b=cursor>=history.length-1||busy(); if(undo.disabled!==a)undo.disabled=a; if(redo.disabled!==b)redo.disabled=b; } }
     function checkpoint() {
-      if (nativeHistory || restoring) return;
+      if (nativeHistory || !recordHistory || restoring) return;
       const state = snapshot();
       if (JSON.stringify(state) === JSON.stringify(history[cursor])) return;
       history = history.slice(0,cursor+1); history.push(state); if (history.length > 100) history.shift(); cursor = history.length-1; update();
@@ -186,6 +186,7 @@
       restoring = false; update();
     }
     if (!nativeHistory) { undo.onclick = () => travel(-1); redo.onclick = () => travel(1); form.addEventListener('input',checkpoint); form.addEventListener('change',checkpoint); }
+    host.addEventListener('close', () => { history=[]; cursor=-1; update(); });
     new MutationObserver(changes => {
       if (changes.some(x => x.attributeName === 'open' || x.attributeName === 'aria-hidden')) {
         if (host.open || host.classList.contains('open')) { history=[]; cursor=-1; checkpoint(); host.dataset.editing='false'; viewport(); }
@@ -201,7 +202,7 @@
   writingForm({id:'harness-dialog',formId:'harness-form',headerSelector:'.admin-dialog-header',closeSelector:'#harness-dialog-close'});
   writingForm({id:'board-manage-dialog',formId:'board-manage-form',headerSelector:'.journal-dialog-header',closeSelector:'#board-manage-close'});
   writingForm({id:'user-dialog',formId:'user-form',headerSelector:'.admin-dialog-header',closeSelector:'[data-close-dialog=user-dialog]'});
-  writingForm({id:'admin-upload-dialog',formId:'admin-upload-form',headerSelector:'.admin-dialog-header',closeSelector:'[data-close-dialog=admin-upload-dialog]'});
+  writingForm({id:'admin-upload-dialog',formId:'admin-upload-form',headerSelector:'.admin-dialog-header',closeSelector:'[data-close-dialog=admin-upload-dialog]',recordHistory:false});
   writingForm({id:'upload-dialog',formId:'upload-form',headerSelector:'.journal-dialog-header',closeSelector:'#upload-close'});
   const memo = $('memo-editor') ? pageHost($('memo-editor')) : null;
   if (memo) {
@@ -211,4 +212,5 @@
   }
   window.WritingForms = {register:writingForm};
 })();
+
 
