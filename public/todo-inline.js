@@ -1,8 +1,8 @@
 (function(){
  let menuId=0;
- function attach(row,text,todo,onSave,items){
+ function attach(row,text,todo,onSave,items,title='TODO'){
   text.classList.add('todo-text-btn');
-  text.title='더블클릭 또는 두 번 탭으로 TODO 수정';
+  text.title='더블클릭 또는 두 번 탭으로 '+title+' 수정';
   text.setAttribute('aria-label',(todo.task||'내용 없는 항목')+' 수정');
   function begin(){
    const card=row.closest('.worklog-card');
@@ -11,7 +11,7 @@
    const controls=Array.from(document.querySelectorAll('.worklog-card button,.worklog-card input,#duplicate-worklog-btn,#open-worklog-btn,#filter-btn,#reset-filter-btn,#filter-date,#open-search-btn,#worklog-search-submit,#worklog-search-nav button')).map(element=>({element,disabled:element.disabled}));
    controls.forEach(({element})=>element.disabled=true);
    const editor=document.createElement('div');editor.className='todo-inline-editor';
-   const input=document.createElement('textarea');input.rows=2;input.value=todo.task||'';input.setAttribute('aria-label','TODO 내용 수정');
+   const input=document.createElement('textarea');input.rows=2;input.value=todo.task||'';input.setAttribute('aria-label',title+' 내용 수정');
    const actions=document.createElement('div');actions.className='todo-inline-actions';
    const additions=[];
    const drafts=document.createElement('div');
@@ -36,7 +36,7 @@
    async function submit(){
     if(saving)return;
     const value=input.value.trim();
-    if(!value){message.textContent='TODO 내용을 입력하세요.';input.focus();return;}
+    if(!value){message.textContent=title+' 내용을 입력하세요.';input.focus();return;}
     if(additions.some(a=>!a.field.value.trim())){message.textContent='추가할 항목 내용을 입력하세요.';return;}
     if(value===(todo.task||'')&&!additions.length){close();return;}
     saving=true;card.dataset.todoSaving='true';editor.querySelectorAll('button,textarea').forEach(el=>{el.dataset.wasDisabled=String(el.disabled);el.disabled=true;});save.textContent='저장 중…';message.textContent='';

@@ -32,8 +32,8 @@
   try{await state.onSave(copy);}catch(error){message.textContent=(error.message||'위치를 저장하지 못했습니다.')+' 기존 위치를 유지했습니다.';}
   finally{delete card.dataset.todoSaving;controls.forEach(({element,disabled})=>{if(element.isConnected)element.disabled=disabled;});}
  }
- function attach(row,todo,worklog,onSave){
-  const handle=document.createElement('button');handle.type='button';handle.className='todo-drag-handle';handle.setAttribute('aria-label','TODO 위치 이동');handle.title='드래그로 위치 이동 · Alt+↑/↓ 순서 변경';handle.setAttribute('aria-pressed','false');
+ function attach(row,todo,worklog,onSave,title='TODO'){
+  const handle=document.createElement('button');handle.type='button';handle.className='todo-drag-handle';handle.setAttribute('aria-label',title+' 위치 이동');handle.title='드래그로 위치 이동 · Alt+↑/↓ 순서 변경';handle.setAttribute('aria-pressed','false');
   const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('aria-hidden','true');for(const x of [8,16])for(const y of [5,12,19]){const dot=document.createElementNS(svg.namespaceURI,'circle');dot.setAttribute('cx',x);dot.setAttribute('cy',y);dot.setAttribute('r','1.7');dot.setAttribute('fill','currentColor');svg.append(dot);}handle.append(svg);row.append(handle);
   handle.addEventListener('contextmenu',event=>event.preventDefault());
   const state={row,todo,worklog,onSave,handle};rows.set(row,state);

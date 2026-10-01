@@ -464,7 +464,7 @@ function openWorklogModal(worklog = null) {
   form.nextDayPlan.value = isEdit ? arrayToLines(worklog.nextDayPlan) : '';
   form.remarks.value = isEdit ? worklog.remarks || '' : '';
   form.memo.value = isEdit ? worklog.memo || '' : '';
-  [form.todo, form.nextDayPlan, form.memo].forEach(input => input.dispatchEvent(new Event('input')));
+  [form.todo, form.nextDayPlan, form.remarks, form.memo].forEach(input => input.dispatchEvent(new Event('input')));
   modal.classList.add('open');
   modal.querySelector('.modal-dialog').scrollTop = 0;
   modal.setAttribute('aria-hidden', 'false');
@@ -540,10 +540,11 @@ document.getElementById('worklog-form').addEventListener('submit', async e => {
   const payload = {
     workDate: form.workDate.value,
     todo,
-    nextDayPlan: linesToArray(form.nextDayPlan.value),
+    nextDayPlan: mergeTodoChecked(linesToArray(form.nextDayPlan.value), previousWorklog?.nextDayPlan || []),
     remarks: form.remarks.value.trim(),
     memo: form.memo.value.trim()
   };
+  for(const key of ['remarks','memo'])payload[key+'Items']=mergeTodoChecked(linesToArray(payload[key]),previousWorklog?WorklogSections.read(previousWorklog,key,linesToArray,arrayToLines):[]);
   const url = id ? `/api/worklogs/${id}` : '/api/worklogs';
   const method = id ? 'PUT' : 'POST';
   const saveButton = document.getElementById('worklog-save-btn')
@@ -858,49 +859,10 @@ function renderWorklogs(worklogs) {
     /* 카드 본문 */
     const cardBody = document.createElement('div');
     cardBody.className = 'card-body';
-    //TODO영역
-    const todoSection = document.createElement('section');
-    todoSection.className = 'card-section';
-    const todoTitle = document.createElement('h3');
-    todoTitle.textContent = 'TO-DO';
-    const todoContainer = document.createElement('div');
-    todoContainer.className = 'todo-list';
-    if (todoList.length === 0) {
-      const emptyTodo = document.createElement('p');
-      emptyTodo.className = 'section-empty';
-      emptyTodo.textContent = '등록된 TO-DO가 없습니다.'
-      todoContainer.appendChild(emptyTodo);
-    } else {
-      appendTodoNodes(todoContainer, todoList, worklog)
-    }
-    todoSection.appendChild(todoTitle);
-    todoSection.appendChild(todoContainer);
-    /* 익일 계획 영역 */
-    const planSection = document.createElement('section');
-    planSection.className = 'card-section';
-    const planTitle = document.createElement('h3');
-    planTitle.textContent = '익일 계획'
+    const sectionServices={canEdit:canUse('worklogEdit'),parse:linesToArray,serialize:arrayToLines,render:()=>renderWorklogs(currentWorklogs),save:async(log,payload)=>{const response=await authFetch(`/api/worklogs/${log.id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});if(!response.ok){const result=await response.json().catch(()=>({}));throw new Error(result.message||'내용을 저장하지 못했습니다.');}}};
+    cardBody.append(WorklogSections.create(worklog,'todo','TODO',sectionServices),WorklogSections.create(worklog,'nextDayPlan','익일 계획',sectionServices));
+    const cardFooter=document.createElement('div');cardFooter.className='card-footer';cardFooter.append(WorklogSections.create(worklog,'remarks','비고',sectionServices),WorklogSections.create(worklog,'memo','메모',sectionServices));
 
-    planSection.appendChild(planTitle);
-    if (nextDayPlanList.length === 0) {
-      const emptyPlan = document.createElement('p');
-      emptyPlan.className = 'section-empty';
-      emptyPlan.textContent = '등록된 익일 계획이 없습니다.';
-      planSection.appendChild(planTitle);
-      planSection.appendChild(emptyPlan);
-    } else {
-      const planTree = createPlanTree(nextDayPlanList);
-      planSection.appendChild(planTree)
-    }
-    cardBody.appendChild(todoSection);
-    cardBody.appendChild(planSection);
-    /*카드 하단*/
-    const cardFooter = document.createElement('div');
-    cardFooter.className = 'card-footer';
-    const remarksSection = createInfoSection('비고', worklog.remarks);
-    const memoSection = createInfoSection('메모', worklog.memo);
-    cardFooter.appendChild(remarksSection);
-    cardFooter.appendChild(memoSection);
     /*카드 하단End*/
     card.appendChild(cardHeader);
     card.appendChild(cardBody);

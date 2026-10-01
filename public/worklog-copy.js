@@ -8,6 +8,7 @@
       return [{...item,checked:Boolean(item.checked),children}];
     });
   }
-  function makeCopy(worklog,date,removeChecked=false){return {workDate:date,todo:copyItems(worklog.todo,removeChecked),nextDayPlan:copyItems(worklog.nextDayPlan,false),remarks:worklog.remarks||'',memo:worklog.memo||''};}
+  function makeCopy(worklog,date,removeChecked=false){return {workDate:date,todo:copyItems(worklog.todo,removeChecked),nextDayPlan:copyItems(worklog.nextDayPlan,false),remarks:worklog.remarks||'',memo:worklog.memo||'',...(Array.isArray(worklog.remarksItems)?{remarksItems:copyItems(worklog.remarksItems,false)}:{}),...(Array.isArray(worklog.memoItems)?{memoItems:copyItems(worklog.memoItems,false)}:{})};}
   if(typeof module!=='undefined'&&module.exports)module.exports={makeCopy};else root.WorklogCopy={makeCopy};
 })(typeof window!=='undefined'?window:globalThis);
+

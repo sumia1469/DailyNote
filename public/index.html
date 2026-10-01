@@ -179,7 +179,12 @@
       <!-- 비고와 메모 -->
       <div class="form-field">
         <label for="remarks">비고</label>
-        <input type="text" id="remarks" name="remarks">
+        <textarea id="remarks" name="remarks" rows="3"></textarea>
+        <div class="list-editor-toolbar" data-editor="remarks" role="group" aria-label="비고 목록 편집">
+          <button type="button" class="secondary-btn" data-action="outdent" aria-controls="remarks" data-icon="outdent">상위로</button>
+          <button type="button" class="secondary-btn" data-action="indent" aria-controls="remarks" data-icon="indent">하위로</button>
+          <button type="button" class="secondary-btn" data-action="add-menu" aria-haspopup="dialog" aria-expanded="false" aria-controls="remarks" data-icon="plus">항목 추가</button>
+        </div>
       </div>
       <div class="form-field">
         <label for="memo">메모</label>
@@ -246,6 +251,7 @@
 <script src="todo-tree.js"></script>
 <script src="todo-inline.js"></script>
   <script src="todo-drag.js"></script>
+<script src="worklog-sections.js"></script>
 <script src="worklog-copy.js"></script>
 <script src="icons.js"></script>
 <script src="screen-settings.js"></script>
@@ -261,7 +267,6 @@
 <script src="text-import.js"></script><script src="editor-add-menu.js"></script>
 </body>
 </html>
-
 
 
 

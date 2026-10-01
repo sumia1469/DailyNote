@@ -12,10 +12,12 @@ async function getWorkLogs(req, res, auth) {
   sendJson(res, 200, list);
 }
 async function createWorkLog(req, res, auth) {
-  const {workDate, todo, nextDayPlan, remarks, memo} = await parseJsonBody(req);
+  const {workDate, todo, nextDayPlan, remarks, memo, remarksItems, memoItems} = await parseJsonBody(req);
+  if((remarksItems!==undefined&&(!Array.isArray(remarksItems)||typeof remarks!=='string'))||(memoItems!==undefined&&(!Array.isArray(memoItems)||typeof memo!=='string')))return sendJson(res,400,{message:'비고·메모 항목은 본문과 항목 배열을 함께 입력하세요.'});
   if (!workDate || !todo) return sendJson(res, 400, {message: 'workDate & todo required'});
   const newLog = await ds.insert('work_logs', {
     userId: auth.userId, workDate, todo, completed: false,
+    ...(Array.isArray(remarksItems)?{remarksItems}:{}),...(Array.isArray(memoItems)?{memoItems}:{}),
     nextDayPlan: nextDayPlan || [], remarks: remarks || '', memo: memo || '',
     createdAt: new Date().toISOString(), updatedAt: new Date().toISOString()
   });
@@ -24,12 +26,14 @@ async function createWorkLog(req, res, auth) {
 async function updateWorkLog(req, res, auth, id) {
   if (!await ds.findOne('work_logs', w => w.id === id && w.userId === auth.userId)) return sendJson(res, 404, {message: 'Worklog not found'});
   const payload = await parseJsonBody(req);
-  const allowed = ['workDate', 'todo', 'completed', 'nextDayPlan', 'remarks', 'memo'];
+  for(const key of ['remarks','memo']){if(payload[key+'Items']!==undefined&&(!Array.isArray(payload[key+'Items'])||typeof payload[key]!=='string'))return sendJson(res,400,{message:'비고·메모 항목은 본문과 항목 배열을 함께 입력하세요.'});}
+  const allowed = ['workDate', 'todo', 'completed', 'nextDayPlan', 'remarks', 'memo', 'remarksItems', 'memoItems'];
   const updates = {};
   for (const key of allowed) {
     if (payload[key] !== undefined) updates[key] = payload[key];
   }
   if (Object.keys(updates).length === 0) return sendJson(res, 400, {message: 'No updatable fields'});
+  for(const key of ['remarks','memo'])if(payload[key]!==undefined&&payload[key+'Items']===undefined)updates[key+'Items']=null;
   updates.updatedAt = new Date().toISOString();
   const updated = await ds.update('work_logs', id, updates);
   if (!updated) return sendJson(res, 404, {message: 'Worklog not found'});
