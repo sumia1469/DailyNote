@@ -1,5 +1,9 @@
 .text-import-buttons {display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 .text-import-buttons button {min-height:44px;display:inline-flex;align-items:center;justify-content:center;gap:7px;flex:1}
+.list-editor-toolbar {display:flex;flex-wrap:nowrap;gap:6px}
+.list-editor-toolbar button {flex:1;min-width:0;white-space:nowrap;font-size:14px;padding:9px 4px}
+.editor-add-dialog button {display:flex;align-items:center;gap:10px;width:100%;min-height:44px;padding:10px;border:0;border-radius:12px;background:transparent;color:inherit;text-align:left;font-size:16px}
+.editor-add-dialog button:hover,.editor-add-dialog button:focus-visible {background:#f1f5f9}
 .text-import-dialog {width:min(720px,calc(100vw - 24px));max-height:calc(100dvh - 24px);box-sizing:border-box;overflow:auto}
 .text-import-dialog [hidden] {display:none!important}
 .text-import-dialog .form-field {margin:12px 0}

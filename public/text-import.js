@@ -3,7 +3,7 @@
   if (!dialog) return;
   const $ = id => document.getElementById('import-' + id);
   const libraries = new Map();
-  let target, opener, file, kind, job = 0, parser, ocr, pdfTask, busy = false;
+  let target, opener, focusDestination, file, kind, job = 0, parser, ocr, pdfTask, busy = false;
   function loadScript(path, name) {
     if (window[name]) return Promise.resolve(window[name]);
     if (!libraries.has(path)) libraries.set(path, new Promise((resolve, reject) => {
@@ -17,7 +17,7 @@
   function setBusy(value) {
     busy = value; $('read').disabled = value || !file;
     $('apply').disabled = value || !$('preview').value.trim();
-    ['file','sheet','column','encoding','ocr-language'].forEach(id => $(id).disabled = value);
+    ['file','sheet','column','encoding','ocr-language','ocr-layout','ocr-rotation'].forEach(id => $(id).disabled = value);
     $('progress').hidden = !value;
     $('preview').readOnly = value;
   }
@@ -108,7 +108,34 @@
       return pages.join('\n');
     } finally {await task.destroy();if(pdfTask===task)pdfTask=null;}
   }
+  async function imageCanvas(selected) {
+    const url = URL.createObjectURL(selected), image = new Image();
+    try {
+      await new Promise((resolve,reject) => {image.onload=resolve;image.onerror=()=>reject(Error('사진을 열지 못했습니다. JPG 또는 PNG로 저장해 다시 선택해 주세요.'));image.src=url;});
+      if (!image.naturalWidth || !image.naturalHeight) throw Error('사진 크기를 확인하지 못했습니다.');
+      // Enlarge small text, composite transparency on white, and bound mobile memory use.
+      const scale = Math.min(2,Math.max(1,1600/Math.max(image.naturalWidth,image.naturalHeight)),4096/Math.max(image.naturalWidth,image.naturalHeight),Math.sqrt(8000000/(image.naturalWidth*image.naturalHeight)));
+      const width=Math.max(1,Math.round(image.naturalWidth*scale)),height=Math.max(1,Math.round(image.naturalHeight*scale));
+      const radians=Number($('ocr-rotation').value)*Math.PI/180, sideways=Number($('ocr-rotation').value)%180!==0;
+      const canvas=document.createElement('canvas'); canvas.width=sideways?height:width;canvas.height=sideways?width:height;
+      const ctx=canvas.getContext('2d',{willReadFrequently:true}); ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);
+      ctx.translate(canvas.width/2,canvas.height/2);ctx.rotate(radians);ctx.drawImage(image,-width/2,-height/2,width,height);
+      return canvas;
+    } finally {URL.revokeObjectURL(url);}
+  }
+  function enhance(canvas) {
+    const ctx=canvas.getContext('2d',{willReadFrequently:true}),pixels=ctx.getImageData(0,0,canvas.width,canvas.height),histogram=new Uint32Array(256);
+    for(let i=0;i<pixels.data.length;i+=4){const grey=Math.round(.299*pixels.data[i]+.587*pixels.data[i+1]+.114*pixels.data[i+2]);histogram[grey]++;}
+    const count=canvas.width*canvas.height;
+    let sum=0,low=0,high=255;
+    for(let i=0;i<256;i++){sum+=histogram[i];if(sum>=count*.01){low=i;break;}}
+    sum=0;for(let i=255;i>=0;i--){sum+=histogram[i];if(sum>=count*.01){high=i;break;}}
+    for(let i=0;i<pixels.data.length;i+=4){let grey=.299*pixels.data[i]+.587*pixels.data[i+1]+.114*pixels.data[i+2];if(high-low>=20)grey=Math.max(0,Math.min(255,(grey-low)*255/(high-low)));pixels.data[i]=pixels.data[i+1]=pixels.data[i+2]=grey;}
+    ctx.putImageData(pixels,0,0);
+  }
   async function readImage(token) {
+    const canvas=await imageCanvas(file);
+    if(token!==job)return {};
     const Tesseract = await loadScript('vendor/ocr/tesseract.min.js','Tesseract');
     if (token !== job) return '';
     const worker = await Tesseract.createWorker($('ocr-language').value, 1, {
@@ -123,7 +150,22 @@
     });
     if (token !== job) {await worker.terminate();return '';}
     ocr = worker;
-    try {const result = await worker.recognize(file);return result.data.text;}
+    try {
+      const layout=$('ocr-layout').value, psm=layout==='column'?'4':layout==='sparse'?'11':'3';
+      await worker.setParameters({tessedit_pageseg_mode:psm,user_defined_dpi:'300'});
+      if(token!==job)return {};
+      let best=(await worker.recognize(canvas,{rotateAuto:true})).data;
+      if(token!==job)return {};
+      if(!best.text.trim()||!Number.isFinite(best.confidence)||best.confidence<65){
+        $('status').textContent='사진 대비·글자 배치를 보정해 다시 읽는 중…';
+        enhance(canvas);
+        await worker.setParameters({tessedit_pageseg_mode:layout==='auto'?'11':psm});
+        if(token!==job)return {};
+        const retry=(await worker.recognize(canvas,{rotateAuto:true})).data;
+        if(retry.text.trim()&&(!best.text.trim()||retry.confidence>best.confidence))best=retry;
+      }
+      return {text:best.text,lowConfidence:!Number.isFinite(best.confidence)||best.confidence<65};
+    }
     finally {await worker.terminate();if(ocr===worker)ocr=null;}
   }
   async function read() {
@@ -132,7 +174,7 @@
     setBusy(true); $('error').textContent = ''; $('status').textContent = '텍스트 읽는 중…'; $('progress').removeAttribute('value');
     try {
       let result = {};
-      if (kind === 'image') result.text = await readImage(token);
+      if (kind === 'image') result = await readImage(token);
       else {
         const buffer = await file.arrayBuffer();
         if (token !== job) return;
@@ -151,32 +193,39 @@
       const text = TextImportCore.normalize(result.text || '');
       if (!text.trim()) throw Error(kind === 'pdf' ? '추출할 텍스트가 없습니다. 스캔 PDF는 페이지를 사진으로 저장한 뒤 사진에서 불러오기를 이용하세요.' : '읽어낸 텍스트가 없습니다. 다른 사진·시트·열을 선택해 주세요.');
       $('preview').value = text;
-      $('status').textContent = `${file.name} · 읽기 완료. 내용을 확인·수정한 뒤 넣어 주세요.`;
+      $('status').textContent = result.lowConfidence
+        ? `${file.name} · 인식 품질이 낮습니다. 글자 부분을 크게 잘라 다시 선택하거나 언어·배치·방향을 바꿔 주세요. 결과를 원본과 비교해 수정한 뒤 넣어 주세요.`
+        : `${file.name} · 읽기 완료. 내용을 확인·수정한 뒤 넣어 주세요.`;
     } catch (error) {if(token===job){$('error').textContent = String(error.message || error);$('status').textContent = '기존 입력 내용은 유지됩니다. 파일을 확인한 뒤 다시 읽어 주세요.';}}
     finally {if(token===job)setBusy(false);}
   }
-  document.querySelectorAll('[data-text-import]').forEach(button => button.addEventListener('click', () => {
-    stop(); opener = button; target = document.getElementById(button.dataset.textImport);
+  function open(targetId, importKind, button) {
+    const destination=document.getElementById(targetId);
+    if(!destination||destination.disabled||destination.readOnly)return;
+    stop(); opener = button; target = destination;
     file = null; kind = ''; $('file').value = ''; $('preview').value = ''; $('error').textContent = '';
     $('sheet-options').hidden = true; $('encoding-options').hidden = true; $('image-options').hidden = true;
-    $('title').textContent = (button.dataset.importKind === 'image' ? '사진' : '파일') + '에서 텍스트 불러오기';
-    $('file').accept = button.dataset.importKind === 'image' ? '.png,.jpg,.jpeg,.webp,.bmp' : '.xlsx,.xls,.ods,.csv,.tsv,.txt,.md,.log,.json,.xml,.html,.htm,.docx,.pdf';
+    $('title').textContent = (importKind === 'image' ? '사진' : '파일') + '에서 텍스트 불러오기';
+    $('file').accept = importKind === 'image' ? '.png,.jpg,.jpeg,.webp,.bmp' : '.xlsx,.xls,.ods,.csv,.tsv,.txt,.md,.log,.json,.xml,.html,.htm,.docx,.pdf';
     $('mode').value = 'append'; $('encoding').value = 'auto'; $('ocr-language').value = 'kor+eng';
+    $('ocr-layout').value='auto';$('ocr-rotation').value='0';
     $('status').textContent = '파일을 선택해 주세요. 원본 파일은 서버에 업로드하지 않습니다.';
     setBusy(false); dialog.showModal();
-  }));
+  }
+  window.TextImport={open};
+  document.querySelectorAll('[data-text-import]').forEach(button => button.addEventListener('click',()=>open(button.dataset.textImport,button.dataset.importKind,button)));
   $('file').addEventListener('change', selectFile);
   $('read').addEventListener('click', read);
-  ['sheet','column','encoding','ocr-language'].forEach(id => $(id).addEventListener('change', read));
+  ['sheet','column','encoding','ocr-language','ocr-layout','ocr-rotation'].forEach(id => $(id).addEventListener('change', read));
   $('preview').addEventListener('input',()=>{$('apply').disabled=busy||!$('preview').value.trim();});
   $('apply').addEventListener('click', () => {
     if (busy || !target || !$('preview').value.trim()) return;
     target.value = TextImportCore.combine(target.value, $('preview').value, $('mode').value);
     target.dispatchEvent(new Event('input', {bubbles:true}));
-    const destination = target; close(); destination.focus(); destination.setSelectionRange(destination.value.length,destination.value.length);
+    const destination = target; focusDestination=destination; close(); destination.focus(); destination.setSelectionRange(destination.value.length,destination.value.length);
   });
   $('close').addEventListener('click', close); $('cancel').addEventListener('click', close);
   dialog.addEventListener('cancel', event => {event.preventDefault();close();});
-  dialog.addEventListener('close', () => {stop();opener?.focus();});
+  dialog.addEventListener('close', () => {stop();const next=focusDestination||opener;focusDestination=null;next?.focus({preventScroll:true});});
   window.addEventListener('hashchange', () => {if(dialog.open)close();});
 })();

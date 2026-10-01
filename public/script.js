@@ -503,7 +503,7 @@ document.querySelector('[data-modal-close]').addEventListener('click', () => {
 /* ESC로 모달 닫기 */
 document.addEventListener('keydown', (e) => {
   const modal = document.getElementById('worklog-modal');
-  if (e.key === 'Escape' && modal.classList.contains('open') && !document.getElementById('text-import-dialog').open) {
+  if (e.key === 'Escape' && modal.classList.contains('open') && !document.getElementById('text-import-dialog').open && !document.getElementById('editor-add-dialog')?.open) {
     closeWorklogModal();
   }
 })
