@@ -1,4 +1,5 @@
 const ds = require('./datastore');
+const {ensureReleaseNotifications} = require('./release-notifications');
 const {sendJson, parseJsonBody} = require('./utils');
 const {makeUserRecord} = require('./auth');
 const {keys, basicKeys, roleOf, safeUser, rightsOf} = require('./permissions');
@@ -85,7 +86,10 @@ async function adminRouter(req,res,auth) {
     }
   }
   if(area==='notifications') {
-    if(method==='GET'&&!id)return sendJson(res,200,await ds.findAll('notifications'));
+    if(method==='GET'&&!id) {
+      await ensureReleaseNotifications(await ds.findAll('users'));
+      return sendJson(res,200,await ds.findAll('notifications'));
+    }
     if(method==='POST'||method==='PUT') {
       const message=String(body.message||'').trim(),userId=Number(body.userId);
       if(!message||message.length>2000)return sendJson(res,400,{message:'알림 내용을 1~2000자로 입력하세요.'});

@@ -68,6 +68,21 @@ async function remove(name, id) {
   await save(name);
   return true;
 }
+let deliveryQueue = Promise.resolve();
+function insertOnce(name, key, obj) {
+  const operation = deliveryQueue.then(async () => {
+    const deliveries = await load(name + '-deliveries');
+    if (deliveries.some(item => item.key === key)) return null;
+    // Recover a notification saved before its delivery marker after interruption.
+    const existing = await findOne(name, item => item.releaseId === obj.releaseId && item.userId === obj.userId);
+    const record = existing || await insert(name, obj);
+    deliveries.push({key, notificationId: record.id});
+    await save(name + '-deliveries');
+    return existing ? null : record;
+  });
+  deliveryQueue = operation.catch(() => {});
+  return operation;
+}
 async function findSessionByToken(token) {
   const arr = await load('sessions');
   return arr.find(s => s.token === token);
@@ -88,7 +103,7 @@ async function deleteExpiredSessions() {
   }
 }
 module.exports = {
-  findAll, findOne, insert, update, remove,
+  findAll, findOne, insert, insertOnce, update, remove,
   findSessionByToken, insertSession, deleteExpiredSessions
 };
 

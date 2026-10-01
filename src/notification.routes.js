@@ -1,11 +1,13 @@
 // src/notification.routes.js — 사진 기반 복원
 const url = require('url');
 const ds = require('./datastore');
+const {ensureReleaseNotifications} = require('./release-notifications');
 const {sendJson, parseJsonBody} = require('./utils');
 async function listNoti(req, res, auth) {
+  await ensureReleaseNotifications([{id: auth.userId}]);
   const all = await ds.findAll('notifications');
   const mine = all.filter(n => n.userId === auth.userId);
-  sendJson(res, 200, mine);
+  sendJson(res, 200, mine.sort((a,b) => new Date(b.createdAt)-new Date(a.createdAt) || b.id-a.id));
 }
 async function createNoti(req, res, auth) {
   const {userId, message} = await parseJsonBody(req);
