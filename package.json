@@ -8,7 +8,8 @@
     "init": "node scripts/init.js",
     "test": "node --test test/*.test.js",
     "test:ui": "node --test test/ui-contract.test.js",
-    "test:browser": "node scripts/verify-ui.cjs"
+    "test:browser": "node scripts/verify-ui.cjs",
+    "test:memos": "node scripts/verify-memos.cjs"
   },
   "author": "Your Company",
   "license": "MIT",

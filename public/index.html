@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="screen-settings.css">
   <link rel="stylesheet" href="app-shell.css">
   <link rel="stylesheet" href="ui-shell.css">
+  <link rel="stylesheet" href="memo.css">
 </head>
 <body>
 <!-- 로그인 섹션 -->
@@ -44,6 +45,7 @@
     <p class="nav-caption">업무 공간</p>
     <nav class="app-navigation">
       <a href="#worklogs" data-view="worklogs" data-icon="journal">일일리스트</a>
+      <a href="#memos" data-view="memos" data-icon="edit">메모</a>
       <a href="#notifications" data-view="notifications" data-icon="bell">알림 <span class="nav-badge" id="notification-count" hidden></span></a>
       <a href="#files" data-view="files" data-icon="files">파일관리</a>
       <a href="admin.html" id="admin-page-btn" data-icon="appearance" hidden>관리자</a>
@@ -56,6 +58,7 @@
     <button type="button" class="shell-icon mobile-menu" id="sidebar-open" aria-label="메뉴 열기" aria-expanded="false" aria-controls="app-sidebar" data-icon="menu"></button>
     <div class="main-title ui-title"><h1 id="shell-title">일일리스트</h1><small>DailyNote</small></div>
     <div class="main-actions ui-actions">
+      <button type="button" id="open-memo-btn" class="shell-icon" aria-label="새 메모 등록" title="새 메모 등록" data-icon="plus" hidden></button>
       <button type="button" id="open-search-btn" class="shell-icon" aria-label="일지 검색" title="일지 검색" data-icon="search"></button>
       <button type="button" id="open-upload-btn" class="shell-icon" aria-label="파일 등록" title="파일 등록" data-icon="plus" hidden></button>
       <button type="button" id="open-worklog-btn" class="shell-icon" aria-label="새 일지 등록" title="새 일지 등록" data-icon="plus"></button>
@@ -63,6 +66,7 @@
   </header>
   <button type="button" id="notification-back" class="shell-icon ui-back" aria-label="알림 목록으로 돌아가기" data-icon="back" hidden></button>
   <p id="no-access" class="empty-state" hidden>사용 가능한 메뉴가 없습니다. 관리자에게 권한을 요청해 주세요.</p>
+  <section id="view-memos" hidden><div class="memo-filters"><input id="memo-search" type="search" placeholder="메모 검색" aria-label="메모 검색"><select id="memo-filter" aria-label="메모 분류"><option value="all">전체</option><option value="star">중요</option></select><select id="memo-sort" aria-label="메모 정렬"><option value="recent">최근 수정순</option><option value="title">제목순</option><option value="old">오래된 순</option></select></div><p id="memo-list-status" role="status"></p><div id="memo-list" class="memo-list"></div></section>
   <!-- 알림 -->
   <section id="view-notifications" class="content-card notification-section" hidden>
     <div id="notification-body" class="collapsible-card-body">
@@ -89,6 +93,18 @@
     </div>
   </section>
 </section>
+<dialog id="memo-editor" data-ui-bound="true" class="memo-editor" aria-labelledby="memo-editor-label">
+ <header class="memo-editor-header"><button type="button" id="memo-close" class="shell-icon" aria-label="메모 편집 닫기">〈</button><h2 id="memo-editor-label">새 메모</h2><div><button type="button" id="memo-star" class="shell-icon" aria-label="중요 메모 표시" aria-pressed="false">☆</button><button type="button" id="memo-more" class="shell-icon" aria-label="메모 더보기" aria-expanded="false">⋯</button><button type="button" id="memo-save" class="primary-btn">저장</button></div></header>
+ <div id="memo-menu" class="memo-menu" hidden><div class="memo-menu-top"><label>메모 색상<select id="memo-color"><option value="white">기본</option><option value="yellow">노랑</option><option value="blue">파랑</option><option value="green">초록</option><option value="pink">분홍</option></select></label><button type="button" id="memo-pin">메모 고정</button></div><button type="button" data-memo-action="find">메모 내 검색</button><button type="button" data-memo-action="folder">폴더 이동</button><button type="button" data-memo-action="share">공유 / 텍스트 내보내기</button><button type="button" data-memo-action="duplicate">복제</button><button type="button" data-memo-action="info">정보</button><button type="button" data-memo-action="delete">삭제</button></div>
+ <div class="memo-paper" id="memo-paper"><span id="memo-folder-label">내 메모</span><input id="memo-title" maxlength="200" placeholder="제목" aria-label="메모 제목"><div id="memo-body" contenteditable="true" role="textbox" aria-label="메모 내용" aria-multiline="true" data-placeholder="메모를 입력하세요."></div><div id="memo-attachments"></div></div>
+ <p id="memo-status" role="status" aria-live="polite"></p>
+ <footer class="memo-toolbar" aria-label="메모 편집 도구"><button type="button" id="memo-undo" aria-label="실행 취소">↶</button><button type="button" id="memo-redo" aria-label="다시 실행">↷</button><button type="button" id="memo-format-toggle" aria-label="글꼴 및 서식" aria-expanded="false">T</button><button type="button" data-command="insertUnorderedList" aria-label="글머리 목록">☷</button><button type="button" id="memo-image" aria-label="사진 첨부">사진</button><button type="button" id="memo-draw" aria-label="그리기">그리기</button><button type="button" id="memo-mic" aria-label="음성 녹음" aria-pressed="false">마이크</button></footer>
+ <div id="memo-format" class="memo-format" hidden><select id="memo-font" aria-label="글꼴"><option value="sans-serif">기본 고딕</option><option value="serif">명조</option><option value="monospace">고정폭</option></select><button type="button" data-command="bold">굵게</button><button type="button" data-command="italic">기울임</button><button type="button" data-command="underline">밑줄</button><button type="button" data-command="removeFormat">서식 지우기</button></div>
+ <input id="memo-photo-input" type="file" accept="image/png,image/jpeg,image/webp" hidden>
+</dialog>
+<dialog id="memo-action-dialog" class="journal-dialog" aria-labelledby="memo-action-title"><form id="memo-action-form"><h2 id="memo-action-title"></h2><p id="memo-action-message"></p><input id="memo-action-input" maxlength="80" aria-label="메모 작업 입력"><div class="journal-dialog-actions"><button type="button" id="memo-action-cancel" class="secondary-btn">취소</button><button type="submit" id="memo-action-confirm" class="primary-btn">확인</button></div></form></dialog>
+<dialog id="memo-drawing" class="journal-dialog" aria-labelledby="memo-draw-title"><h2 id="memo-draw-title">그리기</h2><div class="memo-draw-tools"><label>펜 색상 <input type="color" id="memo-pen-color" value="#333333"></label><label>굵기 <input type="range" id="memo-pen-size" min="1" max="20" value="4"></label><button type="button" id="memo-draw-undo">획 취소</button><button type="button" id="memo-draw-clear">지우기</button></div><canvas id="memo-canvas" width="900" height="600" aria-label="손가락이나 마우스로 그림을 그리는 영역"></canvas><div class="journal-dialog-actions"><button type="button" id="memo-draw-cancel" class="secondary-btn">취소</button><button type="button" id="memo-draw-insert" class="primary-btn">메모에 넣기</button></div></dialog>
+
 <dialog id="upload-dialog" class="journal-dialog" aria-labelledby="upload-dialog-title"><div class="journal-dialog-header"><h2 id="upload-dialog-title">파일 등록</h2><button id="upload-close" class="shell-icon" type="button" aria-label="파일 등록 닫기" data-icon="close"></button></div>
     <form id="upload-form" class="upload-form">
       <div class="file-input-wrap">
@@ -209,6 +225,7 @@
 <script src="app-shell.js"></script>
 <script src="journal-controls.js"></script>
 <script src="script.js"></script>
+<script src="memo.js"></script>
 </body>
 </html>
 

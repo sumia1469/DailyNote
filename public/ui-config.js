@@ -2,6 +2,7 @@
   const menus={
     user:[
       {id:'worklogs',title:'일일리스트',icon:'journal',panel:'worklog-section',read:['worklogRead','worklogCreate'],actions:[{id:'open-search-btn',kind:'search',label:'일지 검색',permission:'worklogRead'},{id:'open-worklog-btn',kind:'create',label:'새 일지 등록',permission:'worklogCreate'}]},
+      {id:'memos',title:'메모',icon:'edit',panel:'view-memos',read:['memoRead','memoCreate'],actions:[{id:'open-memo-btn',kind:'create',label:'새 메모 등록',permission:'memoCreate'}]},
       {id:'notifications',title:'알림',icon:'bell',panel:'view-notifications',read:['notificationRead'],actions:[]},
       {id:'files',title:'파일관리',icon:'files',panel:'view-files',read:['fileRead','fileUpload'],actions:[{id:'open-upload-btn',kind:'create',label:'파일 등록',permission:'fileUpload'}]}
     ],
