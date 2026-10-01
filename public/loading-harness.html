@@ -1,0 +1,9 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>DailyNote 로딩 하네스</title><link rel="stylesheet" href="style.css"><link rel="stylesheet" href="screen-settings.css"><link rel="stylesheet" href="loading-motion.css"></head>
+<body><main style="max-width:520px;margin:32px auto;padding:16px"><h1>로딩 모션</h1><label for="loading-motion">모션 선택</label><select id="loading-motion"></select><div class="loading-motion-preview dn-loading"><div data-loading-motion="petal"></div><p>불러오는 중이에요</p><small>잠시만 기다려 주세요.</small></div><button type="button" id="preview-overlay">전체 로딩 보기</button><p>전체 로딩은 3초 후 닫힙니다. 이 화면은 서버 설정을 저장하지 않습니다.</p></main>
+<div class="loading-overlay" id="harness-loading" hidden><div class="loading-panel dn-loading" role="status"><div class="orbit-spinner"></div><p>불러오는 중이에요</p><small>잠시만 기다려 주세요.</small></div></div>
+<script src="loading-motion.js"></script><script>
+const select=document.getElementById('loading-motion');select.value=LoadingMotion.defaultId;
+select.addEventListener('change',()=>LoadingMotion.apply(select.value));
+document.getElementById('preview-overlay').addEventListener('click',()=>{document.getElementById('harness-loading').hidden=false;setTimeout(()=>document.getElementById('harness-loading').hidden=true,3000);});
+</script></body></html>

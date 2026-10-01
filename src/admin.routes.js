@@ -5,7 +5,8 @@ const {makeUserRecord} = require('./auth');
 const {keys, basicKeys, roleOf, safeUser, rightsOf} = require('./permissions');
 const storage = require('./file-storage');
 const {downloadHandler,removeStored}=require('./upload.routes');
-const defaults = {fontFamily:'system',fontSize:16, spacing:'normal', theme:'light', background:'autumn'};
+const LoadingMotion=require('../public/loading-motion');
+const defaults = {fontFamily:'system',fontSize:16, spacing:'normal', theme:'light', background:'autumn',loadingMotion:LoadingMotion.defaultId};
 const publicSettings = record => ({...defaults, ...(record?.values || {}),
   backgroundUrl:record?.imageData ? '/api/background/1?v=' + encodeURIComponent(record.updatedAt) : null});
 async function settingsHandler(req,res) {
@@ -132,6 +133,7 @@ async function adminRouter(req,res,auth) {
       if(body.spacing!==undefined){if(!['compact','normal','comfortable'].includes(body.spacing))return sendJson(res,400,{message:'잘못된 간격입니다.'});values.spacing=body.spacing;}
       if(body.theme!==undefined){if(!['light','white','dark'].includes(body.theme))return sendJson(res,400,{message:'잘못된 화면 모드입니다.'});values.theme=body.theme;}
       if(body.background!==undefined){if(!['autumn','custom','none'].includes(body.background))return sendJson(res,400,{message:'잘못된 배경입니다.'});values.background=body.background;}
+      if(body.loadingMotion!==undefined){if(!LoadingMotion.variants.some(item=>item.id===body.loadingMotion))return sendJson(res,400,{message:'잘못된 로딩 모션입니다.'});values.loadingMotion=body.loadingMotion;}
       const record={values,updatedAt:new Date().toISOString()};
       if(body.imageData) {
         if(typeof body.imageData!=='string'||body.imageData.length>1500000)return sendJson(res,400,{message:'배경 이미지는 1MB 이하로 올려 주세요.'});
