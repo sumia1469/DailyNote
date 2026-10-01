@@ -1,4 +1,4 @@
-/* Portable Windows launcher. Uses Node built-ins; no npm installation. */
+/* Portable Windows/macOS launcher. Uses Node built-ins; no npm installation. */
 const fs=require('node:fs'),path=require('node:path'),http=require('node:http'),crypto=require('node:crypto');
 const {spawn}=require('node:child_process');
 const root=path.resolve(__dirname,'..');
@@ -16,10 +16,12 @@ function probe(port,id){return new Promise(resolve=>{
   let body='';res.on('data',c=>{body+=c;if(body.length>4096)req.destroy();});res.on('end',()=>{try{resolve(JSON.parse(body).instance===id?'same':'other');}catch{resolve('other');}});
  });req.on('timeout',()=>{req.destroy();resolve('other');});req.on('error',e=>resolve(e.code==='ECONNREFUSED'?'free':'other'));
 });}
-function openBrowser(address){
- if(process.platform!=='win32')return;
- // Use Windows URL handler directly; never interpolate a command string.
- const child=spawn('rundll32.exe',['url.dll,FileProtocolHandler',address],{stdio:'ignore',windowsHide:true});
+function openBrowser(address,platform=process.platform,launch=spawn){
+ const command=platform==='win32'?'rundll32.exe':platform==='darwin'?'/usr/bin/open':null;
+ if(!command){console.log('브라우저에서 직접 열어 주세요: '+address);return;}
+ // Pass the URL as an argument without a shell on both platforms.
+ const args=platform==='win32'?['url.dll,FileProtocolHandler',address]:[address];
+ const child=launch(command,args,{stdio:'ignore',windowsHide:true});
  child.on('error',()=>console.log('브라우저에서 직접 열어 주세요: '+address));
 }
 async function initialize(dir){
@@ -69,4 +71,4 @@ async function main(){
  }catch(e){server.close();throw e;}
 }
 if(require.main===module)main().catch(e=>{console.error('\n실행 실패: '+e.message);process.exitCode=1;});
-module.exports={localEnvironment,identity,probe};
+module.exports={localEnvironment,identity,probe,openBrowser};

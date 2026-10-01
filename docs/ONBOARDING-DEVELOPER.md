@@ -335,3 +335,9 @@ Node.js 설치 없이 포함된 runtime/node.exe를 사용하는 Windows x64 압
 ## 관리자 파일 목록 메뉴
 
 파일 목록은 파일명·등록자·용량과 각 항목 우측 상단의 … 버튼으로 구성합니다. …에서 파일명 변경·다운로드·삭제를 선택합니다. 파일명 변경을 선택하면 해당 항목에만 입력칸과 파일명 저장·취소가 표시됩니다. 실패하면 입력과 오류를 유지하며 저장 중 중복 실행을 차단합니다. 취소/Escape는 기존 이름을 유지합니다. 메뉴는 UIShell.dropdown을 재사용하여 화면 안에 배치하고 바깥 클릭·Escape·화면 이동 시 닫습니다. 파일 등록은 기존 ＋ 전체 작성 페이지를 유지합니다.
+
+
+
+## macOS 로컬 실행
+
+맥은 `Start_DailyNote.command`, Windows는 `Start_DailyNote.bat`로 각각 로컬 서버를 실행합니다. Node.js 설치 없이 사용하려면 GitHub Actions에서 런타임 포함 포터블 ZIP을 내려받습니다. Git의 Code → Download ZIP은 소스만 포함하며 맥용 `.command`는 이 경우 이미 설치된 Node.js를 사용할 수 있습니다. 애플 실리콘·인텔 패키지 다운로드, 실행 권한, 빌드 방법은 [로컬 포터블 안내](LOCAL-PORTABLE.md)를 참고하세요.

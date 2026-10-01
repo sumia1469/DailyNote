@@ -1,0 +1,26 @@
+name: Build portable macOS packages
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      matrix:
+        target: [darwin-arm64, darwin-x64]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python scripts/build-portable.py --platform ${{ matrix.target }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DailyNote-${{ matrix.target }}
+          path: dist/DailyNote-macOS-*.zip
+          retention-days: 30
