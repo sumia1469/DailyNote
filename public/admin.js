@@ -128,7 +128,14 @@ $('admin-create').addEventListener('click',()=>{if(!me?.permissions[activePanel]
 function openUserDialog(user){const form=$('user-form');form.reset();const f=form.elements;f.id.value=user?.id||'';f.username.value=user?.username||'';f.active.value=String(user?.active!==false);f.password.required=!user;$('user-dialog-title').textContent=user?'사용자 수정':'사용자 등록';$('user-form-error').textContent=licenseStatus?.atLimit?'무료 사용 한도에 도달했습니다. 신규 활성 등록·승인은 제한됩니다. 이노마인드랩스: sumia1469@gmail.com':'';$('user-dialog').showModal();}
 $('user-create').addEventListener('click',()=>openUserDialog());
 for(const b of document.querySelectorAll('[data-close-dialog]'))b.addEventListener('click',()=>$(b.dataset.closeDialog).close());
-async function submitDialog(form,dialog,errorId,action){const submit=form.querySelector('[type=submit]');if(submit.disabled)return;submit.disabled=true;form.querySelector('.dialog-progress').hidden=false;$(errorId).textContent='';try{await busy(action);dialog.close();}catch(error){$(errorId).textContent=error.message;}finally{submit.disabled=false;form.querySelector('.dialog-progress').hidden=true;}}
+async function submitDialog(form,dialog,errorId,action){
+ const submit=form.querySelector('[type=submit]');if(submit.disabled)return;
+ const closers=[...dialog.querySelectorAll('[data-close-dialog],#notification-reset')],states=closers.map(b=>b.disabled);
+ const preventCancel=e=>e.preventDefault();dialog.addEventListener('cancel',preventCancel);
+ submit.disabled=true;closers.forEach(b=>b.disabled=true);form.querySelector('.dialog-progress').hidden=false;$(errorId).textContent='';
+ try{await busy(action);dialog.close();}catch(error){$(errorId).textContent=error.message;}
+ finally{submit.disabled=false;closers.forEach((b,i)=>b.disabled=states[i]);dialog.removeEventListener('cancel',preventCancel);form.querySelector('.dialog-progress').hidden=true;}
+}
 $('password-reset-form').addEventListener('submit',e=>{e.preventDefault();const form=e.target,f=form.elements;submitDialog(form,$('password-dialog'),'password-reset-error',async()=>{if(f.password.value!==f.passwordConfirmation.value)throw new Error('비밀번호 확인이 일치하지 않습니다.');await api('/api/admin/users/'+f.id.value+'/reset-password','POST',{password:f.password.value,passwordConfirmation:f.passwordConfirmation.value});form.reset();status('임시 비밀번호를 설정했습니다. 사용자에게 전달해 주세요. 로그인 후 본인 비밀번호로 변경해야 합니다.');});});
 $('notification-form').addEventListener('submit',e=>{e.preventDefault();submitDialog(e.target,$('notification-dialog'),'notification-form-error',async()=>{const f=e.target.elements;await api('/api/admin/notifications'+(f.id.value?'/'+f.id.value:''),f.id.value?'PUT':'POST',{userId:f.userId.value==='all'?'all':Number(f.userId.value),title:f.title.value,message:f.message.value});e.target.reset();f.id.value='';await refresh();status('공지를 저장했습니다.');});});
 $('user-form').addEventListener('submit',e=>{e.preventDefault();const form=e.target,f=form.elements;submitDialog(form,$('user-dialog'),'user-form-error',async()=>{if(!f.id.value&&!f.password.value)throw new Error('새 사용자 비밀번호를 입력하세요.');await api('/api/admin/users'+(f.id.value?'/'+f.id.value:''),f.id.value?'PUT':'POST',{username:f.username.value,password:f.password.value,active:f.active.value==='true'});form.reset();f.id.value='';await refresh();status('사용자를 저장했습니다.');});});
@@ -143,4 +150,5 @@ if(!adminToken)location.replace('/');else run(refresh);
 
 
 window.AdminBoardContext={get user(){return me;},get activePanel(){return activePanel;},api,refresh};
+
 
