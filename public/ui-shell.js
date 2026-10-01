@@ -34,13 +34,31 @@
     opener.addEventListener('click',()=>menu.hidden?open():close());
     opener.addEventListener('keydown',event=>{if(['ArrowDown','ArrowUp'].includes(event.key)){event.preventDefault();open(event.key==='ArrowUp');}});
     menu.addEventListener('click',event=>{if(event.target.closest('a'))close(false);});
-    document.addEventListener('pointerdown',event=>{if(!menu.hidden&&!menu.contains(event.target)&&!opener.contains(event.target))close(false);});
+    document.addEventListener('pointerdown',event=>{if(!menu.hidden&&!menu.contains(event.target)&&!opener.contains(event.target))close();});
     document.addEventListener('keydown',event=>{if(menu.hidden)return;const choices=items(),index=choices.indexOf(document.activeElement);let next;if(event.key==='Escape'||event.key==='Tab'){event.preventDefault();event.stopImmediatePropagation();close();return;}if(event.key==='ArrowDown')next=(index+1)%choices.length;else if(event.key==='ArrowUp')next=(index-1+choices.length)%choices.length;else if(event.key==='Home')next=0;else if(event.key==='End')next=choices.length-1;if(next!==undefined){event.preventDefault();choices[next]?.focus();}});
     nav.addEventListener('scroll',place);window.addEventListener('resize',place);
     new MutationObserver(()=>{if(nav.inert||!nav.classList.contains('is-open'))close(false);}).observe(nav,{attributes:true,attributeFilter:['inert','class']});
     return {menu,open,close};
   }
-  window.UIShell={title,actions,drawer,dialogs,searchDialog,settingsMenu};
+  // Compatibility adapter for existing board action dialogs: use a nonmodal menu.
+  function actionMenu(dialog,opener){
+    dialog._menuOpener=opener;
+    if(!dialog.dataset.actionMenuBound){
+      dialog.dataset.actionMenuBound='true';
+      dialog.addEventListener('close',()=>{dialog._menuOpener?.setAttribute('aria-expanded','false');dialog._menuOpener?.focus();});
+      dialog.addEventListener('keydown',event=>{const items=Array.from(dialog.querySelectorAll('button:not([hidden]),a:not([hidden])')).filter(item=>!item.disabled),index=items.indexOf(document.activeElement);let next;if(event.key==='Escape'){event.preventDefault();dialog.close();return;}if(event.key==='ArrowDown')next=(index+1)%items.length;else if(event.key==='ArrowUp')next=(index-1+items.length)%items.length;else if(event.key==='Home')next=0;else if(event.key==='End')next=items.length-1;if(next!==undefined){event.preventDefault();items[next]?.focus();}});
+      document.addEventListener('pointerdown',event=>{if(dialog.open&&!dialog.contains(event.target)&&!dialog._menuOpener?.contains(event.target))dialog.close();});
+    }
+    opener.setAttribute('aria-haspopup','menu');opener.setAttribute('aria-expanded','true');dialog.setAttribute('role','menu');
+    dialog.querySelectorAll('button,a').forEach(item=>item.setAttribute('role','menuitem'));
+    if(!dialog.open)dialog.show();
+    dialog.style.position='fixed';dialog.style.inset='auto';dialog.style.margin='0';
+    const anchor=opener.getBoundingClientRect(),box=dialog.getBoundingClientRect();
+    dialog.style.left=Math.max(12,Math.min(anchor.right-box.width,innerWidth-box.width-12))+'px';
+    dialog.style.top=Math.max(12,Math.min(anchor.bottom+8,innerHeight-box.height-12))+'px';
+    dialog.querySelector('button:not([hidden]):not(:disabled),a:not([hidden])')?.focus();
+  }
+  window.UIShell={title,actions,drawer,dialogs,searchDialog,settingsMenu,actionMenu};
 })();
 
 
