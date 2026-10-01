@@ -53,3 +53,8 @@ body .sidebar-account strong { white-space:nowrap; }
 
 /* Shared search popup: filters belong to the modal, never the menu body. */
 .ui-search-dialog .form-field{margin:16px 0}.ui-search-dialog input,.ui-search-dialog select{width:100%;box-sizing:border-box;padding:12px;border:1px solid var(--border-color,#ddd);border-radius:12px;background:var(--card-bg,#fff);color:inherit}
+
+.ui-search-dialog .form-field{gap:8px}
+.ui-search-dialog .form-field > label{display:block;margin:0;color:var(--text);font-size:16px;font-weight:400;line-height:1.5;text-align:left}
+.ui-search-dialog .form-field > input{margin:0}
+#search-dialog .search-field{margin:0}
