@@ -196,3 +196,9 @@ notice-posts.js는 공통 게시글(shared:true,userId:0)과 notification_reads�
 ## Windows 로컬 포터블 실행·바로가기
 
 Node.js 설치 없이 포함된 runtime/node.exe를 사용하는 Windows x64 압축 패키지입니다. Start_DailyNote.bat로 실행하고 처음에만 관리자 계정을 생성합니다. Create_DailyNote_Shortcut.bat로 체크 노트 아이콘의 바탕화면 바로가기를 만듭니다. 사용자·관리자 왼쪽 메뉴의 바로가기 만들기에서 안내와 생성 BAT를 받습니다. 자세한 사용·패키징·데이터 보존은 [로컬 포터블 안내](LOCAL-PORTABLE.md)를 참고하세요.
+
+
+
+## DailyNote 로고
+
+승인한 A09 dn 로고를 로그인·사용자/관리자 메뉴·가입·비밀번호 화면과 브라우저 아이콘에 사용합니다. public/brand의 로컬 SVG·PNG를 사용하며 외부 요청은 없습니다. brand/brand.css에서 크기와 다크 모드 반전을 공통 관리합니다. /brand-harness.html에서 기본형·글자 조합·반전형·앱 아이콘·작은 크기를 확인합니다. 비율과 사선 틈을 유지하고 글자·색상을 임의로 바꾸지 않습니다.

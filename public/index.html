@@ -11,15 +11,15 @@
   <link rel="stylesheet" href="memo.css">
   <link rel="stylesheet" href="calendar.css">
   <link rel="stylesheet" href="text-import.css"><link rel="stylesheet" href="references.css">
-<link rel="stylesheet" href="list-scroll.css"><link rel="icon" href="images/dailynote.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="images/dailynote-192.png"></head>
+<link rel="stylesheet" href="list-scroll.css"><link rel="apple-touch-icon" href="images/dailynote-192.png"><link rel="icon" href="brand/app-icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="brand/apple-touch-icon.png"><link rel="stylesheet" href="brand/brand.css"></head>
 <body>
 <!-- 로그인 섹션 -->
 <section id="login-section" class="login-section">
   <div class="login-card">
     <div class="login-title">
-      <span class="login-icon" aria-hidden="true" data-icon="journal"></span>
+      <img class="brand-logo brand-logo-default" src="brand/logo.svg" alt="" width="42" height="30"><img class="brand-logo brand-logo-inverse" src="brand/logo-white.svg" alt="" width="42" height="30">
       <div>
-        <h1>일일 업무일지</h1>
+        <h1>DailyNote</h1>
         <p>오늘의 업무를 기록하고, 내일을 준비하세요.</p>
       </div>
     </div>
@@ -42,7 +42,7 @@
 <section id="main-section" class="main-section" style="display:none;">
   <button class="sidebar-scrim" id="sidebar-scrim" type="button" aria-label="메뉴 닫기" hidden></button>
   <aside class="app-sidebar" id="app-sidebar" aria-label="주 메뉴">
-    <div class="sidebar-brand"><span data-icon="journal" aria-hidden="true"></span><strong>DailyNote</strong><button type="button" class="shell-icon sidebar-close" id="sidebar-close" aria-label="메뉴 닫기" data-icon="close"></button></div>
+    <div class="sidebar-brand"><img class="brand-logo brand-logo-default" src="brand/logo.svg" alt="" width="42" height="30"><img class="brand-logo brand-logo-inverse" src="brand/logo-white.svg" alt="" width="42" height="30"><strong>DailyNote</strong><button type="button" class="shell-icon sidebar-close" id="sidebar-close" aria-label="메뉴 닫기" data-icon="close"></button></div>
 
     <p class="nav-caption">업무 공간</p>
     <nav class="app-navigation">
@@ -308,6 +308,7 @@
 <script src="text-import.js"></script><script src="editor-add-menu.js"></script>
 </body>
 </html>
+
 
 
 
