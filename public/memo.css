@@ -23,3 +23,6 @@
 @media(max-width:600px){.memo-editor{position:fixed;inset:auto;top:var(--memo-viewport-top,0px);left:0;width:100%;height:var(--memo-viewport-height,100dvh);max-height:var(--memo-viewport-height,100dvh);margin:0;border-radius:0}.memo-editor-header{padding:0 8px;height:56px;grid-template-columns:114px minmax(0,1fr) 114px}.memo-editor-header .shell-icon{width:38px;flex-basis:38px}.memo-paper{padding:18px 20px}.memo-paper [contenteditable]{min-height:120px;font-size:17px}.memo-paper input{font-size:28px;margin:16px 0}.memo-toolbar{gap:6px;padding-left:10px;padding-right:10px}.memo-menu{top:52px}}
 @media(max-width:350px){.memo-toolbar{gap:2px}.memo-toolbar button{width:40px;flex-basis:40px}.memo-editor-header{grid-template-columns:108px minmax(0,1fr) 90px}.memo-editor-header .shell-icon{width:36px;flex-basis:36px}}
 .memo-menu button.has-app-icon{justify-content:flex-start}.memo-menu-top #memo-pin{justify-content:flex-start}
+
+/* Viewing a memo reserves no space for editing controls. */
+.memo-editor:not([data-editing="true"]) .memo-toolbar,.memo-editor:not([data-editing="true"]) .memo-format{display:none}
