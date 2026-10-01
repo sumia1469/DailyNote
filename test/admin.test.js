@@ -132,24 +132,26 @@ test('basic user permissions enforce journal, personal file and notification act
 });
 
 
-test('notices: broadcast only to approved active users, titles, ownership and edit validation',async()=>{
+test('shared notices: one post, per-user reads, all-user edits, new users and denied rights',async()=>{
  const admin=(await request('POST','/api/auth/login',{username:'owner',password:'test-admin-123'})).data.token;
  const added=(await request('POST','/api/admin/users',{username:'notice-reader',password:'notice-reader-123'},admin)).data;
  const member=(await request('POST','/api/auth/login',{username:'notice-reader',password:'notice-reader-123'})).data.token;
- const pending=await ds.insert('users',{...makeUserRecord('notice-pending','notice-pending-123'),active:true,approval:'pending'});
- const inactive=await ds.insert('users',{...makeUserRecord('notice-inactive','notice-inactive-123'),active:false,approval:'approved'});
- assert.equal((await request('POST','/api/admin/notifications',{userId:'all',message:'권한 없음'},member)).status,403);
- assert.equal((await request('POST','/api/admin/notifications',{userId:'all',message:'   '},admin)).status,400);
- assert.equal((await request('POST','/api/admin/notifications',{userId:'all',title:'x'.repeat(121),message:'내용'},admin)).status,400);
- const post=await request('POST','/api/admin/notifications',{userId:'all',title:'전사 공지',message:'공지 게시 테스트'},admin);assert.equal(post.status,201);
- const records=(await ds.findAll('notifications')).filter(n=>post.data.ids.includes(n.id));assert.equal(records.length,post.data.count);
- assert.ok(records.every(n=>n.title==='전사 공지'&&!n.isRead&&n.userId!==pending.id&&n.userId!==inactive.id));
- const note=records.find(n=>n.userId===added.id);assert.ok(note);
- assert.equal((await request('GET','/api/notifications/'+note.id,null,member)).data.title,'전사 공지');
- assert.equal((await request('GET','/api/notifications/'+records.find(n=>n.userId!==added.id).id,null,member)).status,404);
- await request('PUT','/api/notifications/'+note.id,{},member);
- const edit=await request('PUT','/api/admin/notifications/'+note.id,{userId:added.id,title:'수정 제목',message:'수정 내용'},admin);assert.equal(edit.status,200);assert.equal(edit.data.isRead,false);assert.ok(edit.data.updatedAt);
- assert.equal(records.filter(n=>n.id!==note.id).length,(await ds.findAll('notifications')).filter(n=>post.data.ids.includes(n.id)&&n.title==='전사 공지').length);
- assert.equal((await request('POST','/api/admin/notifications',{userId:pending.id,message:'대기 사용자'},admin)).status,400);
- assert.equal((await request('PUT','/api/admin/notifications/'+note.id,{userId:'all',message:'잘못된 수정'},admin)).status,400);
+ assert.equal((await request('POST','/api/admin/notifications',{message:'권한 없음'},member)).status,403);
+ assert.equal((await request('POST','/api/admin/notifications',{message:'   '},admin)).status,400);
+ assert.equal((await request('POST','/api/admin/notifications',{title:'x'.repeat(121),message:'내용'},admin)).status,400);
+ const post=await request('POST','/api/admin/notifications',{title:'전사 공지',message:'공지 게시 테스트'},admin);assert.equal(post.status,201);assert.equal(post.data.count,1);const id=post.data.id;
+ assert.equal((await ds.findAll('notifications')).filter(n=>n.id===id).length,1);
+ assert.equal((await request('GET','/api/notifications/'+id,null,member)).data.title,'전사 공지');
+ await request('PUT','/api/notifications/'+id,{},member);
+ assert.equal((await request('GET','/api/notifications/'+id,null,member)).data.isRead,true);
+ assert.equal((await request('GET','/api/notifications/'+id,null,admin)).data.isRead,false);
+ let summary=(await request('GET','/api/admin/notifications',null,admin)).data.find(n=>n.id===id);assert.equal(summary.readCount,1);
+ assert.equal((await request('PUT','/api/admin/notifications/'+id,{title:'수정 제목',message:'수정 내용'},admin)).status,200);
+ for(const token of [admin,member]){const n=(await request('GET','/api/notifications/'+id,null,token)).data;assert.equal(n.message,'수정 내용');assert.equal(n.isRead,false);}
+ const newUser=(await request('POST','/api/admin/users',{username:'later-reader',password:'later-reader-123'},admin)).data;
+ const later=(await request('POST','/api/auth/login',{username:'later-reader',password:'later-reader-123'})).data.token;
+ assert.equal((await request('GET','/api/notifications/'+id,null,later)).data.title,'수정 제목');
+ assert.equal((await request('DELETE','/api/admin/notifications/'+id,null,member)).status,403);
+ assert.equal((await request('DELETE','/api/admin/notifications/'+id,null,admin)).status,200);
+ for(const token of [admin,member,later])assert.equal((await request('GET','/api/notifications/'+id,null,token)).status,404);
 });
