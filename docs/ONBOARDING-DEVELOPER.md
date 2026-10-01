@@ -341,3 +341,10 @@ Node.js 설치 없이 포함된 runtime/node.exe를 사용하는 Windows x64 압
 ## macOS 로컬 실행
 
 맥은 `Start_DailyNote.command`, Windows는 `Start_DailyNote.bat`로 각각 로컬 서버를 실행합니다. Node.js 설치 없이 사용하려면 GitHub Actions에서 런타임 포함 포터블 ZIP을 내려받습니다. Git의 Code → Download ZIP은 소스만 포함하며 맥용 `.command`는 이 경우 이미 설치된 Node.js를 사용할 수 있습니다. 애플 실리콘·인텔 패키지 다운로드, 실행 권한, 빌드 방법은 [로컬 포터블 안내](LOCAL-PORTABLE.md)를 참고하세요.
+
+
+## 공통 본문 링크 처리
+
+`EditorCore.links`는 HTTP/HTTPS URL 검증, 안전한 링크 속성, 텍스트 노드의 URL 변환, contenteditable 안의 링크 열기를 담당합니다. 메모·게시판 sanitizer는 허용한 A의 href만 보존하고 target/rel/class를 공통 모듈로 설정합니다. 다른 속성과 실행 가능한 URL 스킴은 제거합니다. 자동 저장용 HTML은 분리된 DOM에서 변환해 입력 중 커서를 바꾸지 않으며 blur/다시 열기 때 화면에 적용합니다. URL 쿼리, 균형 잡힌 괄호와 텍스트를 보존하고 PRE/CODE/기존 A/이미지 플레이스홀더는 변환하지 않습니다.
+
+`node scripts/verify-links.cjs`는 개발용 Playwright로 PC 1440×1000·모바일 390×844에서 메모 자동 저장·재열기·새 탭 클릭, 게시판 게시·새로고침·링크 클릭, 기존 HTML의 위험한 속성 제거를 검증합니다. 제품에는 브라우저 테스트 의존성을 포함하지 않습니다. GitHub Actions의 Verify memo and board links에서도 실행합니다.

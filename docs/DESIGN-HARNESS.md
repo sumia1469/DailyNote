@@ -314,3 +314,9 @@ UIShell.actionMenu가 메뉴 위치·키보드 이동·aria-expanded를 관리�
 
 `#board-code-form`은 한 열 grid로 언어·코드·삽입 버튼을 배치합니다. 입력 요소는 border-box 전체 너비와 16px 글자 크기를 유지하며 긴 코드의 스크롤은 textarea 안에 제한합니다. `EditorCore.viewport`로 visualViewport 높이·위치에 맞춰 팝업을 제한하고 내부 스크롤을 허용합니다. 기존 `scripts/verify-boards.cjs` 하네스에서 1440×1000, 390×844, 320×568, 390×360의 세로 배치·화면 경계·가로 넘침·버튼 접근·Escape 후 작성 유지·본문 삽입을 검사합니다. 낮은 화면 높이 검사는 키보드 공간의 모의 검증이며 실제 iOS 키보드 검증을 대체하지 않습니다.
 
+
+
+
+## 본문 링크 스타일
+
+게시판·메모의 `a.editor-link`는 공통 ui-shell.css의 파란색 밑줄과 줄바꿈을 사용합니다. 새 탭으로 열고 noopener/noreferrer를 적용합니다. design-harness.html의 본문 링크 예시에서 일반 주소·www 주소·코드 제외와 텍스트 보존을 확인할 수 있습니다.

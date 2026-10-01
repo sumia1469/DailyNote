@@ -35,7 +35,7 @@ const ds=require('../src/datastore'),{makeUserRecord}=require('../src/auth');let
   await page.locator('#memo-title').fill(title);await page.locator('#memo-body').fill(text);await page.locator('#memo-title').focus();
   await page.waitForFunction(()=>document.getElementById('memo-status').textContent==='자동 저장됨');
   assert.equal(await page.locator('#memo-body a').count(),3);assert.equal(await page.locator('#memo-body').innerText(),text);
-  await page.locator('#memo-close').click();await page.locator('.memo-card').filter({hasText:title}).click();
+  await page.locator('#memo-close').click();await page.locator('.memo-card').filter({hasText:title}).click();await page.locator('#memo-editor').waitFor({state:'visible'});
   assert.equal(await page.locator('#memo-body a').count(),3);
   const popup=page.waitForEvent('popup');await page.locator('#memo-body a').first().click();const opened=await popup;await opened.waitForLoadState();assert.ok(opened.url().startsWith('https://example.com/'));await opened.close();
   await page.locator('#memo-close').click();
@@ -53,6 +53,7 @@ const ds=require('../src/datastore'),{makeUserRecord}=require('../src/auth');let
  const post=await ds.insert('board_posts',{boardId:1,userId:1,author:'검토',title:'기존 글',html,text:'기존 글',category:'',tags:[],mentions:[],attachments:[],references:[],createdAt:date,updatedAt:date});
  await page.goto(base+'/#boards/1/posts/'+post.id);await page.locator('.board-detail').waitFor();assert.equal(await page.locator('.board-rich a').count(),2);assert.equal(await page.locator('.board-rich [onclick],.board-rich a[href^="javascript:"],.board-rich pre a').count(),0);
  const memo=await ds.insert('memos',{userId:1,title:'기존 메모',html,text:'기존 메모',folder:'내 메모',font:'sans-serif',color:'white',starred:false,pinned:false,attachments:[],createdAt:date,updatedAt:date});
- await page.goto(base+'/#memos');await page.locator('.memo-card').filter({hasText:'기존 메모'}).click();assert.equal(await page.locator('#memo-body a[href^="javascript:"],#memo-body [onclick]').count(),0);assert.ok(await page.locator('#memo-body a').count()>=2);
+ await page.goto(base+'/#memos');await page.locator('.memo-card').filter({hasText:'기존 메모'}).click();await page.locator('#memo-editor').waitFor({state:'visible'});assert.equal(await page.locator('#memo-body a[href^="javascript:"],#memo-body [onclick]').count(),0);assert.ok(await page.locator('#memo-body a').count()>=2);
+ await page.goto(base+'/design-harness.html');assert.equal(await page.locator('#harness-editor-links a').count(),2);assert.equal(await page.locator('#harness-editor-links pre a').count(),0);assert.ok((await page.locator('#harness-editor-links a').first().getAttribute('href')).includes('page=2'));
  assert.deepEqual(errors,[]);console.log('PASS: PC/mobile memo autosave/reopen/link click; board save/reload/link click; safe existing HTML; text, punctuation and code preserved');
 })().catch(e=>{console.error(e);process.exitCode=1;}).finally(async()=>{await browser?.close();if(server)await new Promise(r=>server.close(r));fs.rmSync(tmp,{recursive:true,force:true});});
