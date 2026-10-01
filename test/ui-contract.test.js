@@ -32,3 +32,10 @@ test('calendar keeps lookup and secondary settings in header popups',()=>{
  const actions=config.actions('user','calendar',{});assert.deepEqual(actions.map(action=>action.kind),['search','more','create']);assert.equal(config.actions('user','calendar',{calendarRead:false}).some(action=>action.kind==='search'),false);const html=read('index.html'),panel=html.slice(html.indexOf('id="view-calendar"'),html.indexOf('id="view-memos"'));assert.equal(panel.includes('data-calendar-filter'),false);assert.equal(panel.includes('calendar-jump'),false);assert.equal(panel.includes('calendar-notify'),false);assert.ok(read('calendar.js').includes('UIShell.searchDialog'));
 });
 
+
+
+test('administrator and guide use footer settings and modal focus takes precedence over the drawer',()=>{
+ for(const file of ['admin.html','onboarding.html']){const html=read(file);assert.ok(html.includes(file==='admin.html'?'class="sidebar-account-actions"':'class="ui-drawer-footer"'));assert.ok(html.includes('data-settings-open'));assert.ok(html.includes(file==='admin.html'?'account-menu.js':'drawer-settings.js'));assert.ok(html.includes('업무일지로 돌아가기'));assert.equal(html.includes('class="onboarding-link" href="local-start.html"'),false);}
+ assert.ok(read('drawer-settings.js').includes('document.body.append(dialog)'));
+ assert.ok(read('ui-shell.js').includes("document.querySelector?.('dialog[open]')"));
+});

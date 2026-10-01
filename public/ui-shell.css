@@ -1,4 +1,24 @@
 /* Shared UI contract: loaded last in every menu module. */
+/* Administrator and guide drawers share a footer settings menu. */
+body .admin-nav,body .admin-shell .admin-nav,body #guide-navigation{height:100vh;height:100dvh;margin:0;padding:22px 14px calc(20px + env(safe-area-inset-bottom,0px));overflow-y:auto;overflow-x:hidden;flex-wrap:nowrap;gap:6px;scroll-padding-bottom:20px;}
+body #guide-navigation{width:min(280px,85vw);transform:translateX(-100%);transition:transform .18s ease;box-shadow:8px 0 40px rgba(0,0,0,.08);}
+body #guide-navigation.is-open{transform:translateX(0)}
+body #guide-navigation::before{content:none}
+.admin-nav > *{flex-shrink:0}
+.ui-drawer-footer{margin-top:auto;padding-top:18px;border-top:1px solid var(--line)}
+body .admin-nav .ui-settings-trigger{display:flex;align-items:center;gap:12px;width:100%;min-height:48px;padding:12px;border:0;border-radius:12px;background:transparent;color:var(--text);font:inherit;cursor:pointer;text-align:left}
+.ui-settings-trigger .app-icon{width:22px;height:22px;flex:none}
+.ui-settings-trigger:hover,.ui-settings-items a:hover{background:var(--line)}
+.ui-settings-dialog{box-sizing:border-box;width:min(320px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:auto;padding:16px;border:1px solid var(--line);border-radius:22px;background:var(--surface);color:var(--text);box-shadow:0 16px 64px rgba(0,0,0,.18)}
+.ui-settings-dialog::backdrop{background:rgba(0,0,0,.2);backdrop-filter:blur(2px)}
+.ui-settings-dialog h2{margin:0;font-size:18px}
+.ui-settings-dialog .shell-icon{width:44px;height:44px}
+.ui-settings-items{display:grid;gap:4px;margin-top:12px}
+.ui-settings-items a{display:flex;align-items:center;gap:12px;min-height:48px;box-sizing:border-box;padding:12px;border-radius:12px;color:var(--text);text-decoration:none;overflow-wrap:anywhere}
+.ui-settings-items .app-icon{width:22px;height:22px;flex:none}
+.ui-settings-items a:focus-visible,.ui-settings-trigger:focus-visible{outline:2px solid var(--text);outline-offset:2px}
+.ui-guide section[id]{scroll-margin-top:92px}
+@media(prefers-reduced-motion:reduce){body #guide-navigation{transition:none}}
 :root { --ui-header-height:76px; --ui-action-size:42px; --ui-dialog-radius:24px; --ui-page-gap:24px; }
 body .ui-header,body #main-section .ui-header,body .admin-shell .ui-header { display:grid; grid-template-columns:92px minmax(0,1fr) 92px; gap:8px; align-items:center; position:fixed; inset:0 0 auto; box-sizing:border-box; height:var(--ui-header-height); padding:10px 20px; margin:0; z-index:25; background:var(--surface); border:0; box-shadow:none; }
 body .ui-header .ui-title,body #main-section .ui-title { grid-column:2; grid-row:1; display:flex; flex-direction:column; align-items:center; justify-content:center; min-width:0; gap:2px; text-align:center; }
