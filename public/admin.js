@@ -25,7 +25,7 @@ function row(title,detail){const div=document.createElement('div');div.className
 function button(label,action,danger=false){const b=document.createElement('button');b.type='button';b.className=danger?'danger-btn':'secondary-btn';b.textContent=label;b.addEventListener('click',()=>run(action));return b;}
 async function run(action){status('');try{await busy(action);}catch(e){status(e.message,true);}}
 function empty(container){if(!container.children.length){const p=document.createElement('p');p.textContent='등록된 항목이 없습니다.';container.appendChild(p);}}
-function showPanel(key){if(activePanel!==key){AppLoading.clear();AppLoading.run('불러오는 중입니다…',()=>new Promise(requestAnimationFrame));}adminScroll.capture();activePanel=key;const menu=UIConfig.menus.admin.find(menu=>menu.id===key);UIShell.title($('admin-title'),menu?.title||'관리페이지');UIShell.actions('admin',key,me?.permissions||{},[$('admin-create'),$('admin-search')]);document.querySelectorAll('.admin-panel').forEach(panel=>panel.hidden=panel.id!==menu?.panel);document.querySelectorAll('[data-panel]').forEach(button=>{if(button.dataset.panel===key)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current');});adminScroll.activate(key);}
+function showPanel(key){if(activePanel!==key){UIShell.dropdown.close();AppLoading.clear();AppLoading.run('불러오는 중입니다…',()=>new Promise(requestAnimationFrame));}adminScroll.capture();activePanel=key;const menu=UIConfig.menus.admin.find(menu=>menu.id===key);UIShell.title($('admin-title'),menu?.title||'관리페이지');UIShell.actions('admin',key,me?.permissions||{},[$('admin-create'),$('admin-search')]);document.querySelectorAll('.admin-panel').forEach(panel=>panel.hidden=panel.id!==menu?.panel);document.querySelectorAll('[data-panel]').forEach(button=>{if(button.dataset.panel===key)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current');});adminScroll.activate(key);}
 
 function renderLicenseStatus(){
  const list=$('admin-users');if(!list)return;
@@ -56,9 +56,60 @@ async function refresh(reload=true){
   if(reload||!notices.length)await loadNotices(true);
   else if($('notice-load-more'))noticeObserver?.observe($('notice-load-more'));
  }
- if(activePanel==='files'&&me.permissions.files){const files=await api('/api/admin/files');const list=$('admin-files');list.replaceChildren();files.forEach(file=>{const r=row(file.originalName,userName(file.userId)+' · '+Math.ceil(file.sizeBytes/1024)+'KB');const input=document.createElement('input');input.value=file.originalName;input.setAttribute('aria-label',file.originalName+' 파일명 변경');input.maxLength=200;r.div.insertBefore(input,r.actions);r.actions.append(button('파일명 저장',async()=>{await api('/api/admin/files/'+file.id,'PUT',{originalName:input.value});await refresh();status('파일명을 변경했습니다.');}),button('다운로드',async()=>{const data=await FileTransfer.download(file,suffix=>api('/api/admin/files/'+file.id+suffix,'GET',undefined,true));const url=URL.createObjectURL(data),a=document.createElement('a');a.href=url;a.download=file.originalName;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}),button('삭제',async()=>{if(!confirm(file.originalName+' 파일을 삭제할까요?'))return;await api('/api/admin/files/'+file.id,'DELETE');await refresh();status('파일을 삭제했습니다.');},true));list.appendChild(r.div);});empty(list);}
+ if(activePanel==='files'&&me.permissions.files){const files=await api('/api/admin/files');UIShell.dropdown.close();const list=$('admin-files');list.replaceChildren();files.forEach(file=>list.appendChild(fileRow(file)));empty(list);}
  if(activePanel==='users'&&me.permissions.users){const pendingUsers=users.filter(user=>user.approval==='pending');$('approval-count').textContent=pendingUsers.length;const requests=$('admin-approvals');requests.replaceChildren();pendingUsers.forEach(user=>{const r=row(user.username,'승인 대기 · '+(user.createdAt?new Date(user.createdAt).toLocaleDateString('ko-KR'):''));r.actions.append(button('승인',async()=>{await api('/api/admin/users/'+user.id+'/approve','POST',{});await refresh();status('가입신청을 승인했습니다. 이제 로그인할 수 있습니다.');}),button('반려',async()=>{if(!confirm('이 가입신청을 반려할까요?'))return;await api('/api/admin/users/'+user.id+'/reject','POST',{});await refresh();status('가입신청을 반려했습니다.');},true));requests.appendChild(r.div);});empty(requests);const list=$('admin-users');list.replaceChildren();users.forEach(user=>{const r=row(user.username,(user.role==='admin'?'관리자':'일반 사용자')+' · '+(user.approval==='pending'?'승인 대기':user.approval==='rejected'?'반려':user.active?'활성':'비활성'));r.actions.append(button('수정',()=>openUserDialog(user)));if(me.role==='admin')r.actions.append(button('비밀번호 초기화',()=>{const form=$('password-reset-form');form.reset();form.elements.id.value=user.id;$('password-reset-account').textContent='대상 사용자: '+user.username;$('password-reset-error').textContent='';$('password-dialog').showModal();}));list.appendChild(r.div);});empty(list);}
  if(activePanel==='appearance'&&me.permissions.appearance){const values=await api('/api/admin/settings');backgroundData=null;$('background-file').value='';setAppearance(values);}
+}
+
+// File actions share the anchored, nonmodal menu used by other lists.
+let fileMenu;
+function fileRow(file){
+ const r=row(file.originalName,userName(file.userId)+' · '+Math.ceil(file.sizeBytes/1024)+'KB');
+ r.div.classList.add('admin-file-row');r.actions.remove();
+ const heading=document.createElement('div');heading.className='admin-file-heading';
+ const title=r.div.querySelector('strong');
+ const more=document.createElement('button');more.type='button';more.className='shell-icon admin-file-more';more.dataset.icon='more';
+ more.setAttribute('aria-label',file.originalName+' 파일 메뉴');more.setAttribute('aria-haspopup','menu');more.setAttribute('aria-expanded','false');
+ heading.append(title,more);r.div.prepend(heading);
+ const form=document.createElement('form');form.className='admin-file-rename';form.hidden=true;
+ const input=document.createElement('input');input.value=file.originalName;input.maxLength=200;input.required=true;input.setAttribute('aria-label','파일명');
+ const error=document.createElement('p');error.className='dialog-error';error.setAttribute('role','alert');
+ const actions=document.createElement('div');actions.className='admin-actions';
+ const save=document.createElement('button');save.type='submit';save.className='primary-btn';save.textContent='파일명 저장';
+ const cancel=document.createElement('button');cancel.type='button';cancel.className='secondary-btn';cancel.textContent='취소';
+ actions.append(save,cancel);form.append(input,error,actions);r.div.append(form);
+ let pending=false;
+ function edit(){form.hidden=false;error.textContent='';input.focus();input.select();}
+ function reset(){if(pending)return;input.value=file.originalName;error.textContent='';form.hidden=true;more.focus();}
+ cancel.addEventListener('click',reset);
+ form.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();reset();}});
+ form.addEventListener('submit',async event=>{
+  event.preventDefault();if(pending)return;
+  const name=input.value.trim();if(!name){error.textContent='파일명을 입력해 주세요.';input.focus();return;}
+  pending=true;[input,save,cancel,more].forEach(n=>n.disabled=true);error.textContent='';
+  try{await busy(async()=>{await api('/api/admin/files/'+file.id,'PUT',{originalName:name});await refresh();});status('파일명을 변경했습니다.');}
+  catch(e){error.textContent=e.message;}
+  finally{pending=false;[input,save,cancel,more].forEach(n=>n.disabled=false);}
+ });
+ async function perform(action){if(pending)return;pending=true;more.disabled=true;try{await run(action);}finally{pending=false;more.disabled=false;}}
+ function open(){
+  if(pending)return;
+  if(!fileMenu){fileMenu=document.createElement('div');fileMenu.id='admin-file-menu';fileMenu.hidden=true;fileMenu.setAttribute('aria-label','파일 메뉴');document.body.append(fileMenu);}
+  if(more.getAttribute('aria-expanded')==='true'){UIShell.dropdown.close(true);return;}
+  fileMenu.replaceChildren();
+  const items=[['파일명 저장','edit',edit],['다운로드','download',()=>perform(async()=>{
+   const data=await FileTransfer.download(file,suffix=>api('/api/admin/files/'+file.id+suffix,'GET',undefined,true));
+   const url=URL.createObjectURL(data),a=document.createElement('a');a.href=url;a.download=file.originalName;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  })],['삭제','trash',()=>perform(async()=>{
+   if(!confirm(file.originalName+' 파일을 삭제할까요?'))return;
+   await api('/api/admin/files/'+file.id,'DELETE');await refresh();status('파일을 삭제했습니다.');
+  })]];
+  for(const [label,icon,action] of items){const b=document.createElement('button');b.type='button';b.textContent=label;b.dataset.icon=icon;if(icon==='trash')b.className='menu-danger';b.addEventListener('click',()=>{UIShell.dropdown.close(true);action();});fileMenu.append(b);}
+  window.AppIcons?.render(fileMenu);UIShell.dropdown.open(fileMenu,more);
+ }
+ more.addEventListener('click',open);
+ more.addEventListener('keydown',event=>{if(event.key==='ArrowDown'||event.key==='ArrowUp'){event.preventDefault();open();}});
+ return r.div;
 }
 
 function noticeRow(note){
@@ -127,3 +178,4 @@ if(!adminToken)location.replace('/');else run(refresh);
 
 
 window.AdminBoardContext={get user(){return me;},get activePanel(){return activePanel;},api,refresh};
+
