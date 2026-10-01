@@ -305,3 +305,8 @@ Node.js 설치 없이 포함된 runtime/node.exe를 사용하는 Windows x64 압
 
 
 게시판 글 목록의 … 메뉴는 각 항목 우측 상단 42px 슬롯에 표시합니다. `#board-content .board-post-row`는 본문과 버튼의 두 열을 유지하며 긴 제목·본문은 본문 열 안에서 줄바꿈합니다. 게시판 CSS 로딩 순서가 바뀌어도 버튼이 글 아래로 내려가지 않습니다.
+
+
+## 로그인 배경 설정 검증
+
+관리자 화면·배경 설정에서 저장한 가을 기본 배경·사용자 지정 이미지·배경 없음이 로그인 화면에 적용됩니다. 공통 셸 CSS는 로그인 배경을 덮어쓰지 않습니다. PC는 가로 기본 이미지, 모바일은 세로 기본 이미지를 사용합니다. `node scripts/verify-login-background.cjs`는 임시 데이터와 예시 계정으로 PC 1440×1000·모바일 390×844, 세 가지 배경과 light/white/dark 화면 모드, 이미지 로딩 및 새로고침을 검증합니다. 개발 환경에서 Playwright를 사용하며 필요하면 `PLAYWRIGHT_MODULE_PATH`·`BROWSER_EXECUTABLE_PATH`를 지정합니다.
