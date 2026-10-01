@@ -1,10 +1,12 @@
 (function(){
   const opener=document.getElementById('account-settings-open'),trigger=document.getElementById('profile-open');
   if(!opener||!trigger)return;
-  const menu=document.createElement('dialog');
-  menu.id='account-settings-dialog';menu.className='journal-dialog account-settings-dialog';menu.setAttribute('aria-labelledby','account-settings-title');
-  menu.innerHTML='<div class="journal-dialog-header"><h2 id="account-settings-title">설정</h2><button type="button" class="shell-icon" data-icon="close" aria-label="설정 닫기"></button></div><nav aria-label="설정 메뉴"><a href="onboarding.html" data-icon="journal">시작하기 · 시작 가이드</a><a href="local-start.html" data-icon="download">바로가기 만들기</a><a href="change-password.html" id="change-password-link" data-icon="password">비밀번호 변경</a><a href="admin.html" id="admin-page-btn" data-icon="shield" hidden>관리자</a></nav>';
-  document.body.append(menu);
+  const settings=UIShell.settingsMenu({opener,id:'account-settings-dialog',canOpen:()=>Boolean(user),beforeOpen:()=>{document.getElementById('change-password-link').href='/change-password.html?returnTo='+encodeURIComponent(location.pathname+location.hash);},links:[
+    {label:'시작하기 · 시작 가이드',href:'onboarding.html',icon:'journal'},
+    {label:'바로가기 만들기',href:'local-start.html',icon:'download'},
+    {label:'비밀번호 변경',href:'change-password.html',icon:'password',id:'change-password-link'},
+    {label:'관리자',href:'admin.html',icon:'shield',id:'admin-page-btn',hidden:true}
+  ]});
   const dialog=document.createElement('dialog');
   dialog.id='profile-dialog';dialog.className='journal-dialog profile-dialog';dialog.setAttribute('aria-labelledby','profile-title');
   dialog.innerHTML='<div class="journal-dialog-header"><h2 id="profile-title">내 프로필</h2><button type="button" id="profile-close" class="shell-icon" data-icon="close" aria-label="프로필 닫기"></button></div><form id="profile-form"><div class="profile-photo"><span id="profile-preview" class="profile-avatar" aria-label="프로필 사진 미리보기"></span><button type="button" id="profile-photo-change" class="secondary-btn">사진 변경</button><input type="file" id="profile-file" accept="image/png,image/jpeg,image/webp" hidden><button type="button" id="profile-remove" class="secondary-btn">사진 삭제</button></div><div class="form-field"><label for="profile-nickname">별명</label><input id="profile-nickname" maxlength="40" autocomplete="nickname" placeholder="별명을 입력하세요"><small>비워두면 로그인 아이디로 표시됩니다.</small></div><p id="profile-error" class="dialog-error" role="alert"></p><div class="journal-dialog-actions"><button type="button" id="profile-cancel" class="secondary-btn">취소</button><button type="submit" id="profile-save" class="primary-btn">저장</button></div></form>';
@@ -16,9 +18,6 @@
   function configure(value){user=value;render();$('admin-page-btn').hidden=!['boards','notifications','files','appearance','users','permissions'].some(key=>user.permissions?.[key]);}
   function lock(value){busy=value;dialog.querySelectorAll('button,input').forEach(node=>node.disabled=value);$('profile-save').textContent=value?'저장 중…':'저장';}
   function close(){if(!busy&&!reading)dialog.close();}
-  opener.addEventListener('click',()=>{if(!user)return;$('change-password-link').href='/change-password.html?returnTo='+encodeURIComponent(location.pathname+location.hash);menu.showModal();opener.setAttribute('aria-expanded','true');});
-  menu.querySelector('button').addEventListener('click',()=>menu.close());
-  menu.addEventListener('close',()=>{opener.setAttribute('aria-expanded','false');opener.focus();});
   trigger.addEventListener('click',()=>{if(!user)return;version++;avatar=user.avatar||'';$('profile-nickname').value=user.nickname||'';$('profile-file').value='';error.textContent='';paint($('profile-preview'),avatar,user.nickname||user.username);dialog.showModal();});
   $('profile-close').addEventListener('click',close);$('profile-cancel').addEventListener('click',close);
   dialog.addEventListener('cancel',event=>{if(busy||reading)event.preventDefault();});
@@ -47,5 +46,5 @@
       if(!user)return;Object.assign(user,data);render();dialog.close();
     }catch(e){error.textContent=e.message;}finally{lock(false);}
   });
-  UIShell.dialogs();window.AccountMenu={configure,reset(){version++;user=null;menu.close();dialog.close();}};
+  UIShell.dialogs();window.AccountMenu={configure,reset(){version++;user=null;settings.close(false);dialog.close();}};
 })();
