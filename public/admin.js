@@ -1,6 +1,6 @@
 const adminToken=localStorage.getItem('token');
 let me, directory=[], users=[], appearance={}, backgroundData=null, activePanel;
-let pending=0, notices=[];
+let pending=0, notices=[], noticeFilters={query:'',recipient:'',read:''};
 const rights=['notifications','files','appearance','users','permissions'];
 const permissionKeys=[...rights,'worklogRead','worklogCreate','worklogEdit','worklogDelete','fileRead','fileUpload','fileDownload','fileDelete','notificationRead','memoRead','memoCreate','memoEdit','memoDelete'];
 const $=id=>document.getElementById(id);
@@ -22,7 +22,7 @@ function row(title,detail){const div=document.createElement('div');div.className
 function button(label,action,danger=false){const b=document.createElement('button');b.type='button';b.className=danger?'danger-btn':'secondary-btn';b.textContent=label;b.addEventListener('click',()=>run(action));return b;}
 async function run(action){status('');try{await busy(action);}catch(e){status(e.message,true);}}
 function empty(container){if(!container.children.length){const p=document.createElement('p');p.textContent='등록된 항목이 없습니다.';container.appendChild(p);}}
-function showPanel(key){activePanel=key;const menu=UIConfig.menus.admin.find(menu=>menu.id===key);UIShell.title($('admin-title'),menu?.title||'관리페이지');UIShell.actions('admin',key,me?.permissions||{},[$('admin-create')]);document.querySelectorAll('.admin-panel').forEach(panel=>panel.hidden=panel.id!==menu?.panel);document.querySelectorAll('[data-panel]').forEach(button=>{if(button.dataset.panel===key)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current');});}
+function showPanel(key){activePanel=key;const menu=UIConfig.menus.admin.find(menu=>menu.id===key);UIShell.title($('admin-title'),menu?.title||'관리페이지');UIShell.actions('admin',key,me?.permissions||{},[$('admin-create'),$('admin-search')]);document.querySelectorAll('.admin-panel').forEach(panel=>panel.hidden=panel.id!==menu?.panel);document.querySelectorAll('[data-panel]').forEach(button=>{if(button.dataset.panel===key)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current');});}
 
 function setPermissionForm(){const u=users.find(u=>String(u.id)===$('permission-user').value);if(!u)return;$('permission-role').value=u.role;for(const key of permissionKeys){const box=$('permission-form').elements.namedItem(key);box.checked=u.permissions[key]===true;box.disabled=u.role==='admin';}}
 function updatePermissionRole(){const admin=$('permission-role').value==='admin';for(const key of permissionKeys){const box=$('permission-form').elements.namedItem(key);box.disabled=admin;if(admin)box.checked=true;}}
@@ -31,7 +31,7 @@ function setAppearance(values){appearance=values;for(const key of ['fontFamily',
 async function refresh(){
  me=await api('/api/auth/me');if(me.mustChangePassword){location.replace('/change-password.html');return;}$('admin-account').textContent=me.username+' · '+(me.role==='admin'?'관리자':'일반 사용자');
  const allowed=UIConfig.allowed('admin',me.permissions).map(menu=>menu.id);document.querySelectorAll('[data-panel]').forEach(b=>b.hidden=!allowed.includes(b.dataset.panel));
- if(!allowed.length){$('admin-create').hidden=true;$('admin-title').textContent='관리페이지';document.querySelectorAll('.admin-panel').forEach(p=>p.hidden=true);status('관리페이지에 접근할 권한이 없습니다.',true);return;}
+ if(!allowed.length){$('admin-create').hidden=true;$('admin-search').hidden=true;$('admin-title').textContent='관리페이지';document.querySelectorAll('.admin-panel').forEach(p=>p.hidden=true);status('관리페이지에 접근할 권한이 없습니다.',true);return;}
  showPanel(allowed.includes(activePanel)?activePanel:allowed[0]);
  if(['notifications','files','users','permissions'].some(key=>me.permissions[key]))directory=await api('/api/admin/directory');
  if(me.permissions.users||me.permissions.permissions){users=await api('/api/admin/'+(me.permissions.users?'users':'permissions'));options($('permission-user'),users);setPermissionForm();}
@@ -47,14 +47,16 @@ async function refresh(){
 }
 
 function renderNotices(){
- const list=$('admin-notifications'),query=$('notice-search').value.trim().toLocaleLowerCase(),recipient=$('notice-recipient').value,read=$('notice-read').value;
+ const list=$('admin-notifications'),query=noticeFilters.query.toLocaleLowerCase(),recipient=noticeFilters.recipient,read=noticeFilters.read;
  const filtered=notices.filter(n=>(!recipient||String(n.userId)===recipient)&&(!read||(read==='read')===!!n.isRead)&&(!query||[n.title,n.message,userName(n.userId)].join(' ').toLocaleLowerCase().includes(query))).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt)||b.id-a.id);
  list.replaceChildren();$('notice-summary').textContent=`${filtered.length} / ${notices.length}건 · 미열람 ${filtered.filter(n=>!n.isRead).length}건 (사용자별 게시 기록)`;
  filtered.forEach(note=>{const date=note.createdAt?new Date(note.createdAt).toLocaleDateString('ko-KR'):'';const r=row(note.title||note.message,userName(note.userId)+' · '+date+' · '+(note.isRead?'열람':'미열람')+(note.updatedAt?' · 수정됨':''));
  if(note.title){const preview=document.createElement('p');preview.className='notice-preview';preview.textContent=note.message;r.div.insertBefore(preview,r.actions);}
  r.actions.append(button('수정',()=>openNotificationDialog(note)),button('삭제',async()=>{if(!confirm(userName(note.userId)+'에게 게시한 공지를 삭제할까요?'))return;await api('/api/admin/notifications/'+note.id,'DELETE');await refresh();status('공지를 삭제했습니다.');},true));list.appendChild(r.div);});empty(list);
 }
-$('notice-search').addEventListener('input',renderNotices);for(const id of ['notice-recipient','notice-read'])$(id).addEventListener('change',renderNotices);
+$('admin-search').addEventListener('click',()=>{if(activePanel!=='notifications'||!me?.permissions.notifications)return;$('notice-search').value=noticeFilters.query;$('notice-recipient').value=noticeFilters.recipient;$('notice-read').value=noticeFilters.read;$('notice-search-dialog').showModal();$('notice-search').focus();});
+$('notice-search-form').addEventListener('submit',event=>{event.preventDefault();noticeFilters={query:$('notice-search').value.trim(),recipient:$('notice-recipient').value,read:$('notice-read').value};renderNotices();$('notice-search-dialog').close();});
+$('notice-search-all').addEventListener('click',()=>{noticeFilters={query:'',recipient:'',read:''};$('notice-search-form').reset();renderNotices();$('notice-search-dialog').close();});
 
 function fileData(file){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(new Error('파일을 읽지 못했습니다.'));reader.readAsDataURL(file);});}
 for(const b of document.querySelectorAll('[data-panel]'))b.addEventListener('click',()=>showPanel(b.dataset.panel));
@@ -66,7 +68,7 @@ $('user-create').addEventListener('click',()=>openUserDialog());
 for(const b of document.querySelectorAll('[data-close-dialog]'))b.addEventListener('click',()=>$(b.dataset.closeDialog).close());
 async function submitDialog(form,dialog,errorId,action){const submit=form.querySelector('[type=submit]');if(submit.disabled)return;submit.disabled=true;form.querySelector('.dialog-progress').hidden=false;$(errorId).textContent='';try{await busy(action);dialog.close();}catch(error){$(errorId).textContent=error.message;}finally{submit.disabled=false;form.querySelector('.dialog-progress').hidden=true;}}
 $('password-reset-form').addEventListener('submit',e=>{e.preventDefault();const form=e.target,f=form.elements;submitDialog(form,$('password-dialog'),'password-reset-error',async()=>{if(f.password.value!==f.passwordConfirmation.value)throw new Error('비밀번호 확인이 일치하지 않습니다.');await api('/api/admin/users/'+f.id.value+'/reset-password','POST',{password:f.password.value,passwordConfirmation:f.passwordConfirmation.value});form.reset();status('임시 비밀번호를 설정했습니다. 사용자에게 전달해 주세요. 로그인 후 본인 비밀번호로 변경해야 합니다.');});});
-$('notification-form').addEventListener('submit',e=>{e.preventDefault();submitDialog(e.target,$('notification-dialog'),'notification-form-error',async()=>{const f=e.target.elements;await api('/api/admin/notifications'+(f.id.value?'/'+f.id.value:''),f.id.value?'PUT':'POST',{userId:f.userId.value==='all'?'all':Number(f.userId.value),title:f.title.value,message:f.message.value});e.target.reset();f.id.value='';await refresh();status('공지을 저장했습니다.');});});
+$('notification-form').addEventListener('submit',e=>{e.preventDefault();submitDialog(e.target,$('notification-dialog'),'notification-form-error',async()=>{const f=e.target.elements;await api('/api/admin/notifications'+(f.id.value?'/'+f.id.value:''),f.id.value?'PUT':'POST',{userId:f.userId.value==='all'?'all':Number(f.userId.value),title:f.title.value,message:f.message.value});e.target.reset();f.id.value='';await refresh();status('공지를 저장했습니다.');});});
 $('user-form').addEventListener('submit',e=>{e.preventDefault();const form=e.target,f=form.elements;submitDialog(form,$('user-dialog'),'user-form-error',async()=>{if(!f.id.value&&!f.password.value)throw new Error('새 사용자 비밀번호를 입력하세요.');await api('/api/admin/users'+(f.id.value?'/'+f.id.value:''),f.id.value?'PUT':'POST',{username:f.username.value,password:f.password.value,active:f.active.value==='true'});form.reset();f.id.value='';await refresh();status('사용자를 저장했습니다.');});});
 $('permission-user').addEventListener('change',setPermissionForm);$('permission-role').addEventListener('change',updatePermissionRole);
 $('permission-form').addEventListener('submit',e=>{e.preventDefault();run(async()=>{const f=e.target.elements;const permissions=Object.fromEntries(permissionKeys.map(key=>[key,f.namedItem(key).checked]));await api('/api/admin/permissions/'+f.userId.value,'PUT',{role:f.role.value,permissions});await refresh();if(rights.some(key=>me.permissions[key]))status('권한을 저장했습니다.');});});

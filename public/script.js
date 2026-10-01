@@ -184,7 +184,7 @@ async function loadNoti() {
     const res = await authFetch('/api/notifications');
 
     if (!res.ok) {
-      throw new Error('공지을 불러오지 못했습니다.');
+      throw new Error('공지를 불러오지 못했습니다.');
     }
     const notifications = await res.json();
     if (!Array.isArray(notifications) || notifications.length === 0) {
@@ -249,11 +249,11 @@ async function loadNoti() {
 window.NotificationPage = (function(){
   let version=0;
   return {cancel(){version++;},async load(id){
-    const current=++version,state=document.getElementById('notification-page-state'),message=document.getElementById('notification-page-message'),date=document.getElementById('notification-page-date');
-    state.textContent='공지을 불러오는 중입니다…';message.textContent='';date.textContent='';date.removeAttribute('datetime');
+    const current=++version,state=document.getElementById('notification-page-state'),message=document.getElementById('notification-page-message'),date=document.getElementById('notification-page-date'),title=document.getElementById('notification-page-title');
+    title.textContent='';title.hidden=true;state.textContent='공지를 불러오는 중입니다…';message.textContent='';date.textContent='';date.removeAttribute('datetime');
     try{
       const response=await authFetch('/api/notifications/'+encodeURIComponent(id));if(current!==version)return;
-      if(!response.ok)throw new Error(response.status===404?'공지을 찾을 수 없습니다. 삭제되었거나 접근할 수 없는 공지입니다.':'공지을 불러오지 못했습니다.');
+      if(!response.ok)throw new Error(response.status===404?'공지를 찾을 수 없습니다. 삭제되었거나 접근할 수 없는 공지입니다.':'공지를 불러오지 못했습니다.');
       const note=await response.json();if(current!==version)return;message.textContent=note.message||'';title.textContent=note.title||'';title.hidden=!note.title;
       if(note.createdAt){date.textContent=new Date(note.createdAt).toLocaleString('ko-KR');date.dateTime=note.createdAt;}state.textContent='';
       if(!note.isRead){const read=await authFetch('/api/notifications/'+encodeURIComponent(id),{method:'PUT'});if(current!==version)return;if(!read.ok)state.textContent='읽음 처리에 실패했습니다. 공지 목록에서 다시 시도해 주세요.';else await loadNoti();}

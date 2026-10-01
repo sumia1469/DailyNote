@@ -102,14 +102,14 @@ async function adminRouter(req,res,auth) {
         return sendJson(res,201,{count:records.length,ids:records.map(n=>n.id)});
       }
       if(!message||message.length>2000)return sendJson(res,400,{message:'공지 내용을 1~2000자로 입력하세요.'});
-      if(!await ds.findOne('users',u=>u.id===userId&&u.active!==false&&(!u.approval||u.approval==='approved')))return sendJson(res,400,{message:'공지을 받을 사용자를 선택하세요.'});
+      if(!await ds.findOne('users',u=>u.id===userId&&u.active!==false&&(!u.approval||u.approval==='approved')))return sendJson(res,400,{message:'공지를 받을 사용자를 선택하세요.'});
       if(method==='PUT') {
         const updated=await ds.update('notifications',id,{userId,title,message,isRead:false,updatedAt:new Date().toISOString()});
-        return sendJson(res,updated?200:404,updated||{message:'공지을 찾을 수 없습니다.'});
+        return sendJson(res,updated?200:404,updated||{message:'공지를 찾을 수 없습니다.'});
       }
       return sendJson(res,201,await ds.insert('notifications',{userId,title,message,isRead:false,createdAt:new Date().toISOString()}));
     }
-    if(method==='DELETE'&&id){const ok=await ds.remove('notifications',id);return sendJson(res,ok?200:404,{message:ok?'공지을 삭제했습니다.':'공지을 찾을 수 없습니다.'});}
+    if(method==='DELETE'&&id){const ok=await ds.remove('notifications',id);return sendJson(res,ok?200:404,{message:ok?'공지를 삭제했습니다.':'공지를 찾을 수 없습니다.'});}
   }
   if(area==='files') {
     if(method==='GET'&&!id)return sendJson(res,200,await ds.findAll('files'));

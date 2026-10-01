@@ -47,5 +47,7 @@ body .sidebar-account strong { white-space:nowrap; }
 
 .notice-toolbar input,.notice-toolbar select{min-height:44px;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--surface);color:var(--text)}
 
+#notice-search-dialog .notice-toolbar{grid-template-columns:minmax(0,1fr);margin:20px 0}#notice-search-dialog .notice-toolbar label:first-child{grid-column:auto}
+
 /* Shared search popup: filters belong to the modal, never the menu body. */
 .ui-search-dialog .form-field{margin:16px 0}.ui-search-dialog input,.ui-search-dialog select{width:100%;box-sizing:border-box;padding:12px;border:1px solid var(--border-color,#ddd);border-radius:12px;background:var(--card-bg,#fff);color:inherit}
