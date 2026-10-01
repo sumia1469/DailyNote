@@ -73,7 +73,7 @@ $('open-calendar-btn').addEventListener('click',()=>open());$('calendar-today').
 const more=$('calendar-more-dialog'),moreButton=$('open-calendar-more-btn');
 function closeMore(restore=false){if(more.open)more.close();if(restore)moreButton.focus();}
 moreButton.addEventListener('click',()=>UIShell.dropdown.open(more,moreButton));
-$('calendar-more-close').addEventListener('click',()=>closeMore(true));more.addEventListener('close',()=>{if(!more.open)moreButton.setAttribute('aria-expanded','false');});
+more.addEventListener('close',()=>{if(!more.open)moreButton.setAttribute('aria-expanded','false');});
 $('calendar-refresh').addEventListener('click',()=>{closeMore();load();});
 UIShell.searchDialog({dialog:$('calendar-search-dialog'),opener:$('open-calendar-search-btn'),closer:$('calendar-search-close'),form:$('calendar-search-form'),resetter:$('calendar-search-reset'),defaults:{query:''},write:value=>{$('calendar-jump').value=selected;$('calendar-query').value=query;},read:()=>({date:$('calendar-jump').value,query:$('calendar-query').value.trim()}),onApply:value=>{query=value.query;selected=value.date||selected;load();}});
 let resizeFrame;window.addEventListener('resize',()=>{cancelAnimationFrame(resizeFrame);resizeFrame=requestAnimationFrame(()=>{closeMore();if(active)render();});});
