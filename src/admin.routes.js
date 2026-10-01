@@ -4,6 +4,7 @@ const {sendJson, parseJsonBody} = require('./utils');
 const {makeUserRecord} = require('./auth');
 const {keys, basicKeys, roleOf, safeUser, rightsOf} = require('./permissions');
 const storage = require('./file-storage');
+const {downloadHandler,removeStored}=require('./upload.routes');
 const defaults = {fontFamily:'system',fontSize:16, spacing:'normal', theme:'light', background:'autumn'};
 const publicSettings = record => ({...defaults, ...(record?.values || {}),
   backgroundUrl:record?.imageData ? '/api/background/1?v=' + encodeURIComponent(record.updatedAt) : null});
@@ -112,11 +113,11 @@ async function adminRouter(req,res,auth) {
     if(method==='DELETE'&&id){const ok=await ds.remove('notifications',id);return sendJson(res,ok?200:404,{message:ok?'공지를 삭제했습니다.':'공지를 찾을 수 없습니다.'});}
   }
   if(area==='files') {
-    if(method==='GET'&&!id)return sendJson(res,200,await ds.findAll('files'));
+    if(method==='GET'&&!id)return sendJson(res,200,(await ds.findAll('files')).filter(f=>f.status!=='uploading'));
     const file=await ds.findOne('files',f=>f.id===id);
     if(!file)return sendJson(res,404,{message:'파일을 찾을 수 없습니다.'});
     if(method==='DELETE') {
-      if(file.storedName)await storage.remove(file.storedName);
+      await removeStored(file);
       await ds.remove('files',id);
       return sendJson(res,200,{message:'파일을 삭제했습니다.'});
     }
@@ -125,12 +126,7 @@ async function adminRouter(req,res,auth) {
       if(!name||name.length>200)return sendJson(res,400,{message:'파일명은 1~200자로 입력하세요.'});
       return sendJson(res,200,await ds.update('files',id,{originalName:name}));
     }
-    if(method==='GET') {
-      const buffer=await storage.read(file.storedName);
-      if(!buffer)return sendJson(res,404,{message:'파일을 찾을 수 없습니다.'});
-      res.writeHead(200,{'Content-Type':file.mimeType||'application/octet-stream','Content-Disposition':`attachment; filename*=UTF-8''${encodeURIComponent(file.originalName)}`});
-      return res.end(buffer);
-    }
+    if(method==='GET')return downloadHandler(req,res,{...auth,userId:file.userId},file.id);
   }
   if(area==='settings') {
     const current=await ds.findOne('site_settings',s=>s.id===1);
