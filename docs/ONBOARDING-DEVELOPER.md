@@ -204,6 +204,11 @@ Node.js 설치 없이 포함된 runtime/node.exe를 사용하는 Windows x64 압
 승인한 A09 dn 로고를 로그인·사용자/관리자 메뉴·가입·비밀번호 화면과 브라우저 아이콘에 사용합니다. public/brand의 로컬 SVG·PNG를 사용하며 외부 요청은 없습니다. brand/brand.css에서 크기와 다크 모드 반전을 공통 관리합니다. /brand-harness.html에서 기본형·글자 조합·반전형·앱 아이콘·작은 크기를 확인합니다. 비율과 사선 틈을 유지하고 글자·색상을 임의로 바꾸지 않습니다.
 
 
+## 공유게시판 모듈
+
+동적 게시판은 UIConfig의 boards 메뉴와 기존 사용자·관리자 셸에 연결합니다. src/board.routes.js, public/boards.js, public/board-admin.js, public/boards.css가 업무 모듈입니다. 서버 권한·공유 첨부 경로·참조 내용 복사·ID 커서 검증은 test/boards.test.js, 실제 PC/모바일 흐름은 scripts/verify-boards.cjs에 있습니다. npm run test:boards를 제공합니다. 데이터·API 계약은 [SHARED-BOARDS.md](SHARED-BOARDS.md)를 확인하세요.
+
+
 ## 무료 사용자 수 자동 제한
 
 무료 사용은 **관리자를 포함한 활성·승인 사용자 최대 6명**입니다. 승인 상태가 없는 기존 활성 계정도 포함하며 승인 대기·반려·비활성 계정은 제외합니다. 6명에 도달하면 가입신청, 신규 활성 사용자 등록, 가입 승인과 재활성화를 서버에서 거절합니다. 비활성 계정 저장과 기존 사용자 정보 수정은 가능합니다. 비활성화는 해당 계정의 로그인·기존 세션 접근을 차단하며 업무 자료는 삭제하지 않습니다.

@@ -1,6 +1,6 @@
 (function(){
   function title(node,text){node.textContent=text;document.title=text+' · DailyNote';}
-  function actions(scope,key,permissions,buttons){buttons.forEach(button=>button.hidden=true);UIConfig.actions(scope,key,permissions).forEach(action=>{const button=document.getElementById(action.id);if(!button)return;button.hidden=false;button.setAttribute('aria-label',action.label);button.title=action.label;button.dataset.icon=action.kind==='search'?'search':action.kind==='more'?'more':'plus';});}
+  function actions(scope,key,permissions,buttons){document.querySelector('.ui-header')?.classList.toggle('ui-header-wide',UIConfig.actions(scope,key,permissions).length>=3);buttons.forEach(button=>button.hidden=true);UIConfig.actions(scope,key,permissions).forEach(action=>{const button=document.getElementById(action.id);if(!button)return;button.hidden=false;button.setAttribute('aria-label',action.label);button.title=action.label;button.dataset.icon=action.kind==='search'?'search':action.kind==='more'?'more':'plus';});}
   function drawer({nav,opener,closer,scrim,select}){
     function close(restore=false){nav.classList.remove('is-open');nav.inert=true;scrim.hidden=true;opener.setAttribute('aria-expanded','false');document.body.classList.remove('ui-drawer-open');if(restore)opener.focus();}
     opener.addEventListener('click',()=>{nav.inert=false;nav.classList.add('is-open');scrim.hidden=false;opener.setAttribute('aria-expanded','true');document.body.classList.add('ui-drawer-open');closer.focus();});
@@ -24,3 +24,4 @@
   }
   window.UIShell={title,actions,drawer,dialogs,searchDialog};
 })();
+

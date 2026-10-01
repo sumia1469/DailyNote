@@ -4,8 +4,8 @@ let licenseStatus;
 let me, directory=[], users=[], appearance={}, backgroundData=null, activePanel;
 let noticeVersion=0, noticeNext=null, noticeLoading=false, noticeObserver;
 let pending=0, notices=[], noticeFilters={query:'',recipient:'',read:''};
-const rights=['notifications','files','appearance','users','permissions'];
-const permissionKeys=[...rights,'calendarRead','calendarCreate','calendarEdit','calendarDelete','worklogRead','worklogCreate','worklogEdit','worklogDelete','fileRead','fileUpload','fileDownload','fileDelete','notificationRead','memoRead','memoCreate','memoEdit','memoDelete'];
+const rights=['boards','notifications','files','appearance','users','permissions'];
+const permissionKeys=[...rights,'boardRead','boardCreate','boardEdit','boardDelete','calendarRead','calendarCreate','calendarEdit','calendarDelete','worklogRead','worklogCreate','worklogEdit','worklogDelete','fileRead','fileUpload','fileDownload','fileDelete','notificationRead','memoRead','memoCreate','memoEdit','memoDelete'];
 const $=id=>document.getElementById(id);
 function status(message,error=false){$('admin-status').textContent=message;$('admin-status').classList.toggle('error',error);}
 async function busy(action){pending++;$('admin-loading').hidden=false;try{return await action();}finally{pending--;$('admin-loading').hidden=pending===0;}}
@@ -46,6 +46,7 @@ async function refresh(reload=true){
  const allowed=UIConfig.allowed('admin',me.permissions).map(menu=>menu.id);document.querySelectorAll('[data-panel]').forEach(b=>b.hidden=!allowed.includes(b.dataset.panel));
  if(!allowed.length){$('admin-create').hidden=true;$('admin-search').hidden=true;$('admin-title').textContent='관리페이지';document.querySelectorAll('.admin-panel').forEach(p=>p.hidden=true);status('관리페이지에 접근할 권한이 없습니다.',true);return;}
  showPanel(allowed.includes(activePanel)?activePanel:allowed[0]);
+ if(me.permissions.boards)await window.BoardAdmin?.load();
  if(['files','users','permissions'].includes(activePanel))directory=await api('/api/admin/directory');
  if((activePanel==='users'||activePanel==='permissions')&&(me.permissions.users||me.permissions.permissions)){users=await api('/api/admin/'+(me.permissions.users?'users':'permissions'));
  renderLicenseStatus();options($('permission-user'),users);setPermissionForm();}
@@ -115,3 +116,6 @@ $('background-file').addEventListener('change',()=>run(async()=>{const file=$('b
 $('appearance-default').addEventListener('click',()=>{backgroundData=null;$('background-file').value='';setAppearance({fontFamily:'system',fontSize:16,spacing:'normal',theme:'light',background:'autumn',backgroundUrl:appearance.backgroundUrl});status('기본값을 미리 보고 있습니다. 적용하려면 설정 저장을 누르세요.');});
 $('appearance-form').addEventListener('submit',e=>{e.preventDefault();run(async()=>{const f=e.target.elements;const saved=await api('/api/admin/settings','PUT',{fontFamily:f.fontFamily.value,fontSize:Number(f.fontSize.value),spacing:f.spacing.value,theme:f.theme.value,background:f.background.value,...(backgroundData?{imageData:backgroundData.split(',')[1]}:{})});backgroundData=null;$('background-file').value='';setAppearance(saved);status('화면·배경 설정을 저장했습니다.');});});
 if(!adminToken)location.replace('/');else run(refresh);
+
+
+window.AdminBoardContext={get user(){return me;},get activePanel(){return activePanel;},api,refresh};

@@ -1,7 +1,7 @@
 (function(){
   const menus=UIConfig.menus.user,panels=Object.fromEntries(menus.map(menu=>[menu.id,document.getElementById(menu.panel)]));
   const detail=document.getElementById('view-notification-detail'),back=document.getElementById('notification-back'),opener=document.getElementById('sidebar-open');
-  const controls=['open-calendar-search-btn','open-calendar-more-btn','open-calendar-btn','open-search-btn','open-worklog-btn','open-upload-btn','open-memo-btn','open-memo-search-btn'].map(id=>document.getElementById(id));
+  const controls=['board-search','board-more','board-create','open-calendar-search-btn','open-calendar-more-btn','open-calendar-btn','open-search-btn','open-worklog-btn','open-upload-btn','open-memo-btn','open-memo-search-btn'].map(id=>document.getElementById(id));
   const scroll=ListScroll.mount(document.getElementById('main-section'));
   let user=null,allowed=[],ready=false;
   function openReference(hash){
@@ -10,6 +10,7 @@
     show();
   }
   function goBack(){
+    if(/^#boards\/\d+\/posts\/\d+$/.test(location.hash)){location.hash=location.hash.split('/').slice(0,2).join('/');return;}
     if(history.state?.referenceReturn){history.back();return;}
     location.hash=location.hash.match(/^(?:#)(files|memos|worklogs)\//)?.[1]||'notifications';
   }
@@ -18,10 +19,10 @@
     if(!ready)return;
     scroll.capture();
     document.getElementById('change-password-link').href='/change-password.html?returnTo='+encodeURIComponent(location.pathname+location.hash);
-    const route=location.hash.slice(1),detailId=route.match(/^notifications\/(\d+)$/)?.[1],ref=route.match(/^(files|memos|worklogs)\/([1-9]\d*)$/);
-    let key=ref?ref[1]:detailId?'notifications':route;if(!ref&&!allowed.includes(key))key=allowed[0];
+    const route=location.hash.slice(1),boardRoute=/^boards(?:\/\d+(?:\/posts\/\d+)?)?$/.test(route),boardDetail=/^boards\/\d+\/posts\/\d+$/.test(route),detailId=route.match(/^notifications\/(\d+)$/)?.[1],ref=route.match(/^(files|memos|worklogs)\/([1-9]\d*)$/);
+    let key=boardRoute?'boards':ref?ref[1]:detailId?'notifications':route;if(!ref&&!allowed.includes(key))key=allowed[0];
     const isNotice=Boolean(detailId&&key==='notifications'),isDetail=isNotice||Boolean(ref);
-    Object.entries(panels).forEach(([id,panel])=>panel.hidden=isDetail||id!==key);detail.hidden=!isNotice;window.References.panel.hidden=!ref;back.hidden=!isDetail;opener.hidden=isDetail;
+    Object.entries(panels).forEach(([id,panel])=>panel.hidden=isDetail||id!==key);detail.hidden=!isNotice;window.References.panel.hidden=!ref;back.hidden=!(isDetail||(boardDetail&&key==='boards'));opener.hidden=isDetail||(boardDetail&&key==='boards');
     document.querySelectorAll('[data-view]').forEach(node=>{if(node.dataset.view===key)node.setAttribute('aria-current','page');else node.removeAttribute('aria-current');});
     UIShell.title(document.getElementById('shell-title'),isDetail?(ref?'참조 상세':'공지 상세'):menus.find(menu=>menu.id===key)?.title||'DailyNote');
     document.querySelector('.ui-header').classList.toggle('calendar-header',key==='calendar'&&!isDetail);
@@ -29,8 +30,8 @@
     document.getElementById('no-access').hidden=allowed.length>0;
     if(isNotice)window.NotificationPage?.load(detailId);else window.NotificationPage?.cancel();
     if(ref)window.References.loadDetail(ref[1],ref[2]);else window.References.cancelDetail();
-    const canonical=ref?ref[0]:isNotice?'notifications/'+detailId:key;if(canonical&&location.hash!=='#'+canonical)history.replaceState(null,'','#'+canonical);
-    window.JournalControls?.close();drawer.close();window.MemoApp?.activate(key,user);window.CalendarApp?.activate(key,user);
+    const canonical=boardRoute&&key==='boards'?route:ref?ref[0]:isNotice?'notifications/'+detailId:key;if(canonical&&location.hash!=='#'+canonical)history.replaceState(null,'','#'+canonical);
+    window.JournalControls?.close();drawer.close();window.MemoApp?.activate(key,user);window.CalendarApp?.activate(key,user);window.BoardApp?.activate(key,user);
     scroll.activate(canonical||'empty',!isDetail?history.state?.referenceScroll:undefined);
     if(isDetail){document.getElementById('shell-title').setAttribute('tabindex','-1');document.getElementById('shell-title').focus();}
   }
@@ -38,7 +39,8 @@
   back.addEventListener('click',goBack);window.addEventListener('hashchange',show);
   window.addEventListener('popstate',event=>{if(!event.state?.referenceImage)show();});
   const list=document.getElementById('noti-list');new MutationObserver(()=>{const count=list.querySelectorAll('.notification-item.unread').length,badge=document.getElementById('notification-count');badge.textContent=count;badge.hidden=!count;}).observe(list,{childList:true,subtree:true});
-  window.AppShell={scroll,refresh:show,openReference,goBack,configure(value){user=value;window.References.configure(value);allowed=UIConfig.allowed('user',user.permissions||{}).map(menu=>menu.id);document.querySelectorAll('[data-view]').forEach(node=>node.hidden=!allowed.includes(node.dataset.view));document.getElementById('shell-account').textContent=user.username||'내 업무 공간';ready=true;show();},reset(){scroll.reset();window.CalendarApp?.reset();window.References.reset();window.MemoApp?.reset();ready=false;user=null;allowed=[];window.NotificationPage?.cancel();drawer.close();window.JournalControls?.close();}};
+  window.AppShell={scroll,refresh:show,openReference,goBack,configure(value){user=value;window.References.configure(value);allowed=UIConfig.allowed('user',user.permissions||{}).map(menu=>menu.id);document.querySelectorAll('[data-view]').forEach(node=>node.hidden=!allowed.includes(node.dataset.view));document.getElementById('shell-account').textContent=user.username||'내 업무 공간';ready=true;show();},reset(){scroll.reset();window.CalendarApp?.reset();window.References.reset();window.MemoApp?.reset();window.BoardApp?.reset();ready=false;user=null;allowed=[];window.NotificationPage?.cancel();drawer.close();window.JournalControls?.close();}};
   UIShell.dialogs();
 })();
+
 

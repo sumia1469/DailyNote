@@ -1,7 +1,7 @@
 const {test}=require('node:test');const assert=require('node:assert/strict');const fs=require('node:fs');const vm=require('node:vm');const path=require('node:path');const config=require('../public/ui-config');
 const read=file=>fs.readFileSync(path.join(__dirname,'../public',file),'utf8');
 test('menu actions enforce user and delegated administrator rights',()=>{
- assert.deepEqual(config.allowed('user',{worklogRead:false,worklogCreate:false,fileRead:false,fileUpload:false,notificationRead:true,calendarRead:false,calendarCreate:false,memoRead:false,memoCreate:false}).map(menu=>menu.id),['notifications']);
+ assert.deepEqual(config.allowed('user',{boardRead:false,worklogRead:false,worklogCreate:false,fileRead:false,fileUpload:false,notificationRead:true,calendarRead:false,calendarCreate:false,memoRead:false,memoCreate:false}).map(menu=>menu.id),['notifications']);
  assert.equal(config.actions('user','notifications',{}).length,0);
  assert.equal(config.actions('user','files',{fileUpload:false}).length,0);
  assert.equal(config.actions('admin','notifications',{notifications:false}).length,0);
@@ -31,3 +31,4 @@ test('shared search dialog applies on submit, preserves applied criteria on canc
 test('calendar keeps lookup and secondary settings in header popups',()=>{
  const actions=config.actions('user','calendar',{});assert.deepEqual(actions.map(action=>action.kind),['search','more','create']);assert.equal(config.actions('user','calendar',{calendarRead:false}).some(action=>action.kind==='search'),false);const html=read('index.html'),panel=html.slice(html.indexOf('id="view-calendar"'),html.indexOf('id="view-memos"'));assert.equal(panel.includes('data-calendar-filter'),false);assert.equal(panel.includes('calendar-jump'),false);assert.equal(panel.includes('calendar-notify'),false);assert.ok(read('calendar.js').includes('UIShell.searchDialog'));
 });
+

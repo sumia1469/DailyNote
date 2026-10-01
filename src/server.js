@@ -12,6 +12,7 @@ const {worklogRouter} = require('./worklog.routes');
 const {adminRouter, settingsHandler} = require('./admin.routes');
 const {calendarRouter} = require('./calendar.routes');
 const {memoRouter} = require('./memo.routes');
+const {boardRouter} = require('./board.routes');
 const PORT = cfg.PORT || 3000;
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
 function serveStatic(req, res) {
@@ -50,6 +51,7 @@ async function handleApi(req, res) {
   if(pathname.startsWith('/api/notifications')&&['GET','PUT'].includes(req.method)) basicRight='notificationRead';
   if(basicRight&&!authInfo.permissions[basicRight])return sendJson(res,403,{code:'PERMISSION_DENIED',message:'이 작업을 사용할 권한이 없습니다. 관리자에게 문의해 주세요.'});
   if (pathname === '/api/calendar' || pathname.startsWith('/api/calendar/')) return calendarRouter(req,res,authInfo);
+  if (/^\/api\/(admin\/)?boards(?:\/|$)/.test(pathname)) return boardRouter(req,res,authInfo);
   if (pathname.startsWith('/api/admin/')) return adminRouter(req, res, authInfo);
   if (pathname.startsWith('/api/users')) return userRouter(req, res, authInfo);
   if (pathname.startsWith('/api/notifications')) return notificationRouter(req, res, authInfo);
@@ -85,5 +87,6 @@ module.exports = handler;
 if (require.main === module) {
  http.createServer(handler).listen(PORT, () => console.log(`dailyNote http://localhost:${PORT}`));
 }
+
 
 
