@@ -10,7 +10,8 @@
     "test:ui": "node --test test/ui-contract.test.js",
     "test:browser": "node scripts/verify-ui.cjs",
     "test:memos": "node scripts/verify-memos.cjs",
-    "test:files": "node scripts/verify-large-files.cjs"
+    "test:files": "node scripts/verify-large-files.cjs",
+    "test:imports": "node scripts/verify-text-import.cjs"
   },
   "author": "Your Company",
   "license": "MIT",

@@ -134,3 +134,12 @@ TODO 직접 수정에서 같은 단계·하위 항목을 추가하고 상위로�
 파일 관리 클라이언트는 `POST /api/upload`에 `{phase:"start",filename,mime,size}`로 시작하고 반환된 `id`, `chunkSize`로 파일을 나눕니다. `{phase:"part",id,index,data}`를 순서대로 보내며 마지막 조각이 저장되면 파일이 목록에 표시됩니다. 중간 실패는 `{phase:"cancel",id}`로 정리합니다. 취소도 업로드 권한과 업로드 중인 본인 파일만 허용합니다. 미완료 파일은 24시간 후 해당 사용자 목록 조회/새 업로드 때 정리합니다. 조각 크기는 512KB이며 파일 전체 크기를 제한하지 않습니다.
 
 메타데이터 `chunkCount`가 있는 파일은 `GET /api/upload/ID?part=INDEX`로 조각을 내려받고 클라이언트 Blob으로 조립합니다. 조각 없는 기존 파일은 이전 다운로드 경로를 유지합니다. 모든 조회·업로드·삭제에서 기존 파일 권한과 소유권 검증을 유지합니다. 외부 저장소/CDN은 추가하지 않습니다. 메모 사진은 브라우저 Canvas로 필요한 경우에만 최적화하며 기존 메모 저장 한도 안에서 첨부합니다.
+
+
+## 브라우저 텍스트 불러오기 모듈
+
+`text-import.js/css`는 일지 입력칸과 하네스에 연결되는 바닐라 JS UI입니다. `text-import-core.js`는 텍스트 정규화·인코딩·추가/교체를 공유하고 `text-import-worker.js`는 엑셀·텍스트·DOCX 해석을 별도 Worker에서 수행합니다. PDF.js와 Tesseract도 로컬 Worker를 사용합니다. 취소 시 작업 번호를 변경해 오래된 응답을 무시하며 활성 Worker와 PDF 작업을 종료합니다. OCR 초기화 중 취소는 초기화 완료 즉시 종료하고 결과를 반영하지 않습니다. 원본은 API로 보내지 않습니다.
+
+사용자 승인에 따라 파일 해석용 로컬 라이브러리만 `public/vendor`에 포함했습니다. 프레임워크·UI 플러그인·CDN은 추가하지 않습니다. 파일 목록·버전·출처·라이선스는 `public/vendor/README.md` 및 `manifest.json`을 확인하세요. 배포·폐쇄망 반입에는 vendor 전체를 포함해야 하며 런타임 npm 설치나 네트워크 다운로드를 요구하지 않습니다. 정적 서버는 `.mjs`를 JavaScript MIME으로 제공해야 합니다. 파일을 `file://`로 직접 여는 방식은 지원하지 않습니다.
+
+`npm run test:imports`는 선택적인 개발용 Playwright·JSZip·pdf-lib를 사용합니다. PLAYWRIGHT_MODULE_PATH, QA_NODE_MODULES, BROWSER_EXECUTABLE_PATH를 필요하면 지정합니다. 예시 계정과 임시 저장소로 PC·모바일, 파일 형식·한글 OCR·시트/열·미리보기 수정·추가/교체·취소·재시도·등록 후 재조회·외부 요청 차단을 확인합니다. 사용자 PC에 검증 도구를 설치할 필요는 없습니다.

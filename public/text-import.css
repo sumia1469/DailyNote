@@ -1,0 +1,14 @@
+.text-import-buttons {display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.text-import-buttons button {min-height:44px;display:inline-flex;align-items:center;justify-content:center;gap:7px;flex:1}
+.text-import-dialog {width:min(720px,calc(100vw - 24px));max-height:calc(100dvh - 24px);box-sizing:border-box;overflow:auto}
+.text-import-dialog [hidden] {display:none!important}
+.text-import-dialog .form-field {margin:12px 0}
+.text-import-dialog input,.text-import-dialog select,.text-import-dialog textarea {box-sizing:border-box;width:100%;font-size:16px;min-height:44px}
+.text-import-dialog input[type=file] {white-space:normal;max-width:100%}
+.text-import-dialog textarea {min-height:240px;resize:vertical;white-space:pre-wrap}
+.text-import-dialog .import-options {display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.text-import-dialog .import-help {font-size:14px;line-height:1.6;color:#64748b;overflow-wrap:anywhere}
+.text-import-dialog .import-state {min-height:24px;overflow-wrap:anywhere}
+.text-import-dialog progress {width:100%;height:10px}
+.text-import-dialog .journal-dialog-actions {position:sticky;bottom:-1px;background:var(--card-bg,#fff);padding-top:12px;gap:8px}
+@media(max-width:480px){.text-import-dialog{padding:18px}.text-import-dialog .import-options{grid-template-columns:1fr}.text-import-dialog textarea{min-height:180px}.text-import-buttons button{font-size:14px}}

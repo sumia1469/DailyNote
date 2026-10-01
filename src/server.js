@@ -19,7 +19,7 @@ function serveStatic(req, res) {
   if (pathname === '/' || pathname === '') pathname = '/index.html';
   const ext = path.extname(pathname).toLowerCase();
   const mime = {
-    '.html': 'text/html', '.css': 'text/css', '.js': 'application/javascript',
+    '.html': 'text/html', '.css': 'text/css', '.js': 'application/javascript', '.mjs': 'application/javascript', '.wasm': 'application/wasm',
     '.webp': 'image/webp', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml', '.json': 'application/json'
   }[ext] || 'application/octet-stream';
   const filePath = path.join(PUBLIC_DIR, pathname);
@@ -77,4 +77,5 @@ module.exports = handler;
 if (require.main === module) {
  http.createServer(handler).listen(PORT, () => console.log(`dailyNote http://localhost:${PORT}`));
 }
+
 
