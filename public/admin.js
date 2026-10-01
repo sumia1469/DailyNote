@@ -42,7 +42,7 @@ function setAppearance(values){appearance=values;for(const key of ['fontFamily',
 async function refresh(reload=true){
  me=await api('/api/auth/me');if(me.mustChangePassword){location.replace('/change-password.html');return;}licenseStatus=await api('/api/license');
  if(licenseStatus.overLimit && !['users','permissions'].includes(activePanel)) activePanel=me.permissions.users?'users':'permissions';
- $('admin-account').textContent=me.username+' · '+(me.role==='admin'?'관리자':'일반 사용자');
+ window.AccountMenu.configure(me);
  const allowed=UIConfig.allowed('admin',me.permissions).map(menu=>menu.id);document.querySelectorAll('[data-panel]').forEach(b=>b.hidden=!allowed.includes(b.dataset.panel));
  if(!allowed.length){$('admin-create').hidden=true;$('admin-search').hidden=true;$('admin-title').textContent='관리페이지';document.querySelectorAll('.admin-panel').forEach(p=>p.hidden=true);status('관리페이지에 접근할 권한이 없습니다.',true);return;}
  showPanel(allowed.includes(activePanel)?activePanel:allowed[0]);
@@ -119,4 +119,5 @@ if(!adminToken)location.replace('/');else run(refresh);
 
 
 window.AdminBoardContext={get user(){return me;},get activePanel(){return activePanel;},api,refresh};
+
 

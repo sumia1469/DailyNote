@@ -47,7 +47,7 @@ async function verifyToken(req) {
   if (!user || user.active === false || (user.approval && user.approval !== 'approved')) return null;
   if (user.passwordResetAt && (!sess.createdAt || new Date(sess.createdAt).getTime() <= new Date(user.passwordResetAt).getTime())) return null;
   const {roleOf, rightsOf} = require('./permissions');
-  return { userId: user.id, username: user.username, role: roleOf(user), permissions: rightsOf(user), mustChangePassword:user.mustChangePassword===true };
+  return { userId: user.id, username: user.username, ...require('./profile').profileOf(user), role: roleOf(user), permissions: rightsOf(user), mustChangePassword:user.mustChangePassword===true };
 }
 
 async function changePasswordHandler(req,res,auth) {
@@ -81,3 +81,4 @@ async function registerHandler(req, res) {
   return sendJson(res,201,{message:'사용자 등록신청을 완료했습니다. 관리자 승인 후 로그인할 수 있습니다.'});
 }
 module.exports = { loginHandler, verifyToken, makeUserRecord, registerHandler, changePasswordHandler };
+

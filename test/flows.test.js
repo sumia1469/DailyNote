@@ -35,6 +35,15 @@ test('login, ownership, worklog CRUD, notifications, password update and file li
  assert.equal((await request('POST','/api/auth/login',{username:'tester',password:'wrong'})).status,401);
  const login=await request('POST','/api/auth/login',{username:'tester',password:'test-password-123'});assert.equal(login.status,200);const token=login.data.token;
  const other=(await request('POST','/api/auth/login',{username:'other',password:'other-password-123'})).data.token;
+ assert.equal((await request('PUT','/api/auth/profile',{nickname:'별명',avatar:''})).status,401);
+ assert.equal((await request('PUT','/api/auth/profile',{nickname:'별명',avatar:'data:image/svg+xml;base64,PHN2Zz4='},token)).status,400);
+ assert.equal((await request('PUT','/api/auth/profile',{nickname:'가'.repeat(41),avatar:''},token)).status,400);
+ assert.equal((await request('PUT','/api/auth/profile',{nickname:'내 별명',avatar:'',userId:2,role:'admin',username:'changed'},token)).status,200);
+ const profile=(await request('GET','/api/auth/me',null,token)).data;
+ assert.equal(profile.nickname,'내 별명');assert.equal(profile.username,'tester');assert.equal(profile.role,'admin');
+ assert.equal((await request('GET','/api/auth/me',null,other)).data.nickname,'');
+ assert.equal((await request('PUT','/api/auth/profile',{nickname:'',avatar:''},token)).status,200);
+
  const rewritten=await request('POST','/api/index?path=auth%2Flogin',{username:'tester',password:'test-password-123'});
  assert.equal(rewritten.status,200);assert.ok(rewritten.data.token);
  assert.equal((await request('POST','/api/index?path=auth/login',{username:'tester',password:'wrong'})).status,401);
@@ -76,4 +85,5 @@ test('Vercel without Redis serves login and assets while API reports missing sto
   assert.equal((await request('POST','/api/auth/login',{username:'tester',password:'test-password-123'})).status,503);
  } finally {if(previous===undefined)delete process.env.VERCEL;else process.env.VERCEL=previous;}
 });
+
 
