@@ -10,7 +10,7 @@
   // Keep the existing adapter entry point on the common nonmodal dropdown.
   UIShell.actionMenu = (menu, opener) => { window.AppIcons?.render(menu); UIShell.dropdown.open(menu, opener); };
 
-  function writingForm({id, formId, headerSelector, closeSelector, nativeHistory=false}) {
+  function writingForm({id, formId, headerSelector, closeSelector, nativeHistory=false, busySelector}) {
     const host = $(id), form = $(formId);
     if (!host || !form || host.dataset.writingBound) return;
     host.dataset.writingBound = 'true'; host.classList.add('ui-writing-screen');
@@ -63,7 +63,7 @@
     const fields = [...form.querySelectorAll('input:not([type=hidden]):not([type=file]),textarea,select')];
     let history = [], cursor = -1, restoring = false;
     const snapshot = () => fields.map(x => x.type === 'checkbox' ? x.checked : x.value);
-    const busy = () => save.disabled;
+    const busy = () => save.disabled || Boolean(busySelector && form.querySelector(busySelector));
     function update() { if (!nativeHistory) { const a=cursor<=0||busy(),b=cursor>=history.length-1||busy(); if(undo.disabled!==a)undo.disabled=a; if(redo.disabled!==b)redo.disabled=b; } }
     function checkpoint() {
       if (nativeHistory || restoring) return;
@@ -88,6 +88,7 @@
   }
   writingForm({id:'board-editor',formId:'board-form',headerSelector:'.journal-dialog-header',closeSelector:'[data-board-close=board-editor]',nativeHistory:true});
   writingForm({id:'notification-dialog',formId:'notification-form',headerSelector:'.admin-dialog-header',closeSelector:'[data-close-dialog=notification-dialog]'});
+  writingForm({id:'board-manage-dialog',formId:'board-manage-form',headerSelector:'.journal-dialog-header',closeSelector:'#board-manage-close',busySelector:'#board-manage-delete:disabled'});
   writingForm({id:'worklog-modal',formId:'worklog-form',headerSelector:'.modal-header',closeSelector:'#modal-close-btn'});
   writingForm({id:'calendar-event-dialog',formId:'calendar-event-form',headerSelector:'.journal-dialog-header',closeSelector:'#calendar-event-close'});
   writingForm({id:'harness-dialog',formId:'harness-form',headerSelector:'.admin-dialog-header',closeSelector:'#harness-dialog-close'});

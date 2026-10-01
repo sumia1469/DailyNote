@@ -49,3 +49,13 @@ body .ui-writing-paper,body .ui-writing-memo .memo-paper{flex:1 1 0%;overflow-x:
 body .ui-writing-screen .ui-writing-header{position:relative;top:auto;background:var(--surface,var(--card-bg,#fff))}
 body .ui-writing-screen .memo-toolbar,body .ui-writing-screen .memo-format{background:var(--surface,var(--card-bg,#fff));flex-shrink:0}
 body #board-editor.ui-writing-screen{max-width:none;margin:0;left:0}body #board-editor.ui-writing-screen:not([data-editing=true]) .editor-tools{display:none}
+
+/* Board settings use the same writing page without an empty editor toolbar. */
+body #board-manage-dialog .ui-writing-paper label{margin:20px 0;gap:8px}
+body #board-manage-dialog .ui-writing-paper input:not([type=checkbox]){width:100%;padding:12px 0;border:0;border-bottom:1px solid var(--border-color,#eee);border-radius:0}
+body #board-manage-dialog #board-manage-name{font-size:28px;font-weight:700}
+body #board-manage-dialog .board-checkbox{display:flex;align-items:flex-start;gap:10px;line-height:1.6}
+body #board-manage-dialog .board-checkbox input{flex:0 0 auto;width:18px;height:18px;margin:3px 0 0}
+body #board-manage-dialog .ui-writing-secondary{display:flex;min-width:0}
+body #board-manage-dialog #board-manage-delete{white-space:normal;color:#b42318}
+body #board-manage-dialog #board-manage-error{overflow-wrap:anywhere}
