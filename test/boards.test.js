@@ -1,0 +1,41 @@
+const {test,after}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),os=require('node:os'),path=require('node:path'),{Readable,Writable}=require('node:stream');
+const temp=fs.mkdtempSync(path.join(os.tmpdir(),'daily-boards-'));process.env.DATA_DIR=path.join(temp,'data');process.env.UPLOAD_DIR=path.join(temp,'uploads');delete process.env.REDIS_URL;delete process.env.UPSTASH_REDIS_REST_URL;
+const ds=require('../src/datastore'),handler=require('../src/server'),{makeUserRecord}=require('../src/auth');after(()=>fs.rmSync(temp,{recursive:true,force:true}));
+async function request(method,url,value,token){const req=Readable.from(value?[JSON.stringify(value)]:[]);Object.assign(req,{method,url,headers:token?{authorization:'Bearer '+token}:{}});let chunks=[];const res=new Writable({write(c,e,cb){chunks.push(c);cb();}});res.writeHead=status=>{res.status=status;res.headersSent=true;};const done=new Promise(resolve=>res.on('finish',resolve));await handler(req,res);await done;const raw=Buffer.concat(chunks);let data;try{data=JSON.parse(raw);}catch{data=raw.toString();}return {status:res.status,data};}
+const post={title:'공유 코드',html:'<pre data-language="javascript">const x = 1;</pre>',text:'const x = 1;',category:'개발',tags:'#개발 #코드',mentions:[],attachments:[],references:[]};
+test('dynamic boards: shared visibility, author/admin rights, categories, cursor pagination, duplicate and archive',async()=>{
+ for(const [username,role] of [['admin','admin'],['writer','member'],['reader','member']])await ds.insert('users',{...makeUserRecord(username,'password123'),role});
+ const tokens={};for(const username of ['admin','writer','reader'])tokens[username]=(await request('POST','/api/auth/login',{username,password:'password123'})).data.token;
+ const value={name:'개발 게시판',group:'업무 공유',categories:['개발','자료'],inMenu:true,active:true,order:2};
+ assert.equal((await request('GET','/api/boards')).status,401);assert.equal((await request('POST','/api/admin/boards',value,tokens.writer)).status,403);
+ const b=await request('POST','/api/admin/boards',value,tokens.admin);assert.equal(b.status,201);const id=b.data.id;
+ const created=await request('POST',`/api/boards/${id}/posts`,post,tokens.writer);assert.equal(created.status,201);const pid=created.data.id;
+ assert.equal((await request('GET',`/api/boards/${id}/posts/${pid}`,null,tokens.reader)).data.title,post.title);
+ for(const method of ['PUT','DELETE'])assert.equal((await request(method,`/api/boards/${id}/posts/${pid}`,post,tokens.reader)).status,403);
+ assert.equal((await request('PUT',`/api/boards/${id}/posts/${pid}`,{...post,title:'관리자 수정'},tokens.admin)).status,200);
+ assert.equal((await request('POST',`/api/boards/${id}/posts`,{...post,category:'없는 분류'},tokens.writer)).status,400);
+ for(let n=0;n<24;n++)assert.equal((await request('POST',`/api/boards/${id}/posts`,{...post,title:'글 '+n},tokens.writer)).status,201);
+ const page=(await request('GET',`/api/boards/${id}/posts?limit=20`,null,tokens.reader)).data;assert.equal(page.items.length,20);assert.equal(page.total,25);assert.ok(page.nextCursor);assert.equal('html' in page.items[0],false);
+ const next=(await request('GET',`/api/boards/${id}/posts?limit=20&cursor=${page.nextCursor}`,null,tokens.reader)).data;assert.equal(next.items.length,5);assert.equal(next.nextCursor,null);assert.ok(next.items.every(p=>!page.items.some(x=>x.id===p.id)));
+ assert.equal((await request('GET',`/api/boards/${id}/posts?q=관리자`,null,tokens.reader)).data.total,1);
+ assert.equal((await request('DELETE','/api/admin/boards/'+id,null,tokens.admin)).status,409);
+ await ds.update('users',3,{permissions:{boardRead:false}});assert.equal((await request('GET',`/api/boards/${id}/posts`,null,tokens.reader)).status,403);await ds.update('users',3,{permissions:{}});
+ assert.equal((await request('PUT','/api/admin/boards/'+id,{...value,name:'이름 변경',active:false},tokens.admin)).status,200);
+ assert.equal((await request('GET','/api/boards/'+id,null,tokens.writer)).status,404);assert.equal((await request('GET','/api/boards',null,tokens.writer)).data.length,0);
+ assert.equal((await request('GET','/api/admin/boards/'+id,null,tokens.admin)).data.name,'이름 변경');await ds.update('boards',id,{categories:{}});assert.deepEqual((await request('GET','/api/admin/boards/'+id,null,tokens.admin)).data.categories,[]);
+});
+test('attachment grants are scoped to a shared post, references snapshot only owned data, copy preserves grants',async()=>{
+ const token=async username=>(await request('POST','/api/auth/login',{username,password:'password123'})).data.token;const admin=await token('admin'),writer=await token('writer'),reader=await token('reader');
+ const b=(await request('POST','/api/admin/boards',{name:'자료',categories:['개발']},admin)).data;
+ const file=(await request('POST','/api/upload',{filename:'코드.txt',mime:'text/plain',data:Buffer.from('파일내용').toString('base64')},writer)).data;
+ const memo=await ds.insert('memos',{userId:2,title:'개인 메모',text:'선택해 공유한 내용'});
+ const url='/api/boards/'+b.id+'/posts';
+ assert.equal((await request('POST',url,{...post,attachments:[file.id],references:[{type:'memos',id:memo.id}]},reader)).status,400);
+ const p=(await request('POST',url,{...post,attachments:[file.id],references:[{type:'memos',id:memo.id}],mentions:[3]},writer)).data;
+ assert.equal(p.references[0].text,'선택해 공유한 내용');await ds.update('memos',memo.id,{text:'추가된 비공개 내용'});assert.equal((await request('GET',url+'/'+p.id,null,reader)).data.references[0].text,'선택해 공유한 내용');
+ assert.equal((await request('GET','/api/files/'+file.id,null,reader)).status,404);
+ assert.equal((await request('GET',url+'/'+p.id+'/files/'+file.id,null,reader)).data,'파일내용');
+ const copy=await request('POST',url,{...post,sourcePostId:p.id,attachments:[file.id],references:p.references},reader);assert.equal(copy.status,201);
+ await request('DELETE',url+'/'+p.id,null,writer);assert.equal((await request('GET',url+'/'+p.id+'/files/'+file.id,null,reader)).status,404);assert.equal((await request('GET',url+'/'+copy.data.id+'/files/'+file.id,null,reader)).status,200);
+ await ds.update('users',3,{permissions:{fileDownload:false}});assert.equal((await request('GET',url+'/'+copy.data.id+'/files/'+file.id,null,reader)).status,403);
+});

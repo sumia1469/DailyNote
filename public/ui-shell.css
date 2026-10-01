@@ -62,3 +62,9 @@ body .sidebar-account strong { white-space:nowrap; }
 /* Added menus may overflow short screens: keep focused account controls above the bottom edge. */
 body .app-sidebar { scroll-padding-bottom:calc(20px + env(safe-area-inset-bottom,0px)); }
 body .sidebar-account-actions .shell-icon { scroll-margin-bottom:8px; }
+
+
+/* Shared symmetric slots for menus with search, more and create. */
+body .ui-header.ui-header-wide,body #main-section .ui-header.ui-header-wide{grid-template-columns:142px minmax(0,1fr) 142px}
+@media(max-width:600px){body .ui-header.ui-header-wide,body #main-section .ui-header.ui-header-wide{padding-left:12px;padding-right:12px;grid-template-columns:134px minmax(0,1fr) 134px;gap:4px}}
+@media(max-width:360px){body .ui-header.ui-header-wide,body #main-section .ui-header.ui-header-wide{grid-template-columns:112px minmax(0,1fr) 112px}.ui-header-wide .ui-actions{gap:4px}.ui-header-wide .ui-actions .shell-icon{width:34px!important;height:34px!important}}
