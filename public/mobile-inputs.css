@@ -1,0 +1,27 @@
+/* Keep Safari's automatic text sizing stable across login and page transitions.
+   This does not restrict the user's browser/page zoom or pinch-to-zoom. */
+html { -webkit-text-size-adjust:100%; text-size-adjust:100%; }
+
+/* iOS may zoom a focused field whose rendered font is smaller than 16px.
+   Load last: auxiliary dialogs and inherited/UA select fonts need the same floor
+   as login and full-page editors. Desktop typography remains unchanged. */
+@media (max-width:767px), (hover:none) and (pointer:coarse) {
+  input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]):not([type=file]):not([type=button]):not([type=submit]):not([type=reset]):not([type=hidden]),
+  textarea,
+  select,
+  [contenteditable]:not([contenteditable=false]) {
+    font-size:max(16px,var(--app-font-size,16px),var(--focus-font-size,16px)) !important;
+    box-sizing:border-box;
+    min-inline-size:0;
+    max-inline-size:100%;
+  }
+  /* Preserve the memo title's intentionally larger mobile typography. */
+  .memo-paper input { --focus-font-size:34px; }
+  #board-title, #notification-title, #board-manage-name { --focus-font-size:30px; }
+  #memo-body, #board-body { --focus-font-size:18px; }
+}
+
+@media (max-width:600px) {
+  .memo-paper input, #board-title, #notification-title { --focus-font-size:28px; }
+  #memo-body, #board-body { --focus-font-size:17px; }
+}

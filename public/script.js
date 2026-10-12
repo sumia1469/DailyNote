@@ -107,6 +107,9 @@ document
           data.message || '로그인에 실패했습니다.'
         );
       }
+      // Dismiss the software keyboard before swapping the login form for the app.
+      // Keep focus/input unchanged on failed authentication; never reset user zoom.
+      if (form.contains(document.activeElement)) document.activeElement.blur();
       token = data.token;
       localStorage.setItem('token', token);
       if (data.mustChangePassword) { location.replace('/change-password.html'); return; }

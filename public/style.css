@@ -1158,8 +1158,7 @@ mark.search-current { background:#ffc04a; outline:2px solid #9b5a00; }
 
 
 /* Keep item actions available on touch screens, without covering editable text. */
-.todo-menu-trigger.shell-icon { flex:0 0 36px; width:36px; height:36px; align-self:center; }
+.todo-menu-trigger.shell-icon { display:inline-flex; flex:0 0 44px; width:44px; min-width:44px; height:44px; min-height:44px; align-self:center; touch-action:manipulation; }
 .todo-item-menu { z-index:100; }
 .todo-item-menu .todo-menu-status { margin:6px 10px; max-width:240px; white-space:normal; }
 .todo-delete-dialog p { overflow-wrap:anywhere; white-space:pre-wrap; }
-@media (pointer:coarse) { .todo-menu-trigger.shell-icon { flex-basis:44px; width:44px; height:44px; } }

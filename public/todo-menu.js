@@ -43,7 +43,7 @@
    function close(){if(blocked())return;dialog.close();dialog.remove();if(trigger.isConnected)trigger.focus({preventScroll:true});}
    cancel.addEventListener('click',close);confirm.addEventListener('click',()=>save('remove',dialog));dialog.addEventListener('cancel',event=>{event.preventDefault();close();});dialog.addEventListener('click',event=>{const r=dialog.getBoundingClientRect();if(event.target===dialog&&(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom))close();});dialog.showModal();cancel.focus();
   }
-  trigger.addEventListener('pointerdown',event=>event.stopPropagation());trigger.addEventListener('dblclick',event=>event.stopPropagation());trigger.addEventListener('click',open);
+  trigger.addEventListener('pointerdown',event=>event.stopPropagation());trigger.addEventListener('pointerup',event=>event.stopPropagation());trigger.addEventListener('dblclick',event=>event.stopPropagation());trigger.addEventListener('click',open);
   row.addEventListener('contextmenu',event=>{if(event.target.closest('a,textarea,input,.todo-inline-editor'))return;open(event);});
   row.addEventListener('keydown',event=>{if((event.key==='ContextMenu'||(event.shiftKey&&event.key==='F10'))&&!event.target.closest('textarea,input'))open(event);});
  }

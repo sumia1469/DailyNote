@@ -367,3 +367,7 @@ Node.js 설치 없이 포함된 runtime/node.exe를 사용하는 Windows x64 압
 ## 항목 메뉴
 
 `todo-menu.js`는 `WorklogSections.create`에서 인라인 수정 함수와 기존 `persist`를 전달받습니다. `UIShell.dropdown`을 재사용해 키보드·바깥 클릭·스크롤 닫기·화면 경계 배치를 유지합니다. 저장은 `worklogEdit`와 기존 PUT 소유권 검증을 그대로 사용합니다. 항목은 별도 ID가 없는 트리 객체 모델이며, 복제는 `TodoTree.duplicate`로 깊은 복사 후 바로 다음 형제로 삽입합니다. 메뉴가 열렸던 행이 제거되면 메뉴를 닫고, 액션 전에도 연결 상태를 확인합니다. `npm run test:todo-menu`는 격리 JSON 저장소의 예시 계정으로 PC/모바일 회귀를 실행합니다.
+
+## 모바일 입력 글꼴
+
+`mobile-inputs.css`는 모든 HTML의 마지막 스타일시트입니다. 좁은 화면 및 터치 중심 기기의 입력에 16px 하한을 적용하고 사용자 글꼴 및 제목/본문의 큰 크기를 유지합니다. 새 입력 컴포넌트를 추가할 때 기본 하한을 회피하지 말고, 큰 타이포그래피는 `--focus-font-size`로 선언하세요. viewport 확대 금지나 강제 scale 재설정은 사용하지 않습니다. `/mobile-input-harness.html`은 API 없는 예시이며 실제 iOS 포커스 검증을 보조합니다.

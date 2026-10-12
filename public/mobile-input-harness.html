@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>모바일 입력 검증 · DailyNote</title>
+<link rel="stylesheet" href="style.css"><link rel="stylesheet" href="screen-settings.css"><link rel="stylesheet" href="app-shell.css"><link rel="stylesheet" href="ui-shell.css"><link rel="stylesheet" href="memo.css"><link rel="stylesheet" href="writing-forms.css">
+<style>main{max-width:680px;margin:auto;padding:20px;box-sizing:border-box}fieldset{min-width:0;margin:16px 0;padding:16px;border:1px solid #ddd}label{display:grid;gap:6px;margin:12px 0}input,select,textarea{padding:10px}#metrics{position:sticky;top:0;padding:12px;background:#f4f4f4;color:#222;z-index:10;white-space:pre-wrap;overflow-wrap:anywhere}#sample-login,#sample-main{min-width:0}#sample-main[hidden],#sample-login[hidden]{display:none}button{min-height:44px}#editable{border:1px solid #ddd;padding:12px;min-height:70px}#audit-results{white-space:pre-wrap;overflow-wrap:anywhere}</style>
+<link rel="stylesheet" href="mobile-inputs.css"></head><body><main>
+<h1>모바일 입력 검증</h1><p>예시 전용입니다. 실제 로그인·API·저장 없이 입력 초점과 화면 크기를 확인합니다.</p>
+<p id="metrics" role="status"></p>
+<div><button id="font-small" type="button">본문 14px</button> <button id="font-large" type="button">본문 20px</button> <button id="audit" type="button">글꼴 검사</button></div>
+<section id="sample-login"><h2>로그인 전환 예시</h2><form id="sample-form"><label>예시 아이디<input id="sample-username" autocomplete="off" value="example"></label><label>예시 비밀번호<input id="sample-password" type="password" autocomplete="off"></label><button type="submit">입력 화면으로 전환</button></form></section>
+<section id="sample-main" hidden><h2>로그인 후 입력 예시</h2><button id="back" type="button">처음 화면으로</button>
+<fieldset><legend>검색·일정·설정</legend><label>검색<input type="search" id="sample-search"></label><label>날짜<input type="date" id="sample-date"></label><label>시간<input type="datetime-local" id="sample-time"></label><label>분류<select id="sample-select"><option>전체</option><option>중요</option></select></label><label>연락처<input type="email" id="sample-email"></label><label>숫자<input type="number" id="sample-number"></label><label>본문<textarea id="sample-textarea" rows="3"></textarea></label></fieldset>
+<fieldset class="memo-menu-top"><legend>작은 글꼴 상속 보조 도구</legend><label>색상 선택<select id="sample-color"><option>기본</option><option>파랑</option></select></label><label>링크 주소<input id="memo-action-input" type="url"></label><div class="ui-writing-tools"><label>서식<select id="sample-format"><option>일반</option><option>코드</option></select></label></div></fieldset>
+<fieldset class="memo-paper"><legend>메모 큰 제목 및 편집 본문</legend><input id="sample-title" aria-label="메모 제목" value="큰 제목은 유지합니다"><div id="editable" contenteditable="true" role="textbox" aria-label="편집 본문">예시 본문</div></fieldset>
+</section><pre id="audit-results" aria-live="polite"></pre></main><script src="mobile-input-harness.js"></script></body></html>
