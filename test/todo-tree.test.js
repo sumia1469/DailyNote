@@ -21,3 +21,10 @@ test('full form round trip preserves inline newlines, literal slashes and hierar
  const converted=JSON.parse(JSON.stringify(context.linesToArray(context.arrayToLines(items))));
  assert.equal(converted.length,2);assert.equal(converted[0].task,items[0].task);assert.equal(converted[0].children[0].task,items[0].children[0].task);
 });
+test('duplicate keeps hierarchy, checks, newlines and links in a separate adjacent subtree',()=>{
+ const child={task:'child @[자료](files:1)',checked:true,children:[]},parent={task:'parent\nline',checked:true,children:[child]},tail={task:'tail',checked:false,children:[]},items=[parent,tail];
+ const copy=tree.duplicate(items,parent);assert.deepEqual(items,[parent,copy,tail]);assert.deepEqual(copy,parent);assert.notEqual(copy,parent);assert.notEqual(copy.children[0],child);
+ copy.children[0].task='changed';assert.equal(child.task,'child @[자료](files:1)');
+ const nested=tree.duplicate(items,child);assert.equal(parent.children[1],nested);assert.deepEqual(nested,child);
+ assert.equal(tree.remove(items,parent),true);assert.deepEqual(items,[copy,tail]);assert.equal(tree.remove(items,parent),false);assert.equal(tree.duplicate(items,parent),null);
+});

@@ -1156,3 +1156,10 @@ mark[data-worklog-match] { background:#ffed8a; color:#202020; border-radius:3px;
 mark.search-current { background:#ffc04a; outline:2px solid #9b5a00; }
 #worklog-query { display:block; width:100%; min-width:0; margin:8px 0; padding:12px; border:1px solid var(--line); border-radius:10px; font-size:16px; }
 
+
+/* Keep item actions available on touch screens, without covering editable text. */
+.todo-menu-trigger.shell-icon { flex:0 0 36px; width:36px; height:36px; align-self:center; }
+.todo-item-menu { z-index:100; }
+.todo-item-menu .todo-menu-status { margin:6px 10px; max-width:240px; white-space:normal; }
+.todo-delete-dialog p { overflow-wrap:anywhere; white-space:pre-wrap; }
+@media (pointer:coarse) { .todo-menu-trigger.shell-icon { flex-basis:44px; width:44px; height:44px; } }

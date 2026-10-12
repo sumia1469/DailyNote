@@ -363,3 +363,7 @@ Node.js 설치 없이 포함된 runtime/node.exe를 사용하는 Windows x64 압
 로그는 로그인 결과·계정 변경·자료 등록/수정/삭제·백업/복원·API 오류의 시간, 사용자, 경로, HTTP 상태, 처리 시간을 보관합니다. 비밀번호·인증 토큰·본문·첨부 내용은 기록하지 않습니다. 최근 30일, 최대 10,000건을 조회하며 돋보기에서 종류·검색어·한국 시간 날짜를 조회하고 결과 JSON을 다운로드할 수 있습니다. 로그는 이 버전 적용 후 기록되며 과거 접속 기록을 재생성하지 않습니다.
 
 검증: npm test, npm run test:ui, npm run test:backups, npm run test:backups:redis. PC 1440×1000·모바일 390×844에서 백업 ZIP/이전 JSON/이전 uploads ZIP/중복 복원/전체 복원/파일 전체·선택 ZIP/로그 검색과 화면 너비를 검증합니다. 운영 사용자 데이터는 검증에 사용하지 않습니다.
+
+## 항목 메뉴
+
+`todo-menu.js`는 `WorklogSections.create`에서 인라인 수정 함수와 기존 `persist`를 전달받습니다. `UIShell.dropdown`을 재사용해 키보드·바깥 클릭·스크롤 닫기·화면 경계 배치를 유지합니다. 저장은 `worklogEdit`와 기존 PUT 소유권 검증을 그대로 사용합니다. 항목은 별도 ID가 없는 트리 객체 모델이며, 복제는 `TodoTree.duplicate`로 깊은 복사 후 바로 다음 형제로 삽입합니다. 메뉴가 열렸던 행이 제거되면 메뉴를 닫고, 액션 전에도 연결 상태를 확인합니다. `npm run test:todo-menu`는 격리 JSON 저장소의 예시 계정으로 PC/모바일 회귀를 실행합니다.
