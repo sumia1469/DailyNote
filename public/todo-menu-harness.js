@@ -1,0 +1,11 @@
+(function(){
+ const sample=new URLSearchParams(location.search).has('sample');
+ if(!sample){for(const width of [320,390,430]){const figure=document.createElement('figure'),caption=document.createElement('figcaption'),frame=document.createElement('iframe');caption.textContent=width+'px';frame.width=width;frame.title=width+'px 메뉴 예시';frame.src='todo-menu-harness.html?sample=1';figure.append(caption,frame);document.getElementById('frames').append(figure);}return;}
+ document.getElementById('comparison').hidden=true;document.getElementById('sample').hidden=false;
+ const model={todo:[{task:'메모 예시 항목',checked:false,children:[{task:'하위 예시',checked:false,children:[]}]}]},list=document.querySelector('.todo-list');
+ function render(){list.replaceChildren();for(const item of model.todo){const row=document.createElement('div'),text=document.createElement('div');row.className='todo-item';text.className='todo-text-btn';text.textContent=item.task;row.append(text);list.append(row);TodoMenu.attach(row,text,item,model,async copy=>{model.todo=copy;render();},()=>{document.getElementById('sample-results').textContent='수정 예시 선택';});}AppIcons.render(list);}
+ function audit(){const menu=document.getElementById('todo-item-menu');if(!menu||menu.hidden)return;const r=menu.getBoundingClientRect(),rows=[...menu.querySelectorAll('button')];document.getElementById('sample-results').textContent=rows.map(button=>{const icon=button.querySelector('.app-icon'),b=button.getBoundingClientRect();return button.textContent+': '+getComputedStyle(button).justifyContent+' / icon '+(icon?Math.round(icon.getBoundingClientRect().width):0)+'px / row '+Math.round(b.height)+'px';}).join('\n')+'\n화면 안 배치: '+(r.left>=0&&r.right<=innerWidth&&r.top>=0&&r.bottom<=innerHeight);}
+ function open(){document.querySelector('.todo-menu-trigger')?.click();requestAnimationFrame(audit);}
+ for(const [id,bottom] of [['edge-top',false],['edge-bottom',true]])document.getElementById(id).addEventListener('click',()=>{UIShell.dropdown.close();document.querySelector('.sample-card').style.marginTop=bottom?'260px':'12px';open();});
+ render();requestAnimationFrame(open);document.addEventListener('click',()=>requestAnimationFrame(audit));
+})();

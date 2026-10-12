@@ -3,7 +3,7 @@ const {JSDOM}=require(process.env.JSDOM_MODULE_PATH||'jsdom'),assert=require('no
 const dom=new JSDOM('<!doctype html><body><main></main></body>',{runScripts:'outside-only',pretendToBeVisual:true}),w=dom.window,d=w.document;
 w.HTMLElement.prototype.getClientRects=function(){return this.hidden?[]:[this.getBoundingClientRect()];};
 w.HTMLDialogElement.prototype.showModal=function(){this.open=true;};w.HTMLDialogElement.prototype.close=function(){this.open=false;this.dispatchEvent(new w.Event('close'));};
-for(const file of ['ui-shell.js','todo-tree.js','todo-menu.js'])w.eval(fs.readFileSync('public/'+file,'utf8'));
+for(const file of ['icons.js','ui-shell.js','todo-tree.js','todo-menu.js'])w.eval(fs.readFileSync('public/'+file,'utf8'));
 let model,fail=false,saveCount=0,editCount=0,releaseSave=null;
 function mount(){
  d.querySelector('main').innerHTML='<article class="worklog-card"><section><button class="worklog-field-add">+</button><div class="todo-list"></div></section></article>';
@@ -15,7 +15,7 @@ function choose(label){const node=[...d.querySelectorAll('#todo-item-menu button
 const tick=()=>new Promise(resolve=>setImmediate(resolve));
 (async()=>{
  model={todo:[{task:'parent\nline',checked:true,children:[{task:'child @[doc](files:1)',checked:false,children:[]}]},{task:'other',checked:false,children:[]}]};mount();
- const initial=JSON.stringify(model.todo);const initialRow=d.querySelector('.todo-item'),trigger=initialRow.querySelector('.todo-menu-trigger');let propagated=0;for(const type of ['pointerdown','pointerup','click'])initialRow.addEventListener(type,()=>propagated++);trigger.dispatchEvent(new w.Event('pointerdown',{bubbles:true}));trigger.dispatchEvent(new w.Event('pointerup',{bubbles:true}));let menu=open();assert.equal(propagated,0,'touch menu events never activate the row');assert.equal(saveCount,0,'opening menu never toggles completion or persists');assert.equal(menu.hidden,false);assert.equal(menu.querySelectorAll('[role=menuitem]').length,4);
+ const initial=JSON.stringify(model.todo);const initialRow=d.querySelector('.todo-item'),trigger=initialRow.querySelector('.todo-menu-trigger');let propagated=0;for(const type of ['pointerdown','pointerup','click'])initialRow.addEventListener(type,()=>propagated++);trigger.dispatchEvent(new w.Event('pointerdown',{bubbles:true}));trigger.dispatchEvent(new w.Event('pointerup',{bubbles:true}));let menu=open();assert.equal(propagated,0,'touch menu events never activate the row');assert.equal(saveCount,0,'opening menu never toggles completion or persists');assert.equal(menu.hidden,false);assert.equal(menu.querySelectorAll('[role=menuitem]').length,4);assert.equal(menu.querySelectorAll('button > svg.app-icon').length,4,'all menu rows have an icon');
  choose('복제');await tick();assert.equal(model.todo.length,3);assert.equal(menu.hidden,true);assert.notEqual(model.todo[0],model.todo[1]);assert.notEqual(model.todo[0].children[0],model.todo[1].children[0]);assert.equal(JSON.stringify([model.todo[0],model.todo[2]]),initial);
  open();choose('미완료로 변경');await tick();assert.equal(model.todo[0].checked,false);assert.equal(model.todo[1].checked,true);
  open();choose('완료로 변경');await tick();assert.equal(model.todo[0].children[0].checked,true);assert.equal(model.todo[1].children[0].checked,false);

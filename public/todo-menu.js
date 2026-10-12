@@ -12,11 +12,12 @@
    if(!menu){menu=document.createElement('div');menu.id='todo-item-menu';menu.className='todo-item-menu';menu.hidden=true;document.body.append(menu);}
    if(trigger.getAttribute('aria-expanded')==='true'){UIShell.dropdown.close(true);return;}
    activeRow=row;menu.replaceChildren();menu.setAttribute('aria-label',title+' 항목 메뉴');
-   function choice(label,action,danger=false){const button=document.createElement('button');button.type='button';button.textContent=label;if(danger)button.className='menu-danger';button.addEventListener('click',event=>{event.stopPropagation();if(!blocked()&&row.isConnected)action();});menu.append(button);}
-   choice('수정',()=>{UIShell.dropdown.close();edit();});
-   if(checkable)choice(item.checked?'미완료로 변경':'완료로 변경',()=>save('toggle',menu));
-   choice('복제',()=>save('duplicate',menu));
-   choice('삭제',confirmDelete,true);
+   function choice(label,icon,action,danger=false){const button=document.createElement('button');button.type='button';button.textContent=label;button.dataset.icon=icon;if(danger)button.className='menu-danger';button.addEventListener('click',event=>{event.stopPropagation();if(!blocked()&&row.isConnected)action();});menu.append(button);}
+   choice('수정','edit',()=>{UIShell.dropdown.close();edit();});
+   if(checkable)choice(item.checked?'미완료로 변경':'완료로 변경','check',()=>save('toggle',menu));
+   choice('복제','copy',()=>save('duplicate',menu));
+   choice('삭제','trash',confirmDelete,true);
+   window.AppIcons?.render(menu);
    UIShell.dropdown.open(menu,trigger);
   }
   async function save(action,host){

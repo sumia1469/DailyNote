@@ -3,5 +3,13 @@ test('row menu touch target stays visible and at least 44px regardless of pointe
  const css=fs.readFileSync('public/style.css','utf8'),rule=css.match(/\.todo-menu-trigger\.shell-icon\s*\{([^}]+)\}/)?.[1];assert.ok(rule);for(const property of ['width','min-width','height','min-height'])assert.match(rule,new RegExp('(?:^|;)\\s*'+property+':44px'));assert.match(rule,/display:inline-flex/);assert.match(rule,/touch-action:manipulation/);assert.doesNotMatch(rule,/opacity:0|visibility:hidden|display:none/);
 });
 test('touch menu isolates pointer events and uses the same actions as right-click',()=>{
- const source=fs.readFileSync('public/todo-menu.js','utf8');for(const type of ['pointerdown','pointerup'])assert.ok(source.includes("trigger.addEventListener('"+type+"',event=>event.stopPropagation())"));assert.ok(source.includes("trigger.addEventListener('click',open)"));assert.match(source,/row\.addEventListener\('contextmenu'/);assert.match(source,/choice\('삭제',confirmDelete,true\)/);assert.match(source,/const count=flatten\(\[item\]\)\.length/);assert.match(source,/cancel\.focus\(\)/);
+ const source=fs.readFileSync('public/todo-menu.js','utf8');for(const type of ['pointerdown','pointerup'])assert.ok(source.includes("trigger.addEventListener('"+type+"',event=>event.stopPropagation())"));assert.ok(source.includes("trigger.addEventListener('click',open)"));assert.match(source,/row\.addEventListener\('contextmenu'/);assert.match(source,/choice\('삭제','trash',confirmDelete,true\)/);assert.match(source,/const count=flatten\(\[item\]\)\.length/);assert.match(source,/cancel\.focus\(\)/);
+});
+
+test('all item actions use explicit equal-width icons and override centered generic icon buttons',()=>{
+ const js=fs.readFileSync('public/todo-menu.js','utf8'),css=fs.readFileSync('public/style.css','utf8');
+ for(const icon of ['edit','check','copy','trash'])assert.ok(js.includes("'"+icon+"',"));
+ assert.ok(js.includes('button.dataset.icon=icon'));assert.ok(js.includes('window.AppIcons?.render(menu)'));
+ assert.match(css,/\.todo-item-menu\.ui-dropdown > button \{[^}]*justify-content:flex-start/);
+ assert.match(css,/\.todo-item-menu\.ui-dropdown > button > \.app-icon \{[^}]*flex:0 0 20px/);
 });
