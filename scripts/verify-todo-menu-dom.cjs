@@ -1,0 +1,32 @@
+/* Optional DOM-only action regressions. This does not replace browser layout QA. */
+const {JSDOM}=require(process.env.JSDOM_MODULE_PATH||'jsdom'),assert=require('node:assert/strict'),fs=require('node:fs');
+const dom=new JSDOM('<!doctype html><body><main></main></body>',{runScripts:'outside-only',pretendToBeVisual:true}),w=dom.window,d=w.document;
+w.HTMLElement.prototype.getClientRects=function(){return this.hidden?[]:[this.getBoundingClientRect()];};
+w.HTMLDialogElement.prototype.showModal=function(){this.open=true;};w.HTMLDialogElement.prototype.close=function(){this.open=false;this.dispatchEvent(new w.Event('close'));};
+for(const file of ['ui-shell.js','todo-tree.js','todo-menu.js'])w.eval(fs.readFileSync('public/'+file,'utf8'));
+let model,fail=false,saveCount=0,editCount=0,releaseSave=null;
+function mount(){
+ d.querySelector('main').innerHTML='<article class="worklog-card"><section><button class="worklog-field-add">+</button><div class="todo-list"></div></section></article>';
+ for(const item of model.todo.flatMap(function visit(item){return [item,...(item.children||[]).flatMap(visit)];})){const row=d.createElement('div');row.className='todo-item';const text=d.createElement('div');text.className='todo-text-btn';text.tabIndex=0;text.textContent=item.task;row.append(text);d.querySelector('.todo-list').append(row);w.TodoMenu.attach(row,text,item,model,async copy=>{saveCount++;if(releaseSave)await new Promise(resolve=>releaseSave=resolve);if(fail)throw Error('sample failure');model.todo=copy;mount();},()=>editCount++);}
+}
+function click(node){node.dispatchEvent(new w.MouseEvent('click',{bubbles:true}));}
+function open(){click(d.querySelector('.todo-menu-trigger'));return d.querySelector('#todo-item-menu');}
+function choose(label){const node=[...d.querySelectorAll('#todo-item-menu button')].find(n=>n.textContent===label);assert.ok(node,label);click(node);}
+const tick=()=>new Promise(resolve=>setImmediate(resolve));
+(async()=>{
+ model={todo:[{task:'parent\nline',checked:true,children:[{task:'child @[doc](files:1)',checked:false,children:[]}]},{task:'other',checked:false,children:[]}]};mount();
+ const initial=JSON.stringify(model.todo);const initialRow=d.querySelector('.todo-item'),trigger=initialRow.querySelector('.todo-menu-trigger');let propagated=0;for(const type of ['pointerdown','pointerup','click'])initialRow.addEventListener(type,()=>propagated++);trigger.dispatchEvent(new w.Event('pointerdown',{bubbles:true}));trigger.dispatchEvent(new w.Event('pointerup',{bubbles:true}));let menu=open();assert.equal(propagated,0,'touch menu events never activate the row');assert.equal(saveCount,0,'opening menu never toggles completion or persists');assert.equal(menu.hidden,false);assert.equal(menu.querySelectorAll('[role=menuitem]').length,4);
+ choose('복제');await tick();assert.equal(model.todo.length,3);assert.equal(menu.hidden,true);assert.notEqual(model.todo[0],model.todo[1]);assert.notEqual(model.todo[0].children[0],model.todo[1].children[0]);assert.equal(JSON.stringify([model.todo[0],model.todo[2]]),initial);
+ open();choose('미완료로 변경');await tick();assert.equal(model.todo[0].checked,false);assert.equal(model.todo[1].checked,true);
+ open();choose('완료로 변경');await tick();assert.equal(model.todo[0].children[0].checked,true);assert.equal(model.todo[1].children[0].checked,false);
+ open();choose('수정');assert.equal(editCount,1);assert.equal(menu.hidden,true);
+ open();choose('삭제');let dialog=d.querySelector('.todo-delete-dialog');assert.ok(dialog.textContent.includes('하위 항목 1개'));assert.equal(d.activeElement.textContent,'취소');click(dialog.querySelector('button'));assert.equal(d.querySelector('.todo-delete-dialog'),null);assert.equal(model.todo.length,3);
+ open();choose('삭제');dialog=d.querySelector('.todo-delete-dialog');fail=true;click([...dialog.querySelectorAll('button')].find(n=>n.textContent==='삭제'));await tick();assert.equal(model.todo.length,3);assert.equal(dialog.querySelector('[role=status]').textContent,'sample failure');assert.equal(dialog.querySelector('button').disabled,false);fail=false;click([...dialog.querySelectorAll('button')].find(n=>n.textContent==='삭제'));await tick();assert.equal(model.todo.length,2);assert.equal(d.querySelector('.todo-delete-dialog'),null);
+ open();fail=true;choose('복제');await tick();assert.equal(model.todo.length,2);assert.equal(menu.querySelector('[role=status]').textContent,'sample failure');fail=false;choose('복제');await tick();assert.equal(model.todo.length,3);
+ open();const oldAction=[...menu.querySelectorAll('button')].find(n=>n.textContent==='삭제');mount();await tick();assert.equal(menu.hidden,true);click(oldAction);assert.equal(d.querySelector('.todo-delete-dialog'),null,'stale action cannot open deletion');
+ const row=d.querySelector('.todo-item');row.dispatchEvent(new w.MouseEvent('contextmenu',{bubbles:true,cancelable:true}));assert.equal(menu.hidden,false);w.UIShell.dropdown.close();const link=d.createElement('a');link.href='/';row.append(link);const event=new w.MouseEvent('contextmenu',{bubbles:true,cancelable:true});link.dispatchEvent(event);assert.equal(event.defaultPrevented,false);assert.equal(menu.hidden,true);
+ row.closest('article').dataset.todoEditing='true';open();assert.equal(menu.hidden,true);delete row.closest('article').dataset.todoEditing;
+ open();releaseSave=true;const count=saveCount;choose('복제');choose('복제');assert.equal(saveCount,count+1,'double activation saves once');assert.equal(d.querySelector('.todo-menu-trigger').disabled,true);releaseSave();releaseSave=null;await tick();assert.equal(model.todo.length,4);
+ const beforeNested=model.todo.length,parent=model.todo[0];const childRow=[...d.querySelectorAll('.todo-item')].find(row=>row.querySelector('.todo-text-btn').textContent===parent.children[0].task);click(childRow.querySelector('.todo-menu-trigger'));choose('삭제');const childDialog=d.querySelector('.todo-delete-dialog');assert.ok(!childDialog.textContent.includes('하위 항목 1개'));click([...childDialog.querySelectorAll('button')].find(n=>n.textContent==='삭제'));await tick();assert.equal(model.todo.length,beforeNested,'deleting nested row preserves roots');assert.equal(model.todo[0].children.length,0);assert.equal(model.todo[1].children.length,1,'other duplicate subtree is unchanged');
+ console.log('DOM action checks passed: copy isolation, completion, edit, delete cancel/failure/retry, duplicate retry, stale rows, native link context menu, edit lock, repeated submission.');dom.window.close();
+})().catch(e=>{console.error(e);dom.window.close();process.exitCode=1;});

@@ -21,5 +21,11 @@
   from.items.splice(from.index,1);const destination=locate(items,target);
   destination.items.splice(destination.index+(after?1:0),0,source);return true;
  }
- const api={locate,canMove,move,add,reposition};if(typeof module!=='undefined')module.exports=api;else root.TodoTree=api;
+ function duplicate(items,target){
+  const position=locate(items,target);if(!position)return null;
+  // This model has no item IDs: independent objects at distinct tree positions are its identity.
+  const copy=JSON.parse(JSON.stringify(target));position.items.splice(position.index+1,0,copy);return copy;
+ }
+ function remove(items,target){const position=locate(items,target);if(!position)return false;position.items.splice(position.index,1);return true;}
+ const api={locate,canMove,move,add,reposition,duplicate,remove};if(typeof module!=='undefined')module.exports=api;else root.TodoTree=api;
 })(typeof window!=='undefined'?window:globalThis);

@@ -53,6 +53,7 @@
   text.addEventListener('pointerup',event=>{if(event.pointerType!=='touch'||event.target.closest('a')){lastTap=0;return;}const now=performance.now();if(lastTap&&now-lastTap<350){lastTap=0;event.preventDefault();begin();}else lastTap=now;});
   text.addEventListener('dblclick',event=>{if(!event.target.closest('a'))begin();});
   text.addEventListener('keydown',event=>{if(event.target===text&&!event.isComposing&&['Enter','F2'].includes(event.key)){event.preventDefault();begin();}});
+  return begin;
  }
  window.TodoInline={attach};
 })();
