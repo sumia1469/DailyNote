@@ -1162,3 +1162,8 @@ mark.search-current { background:#ffc04a; outline:2px solid #9b5a00; }
 .todo-item-menu { z-index:100; }
 .todo-item-menu .todo-menu-status { margin:6px 10px; max-width:240px; white-space:normal; }
 .todo-delete-dialog p { overflow-wrap:anywhere; white-space:pre-wrap; }
+
+/* Menu items must not inherit centered alignment from generic icon buttons. */
+.todo-item-menu.ui-dropdown > button { display:flex; justify-content:flex-start; align-items:center; gap:10px; width:100%; text-align:left; }
+.todo-item-menu.ui-dropdown > button > .app-icon { flex:0 0 20px; width:20px; height:20px; margin:0; }
+.todo-item-menu.ui-dropdown { width:min(220px,calc(100vw - 24px)) !important; }
