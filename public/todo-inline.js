@@ -4,7 +4,7 @@
   text.classList.add('todo-text-btn');
   text.title='더블클릭 또는 두 번 탭으로 '+title+' 수정';
   text.setAttribute('aria-label',(todo.task||'내용 없는 항목')+' 수정');
-  function begin(){
+  function begin(initialAddition){
    const card=row.closest('.worklog-card');
    if(document.querySelector('[data-todo-saving],[data-todo-editing]'))return;
    card.dataset.todoEditing='true';
