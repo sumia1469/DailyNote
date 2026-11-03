@@ -9,6 +9,7 @@ on:
       - 'public/file-transfer.js'
       - 'public/text-import.js'
       - 'public/references.js'
+      - 'public/ui-shell.js'
       - 'public/index.html'
       - 'public/admin.html'
       - 'public/admin.js'
@@ -38,6 +39,7 @@ jobs:
           node --check public/text-import.js
           node --check public/todo-inline.js
           node --check public/references.js
+          node --check public/ui-shell.js
       - name: Install browser for isolated UI checks
         run: |
           npm install --prefix "$RUNNER_TEMP/dailynote-browser" playwright --no-audit --no-fund
