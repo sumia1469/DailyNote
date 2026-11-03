@@ -8,6 +8,7 @@ async function readJsonRequest(req){
  return JSON.parse(Buffer.concat(chunks).toString('utf8')||'{}');
 }
 const {verifyToken}=require('./auth');
+const regression=require('./mcp-regression');
 const VERSION='2025-11-25';
 const spec=(description,properties={},required=[],extra={})=>({description,inputSchema:{type:'object',properties,required,additionalProperties:false},...extra});
 const string=(description,maxLength=200)=>({type:'string',description,maxLength});
@@ -17,6 +18,7 @@ const tools={
  system_whoami:{...spec('현재 로그인 계정과 사용 가능한 권한 확인'),method:'GET',path:'/api/auth/me'},
  system_test_health:{...spec('운영 데이터를 변경하지 않고 로그인 API와 라이선스 상태를 점검'),method:'GET',path:'/api/license',diagnostic:'health'},
  system_test_permissions:{...spec('현재 계정의 MCP 도구별 허용 상태를 점검. 다른 사용자의 데이터를 조회하지 않음'),method:'GET',path:'/api/auth/me',diagnostic:'permissions'},
+ system_test_regression:{...spec('로컬 격리 환경에서 MCP 또는 UI 계약 회귀 테스트 실행 (운영 환경 불가)',{suite:{type:'string',enum:['mcp','ui'],description:'실행할 고정 테스트 모음'}},['suite']),localTest:true},
  worklog_list:{...spec('내 업무일지 검색. workDate는 선택.',{workDate:date()}),right:'worklogRead',method:'GET',path:a=>'/api/worklogs'+(a.workDate?'?date='+encodeURIComponent(a.workDate):'')},
  worklog_create:{...spec('내 업무일지 생성',{workDate:date(),todo:{type:'array',description:'TODO 항목 (task, checked, children)',items:{type:'object'}},nextDayPlan:{type:'array',items:{type:'object'}},remarks:string('비고',10000),memo:string('메모',10000)},['workDate','todo']),right:'worklogCreate',method:'POST',path:'/api/worklogs',body:a=>({workDate:a.workDate,todo:a.todo,nextDayPlan:a.nextDayPlan||[],remarks:a.remarks||'',memo:a.memo||''})},
  worklog_update:{...spec('내 업무일지 수정. 기존 값 덮어쓰기 주의.',{id:integer('업무일지 ID'),todo:{type:'array',items:{type:'object'}},nextDayPlan:{type:'array',items:{type:'object'}},remarks:string('비고',10000),memo:string('메모',10000)},['id']),right:'worklogEdit',method:'PUT',path:a=>'/api/worklogs/'+a.id,body:a=>Object.fromEntries(['todo','nextDayPlan','remarks','memo'].filter(k=>a[k]!==undefined).map(k=>[k,a[k]]))},
@@ -38,13 +40,13 @@ function validate(schema,value){
  for(const key of schema.required||[])if(value[key]===undefined)throw Error('Missing required argument: '+key);
  for(const [key,val] of Object.entries(value)){
   const rule=schema.properties[key];if(!rule)throw Error('Unknown argument: '+key);
-  if(rule.type==='string'&&(typeof val!=='string'||(rule.maxLength&&val.length>rule.maxLength)||(rule.pattern&&!new RegExp(rule.pattern).test(val))))throw Error('Invalid argument: '+key);
+  if(rule.type==='string'&&(typeof val!=='string'||(rule.maxLength&&val.length>rule.maxLength)||(rule.enum&&!rule.enum.includes(val))||(rule.pattern&&!new RegExp(rule.pattern).test(val))))throw Error('Invalid argument: '+key);
   if(rule.type==='integer'&&(!Number.isSafeInteger(val)||val<(rule.minimum||0)))throw Error('Invalid argument: '+key);
   if(rule.type==='boolean'&&typeof val!=='boolean')throw Error('Invalid argument: '+key);
   if(rule.type==='array'&&(!Array.isArray(val)||val.length>500))throw Error('Invalid argument: '+key);
  }
 }
-function allowed(tool,auth){return (!tool.right||auth.permissions[tool.right]===true)&&(!tool.adminWrite||process.env.DAILYNOTE_MCP_ADMIN_WRITES==='1');}
+function allowed(tool,auth){return (!tool.right||auth.permissions[tool.right]===true)&&(!tool.adminWrite||process.env.DAILYNOTE_MCP_ADMIN_WRITES==='1')&&(!tool.localTest||regression.available());}
 function publicTool(name,tool){const {description,inputSchema}=tool;return {name,description,inputSchema,annotations:{readOnlyHint:tool.method==='GET',destructiveHint:false,idempotentHint:tool.method==='GET'}};}
 function rpc(id,result){return {jsonrpc:'2.0',id,result};}
 function failure(id,code,message){return {jsonrpc:'2.0',id,error:{code,message}};}
@@ -95,7 +97,7 @@ async function mcpRouter(req,res,auth,dispatch){
   const body=tool.body?tool.body(args):undefined;
   if(tool.method!=='GET'&&body&&Object.keys(body).length===0&&name==='worklog_update')throw Error('No updates supplied');
   req.auditInfo={mcpTool:name,targetId:args.id||null};
-  const result=await invokeApi({method:tool.method,path,body},req.headers.authorization,dispatch);
+  const result=tool.localTest?await regression.run(args.suite):await invokeApi({method:tool.method,path,body},req.headers.authorization,dispatch);
   const data=compact(tool.diagnostic==='health'
    ?{ok:true,checkedAt:new Date().toISOString(),license:{atLimit:result.atLimit,overLimit:result.overLimit,activeUserCount:result.activeUserCount}}
    :tool.diagnostic==='permissions'
