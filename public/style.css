@@ -1173,3 +1173,6 @@ mark.search-current { background:#ffc04a; outline:2px solid #9b5a00; }
 .file-dropzone.is-drag-over{border-color:var(--primary,#2563eb);background:rgba(37,99,235,.08)}
 .file-dropzone input[type=file]{max-width:100%;width:100%}
 .file-dropzone small{display:block;margin-top:8px;overflow-wrap:anywhere}
+
+.todo-quick-add{flex:0 0 auto;border:1px solid var(--border,#cbd5e1);background:transparent;border-radius:10px;min-width:28px;min-height:28px;padding:0 6px;cursor:pointer;color:inherit;font-weight:600}
+.todo-quick-add:hover,.todo-quick-add:focus-visible{background:rgba(100,116,139,.1);outline-offset:2px}
