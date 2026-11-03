@@ -76,3 +76,7 @@ MCP client (Claude, ChatGPT, local agent)
 - 인수 형식/길이 검증과 오류 응답
 - 운영 데이터 변경 없는 테스트 도구
 - 기존 웹 사용자 화면·로컬 실행 회귀 없음
+
+## MCP 로컬 연결·테스트 2단계 (2026-11-04)
+
+폐쇄망 로컬 PC에서 stdio MCP 연결기를 통해 기존 사용자 권한의 API 도구를 호출할 수 있습니다. 개발 환경에서만 격리형 `system_test_regression`을 노출하며 운영 데이터·Redis는 테스트하지 않습니다. 설치·환경 변수·보안 주의사항은 [MCP 로컬 가이드](MCP-LOCAL.md)를 참고하세요. 외부 ChatGPT/Claude OAuth 계정 연결은 아직 구현되지 않았습니다.
