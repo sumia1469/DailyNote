@@ -43,6 +43,7 @@ async function handleApi(req, res) {
   const license = await require('./license').status();
   const recovery = /^\/api\/admin\/(users|permissions|directory)(\/|$)/.test(pathname);
   if (license.overLimit && !recovery) throw require('./license').licenseError(license.activeUserCount);
+  if(pathname==='/api/mcp')return require('./mcp').mcpRouter(req,res,authInfo,handleApi);
   if (pathname === '/api/auth/profile' && req.method === 'PUT') return require('./profile').updateProfile(req,res,authInfo);
   if(pathname.startsWith('/api/backup/'))return require('./backup.routes').backupRouter(req,res,authInfo);
   if(pathname.startsWith('/api/admin/logs'))return require('./audit').router(req,res,authInfo);
