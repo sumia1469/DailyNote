@@ -10,7 +10,8 @@
    if(blocked()||trigger.disabled||!row.isConnected)return;
    event?.preventDefault();event?.stopPropagation();
    if(!menu){menu=document.createElement('div');menu.id='todo-item-menu';menu.className='todo-item-menu';menu.hidden=true;document.body.append(menu);}
-   if(trigger.getAttribute('aria-expanded')==='true'){UIShell.dropdown.close(true);return;}
+   if(trigger.getAttribute('aria-expanded')==='true'&&!menu.hidden){UIShell.dropdown.close(true);return;}
+   if(menu.hidden)trigger.setAttribute('aria-expanded','false');
    activeRow=row;menu.replaceChildren();menu.setAttribute('aria-label',title+' 항목 메뉴');
    function choice(label,icon,action,danger=false){const button=document.createElement('button');button.type='button';button.textContent=label;button.dataset.icon=icon;if(danger)button.className='menu-danger';button.addEventListener('click',event=>{event.stopPropagation();if(!blocked()&&row.isConnected)action();});menu.append(button);}
    choice('수정','edit',()=>{UIShell.dropdown.close();edit();});
@@ -19,9 +20,7 @@
    choice('삭제','trash',confirmDelete,true);
    window.AppIcons?.render(menu);
    UIShell.dropdown.open(menu,trigger);
-   // A browser may scroll the clicked row into view immediately after opening.
-   // Restore once on the next frame if that initial scroll dismissed the menu.
-   requestAnimationFrame(()=>{if(row.isConnected&&!blocked()&&menu.hidden&&trigger.getAttribute('aria-expanded')==='false')UIShell.dropdown.open(menu,trigger);});
+
   }
   async function save(action,host){
    if(blocked()||!row.isConnected)return;
