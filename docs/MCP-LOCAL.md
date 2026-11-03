@@ -26,12 +26,12 @@ Node.js 18 이상에서 추가 npm 패키지 없이 `scripts/mcp-stdio.cjs`를 �
 
 ## 격리형 Test MCP
 
-`DAILYNOTE_MCP_TEST_MODE=1`을 설정한 개발용 서버(로컬 JSON 모드, NODE_ENV가 production이 아님)에서만 `system_test_regression` 도구가 보입니다.
+`DAILYNOTE_MCP_TEST_MODE=1`을 설정한 개발용 서버(로컬 JSON 모드, NODE_ENV가 production이 아님)의 **관리자 계정**에서만 `system_test_regression` 도구가 보입니다.
 
 - `suite: "mcp"`: MCP 인증·권한·소유권 및 프로토콜 단위/통합 테스트
 - `suite: "ui"`: 바닐라 JS 화면 계약 테스트 (실제 픽셀 기반 브라우저 테스트와 다름)
 
-고정된 테스트 파일만 실행하며 임시 `DATA_DIR`·`UPLOAD_DIR`을 쓰고 Redis/Upstash/Vercel 환경 변수를 자식 프로세스에서 제거합니다. 결과는 성공 여부·경과 시간·건수 요약만 돌려주며 실행 후 임시 파일을 삭제합니다. 서버가 Redis/Vercel/production이면 도구 자체를 숨깁니다. **실제 브라우저 회귀 테스트는 별도의 GitHub Actions나 로컬 UI 하네스로 유지**합니다.
+고정된 테스트 파일만 실행하며 임시 `DATA_DIR`·`UPLOAD_DIR`을 쓰고 Redis/Upstash/Vercel 환경 변수를 자식 프로세스에서 제거합니다. 결과는 성공 여부·경과 시간·건수 요약만 돌려주며 실행 후 임시 파일을 삭제합니다. 30초 재실행 제한과 동시 실행 차단을 적용합니다. 서버가 Redis/Vercel/production이면 도구 자체를 숨깁니다. **실제 브라우저 회귀 테스트는 별도의 GitHub Actions나 로컬 UI 하네스로 유지**합니다.
 
 ## 아직 연결하지 않은 범위
 
