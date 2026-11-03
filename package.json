@@ -26,7 +26,8 @@
     "test:pull-refresh": "node scripts/verify-pull-refresh.cjs",
     "test:backups": "node scripts/verify-backups.cjs",
     "test:backups:redis": "node scripts/verify-backup-redis.cjs",
-    "test:todo-menu": "node scripts/verify-todo-menu.cjs"
+    "test:todo-menu": "node scripts/verify-todo-menu.cjs",
+    "mcp:stdio": "node scripts/mcp-stdio.cjs"
   },
   "author": "이노마인드랩스",
   "license": "SEE LICENSE IN LICENSE",
