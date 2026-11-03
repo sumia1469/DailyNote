@@ -130,9 +130,10 @@
 
 <dialog id="upload-dialog" class="journal-dialog" aria-labelledby="upload-dialog-title"><div class="journal-dialog-header"><h2 id="upload-dialog-title">파일 등록</h2><button id="upload-close" class="shell-icon" type="button" aria-label="파일 등록 닫기" data-icon="close"></button></div>
     <form id="upload-form" class="upload-form">
-      <div class="file-input-wrap">
-        <label for="file-input">파일선택</label>
-        <input type="file" id="file-input" required>
+      <div class="file-input-wrap file-dropzone" id="file-dropzone" role="group" aria-label="파일 등록 영역">
+        <label for="file-input">파일 선택 또는 이 영역에 파일을 끌어다 놓으세요</label>
+        <input type="file" id="file-input" multiple required>
+        <small id="file-selection-status">여러 파일을 한 번에 선택할 수 있습니다.</small>
       </div>
       <button type="submit" class="primary-btn upload-btn">업로드</button><p id="file-upload-status" class="dialog-error" role="alert"></p>
     </form>
