@@ -379,3 +379,14 @@ Node.js 설치 없이 포함된 runtime/node.exe를 사용하는 Windows x64 압
 - 사용자 `public/script.js`, 관리자 `public/admin.js` 업로드 폼은 네이티브 `input[multiple]`과 드롭 파일 목록을 별도로 관리합니다. 서버의 기존 소유권·권한 검증은 그대로 사용합니다.
 - `TodoInline.attach`는 편집 함수 반환 외에 행별 빠른 추가 버튼을 등록합니다. `TodoMenu.attach`를 일일업무 렌더러에서 연결해 저장 시 기존 PUT API를 사용합니다.
 - 참조 검색은 각 형식의 `updatedAt/uploadedAt/createdAt/workDate`를 기준으로 통합 정렬합니다. OCR 영어 보조 패스는 기존 로컬 `eng.traineddata.gz`를 사용합니다.
+
+
+## MCP 서버 개발 안내 (2026-11-04)
+
+`src/mcp.js`는 `/api/mcp`를 처리하는 무상태 JSON-RPC MCP 어댑터입니다. `src/server.js`는 세션·라이선스를 검증한 뒤 MCP 요청을 전달하며, 실제 도구는 기존 `handleApi`를 재호출해 권한·소유권 검증을 중복 적용합니다. 신규 엔드포인트를 MCP에 추가할 때 데이터 저장소에 직접 접근하지 말고 기존 업무 API 권한을 먼저 확인하세요.
+
+- 통신: `initialize`, `ping`, `tools/list`, `tools/call`, `notifications/initialized` 지원. 무상태 HTTP JSON 응답.
+- 도구 등록: `tools` 레지스트리에 JSON Schema/필요 권한/기존 API 경로를 선언. 입력 길이·스키마 검증 및 HTTP 요청 크기 제한을 유지합니다.
+- 관리자 변경: `adminWrite`는 기본 OFF. 사용자 승인 확인을 단순 bool로 대체하면 안 되며 실제 클라이언트 승인 정책이 추가로 필요합니다.
+- 자동 검증: `test/mcp.test.js`, `test/mcp-integration.test.js`, `npm test`, `npm run test:ui`, `.github/workflows/mcp-tests.yml`.
+- 운영 접속을 위해 기존 토큰을 문서나 GitHub 로그에 넣지 마세요. OAuth 및 망분리용 로컬 transport는 [MCP 계획](MCP-PLAN.md)의 후속 단계입니다.
