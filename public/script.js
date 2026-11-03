@@ -610,7 +610,7 @@ function createTodoItem(worklog, todo) {
   text.tabIndex=0;
   text.className='todo-text-btn';
   References.render(text,todo.task || '');
-  if(canUse('worklogEdit'))TodoInline.attach(label,text,todo,async (value,changes) => {
+  const editTodo=canUse('worklogEdit')?TodoInline.attach(label,text,todo,async (value,changes) => {
     const copy=JSON.parse(JSON.stringify(worklog.todo));
     const position=flattenTodoItems(worklog.todo).indexOf(todo);
     const target=flattenTodoItems(copy)[position];target.task=value;
@@ -621,7 +621,7 @@ function createTodoItem(worklog, todo) {
     if(!response.ok){const result=await response.json().catch(()=>({}));throw new Error(result.message||'TODO 내용을 저장하지 못했습니다.');}
     worklog.todo=copy;
     renderWorklogs(currentWorklogs);
-  },worklog.todo);
+  },worklog.todo):null;
   checkbox.addEventListener('change', async () => {
     const affected = flattenTodoItems([todo]);
     const previousStates = affected.map(item => ({item, checked: Boolean(item.checked)}));
@@ -656,6 +656,11 @@ function createTodoItem(worklog, todo) {
   });
   label.appendChild(checkbox);
   label.appendChild(text);
+  if(editTodo)TodoMenu.attach(label,text,todo,worklog,async copy=>{
+    const response=await authFetch(`/api/worklogs/${worklog.id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({todo:copy})});
+    if(!response.ok){const result=await response.json().catch(()=>({}));throw Error(result.message||'TODO 항목을 저장하지 못했습니다.');}
+    worklog.todo=copy;renderWorklogs(currentWorklogs);
+  },editTodo,'TODO',true);
   if(canUse('worklogEdit'))TodoDrag.attach(label,todo,worklog,async copy=>{
     const response=await authFetch(`/api/worklogs/${worklog.id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({todo:copy})});
     if(!response.ok){const result=await response.json().catch(()=>({}));throw new Error(result.message||'항목 위치를 저장하지 못했습니다.');}
