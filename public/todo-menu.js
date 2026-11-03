@@ -18,8 +18,10 @@
    choice('복제','copy',()=>save('duplicate',menu));
    choice('삭제','trash',confirmDelete,true);
    window.AppIcons?.render(menu);
-   // Let click-triggered auto scrolling settle before anchoring the menu.
-   requestAnimationFrame(()=>{if(row.isConnected&&!blocked())UIShell.dropdown.open(menu,trigger);});
+   UIShell.dropdown.open(menu,trigger);
+   // A browser may scroll the clicked row into view immediately after opening.
+   // Restore once on the next frame if that initial scroll dismissed the menu.
+   requestAnimationFrame(()=>{if(row.isConnected&&!blocked()&&menu.hidden&&trigger.getAttribute('aria-expanded')==='false')UIShell.dropdown.open(menu,trigger);});
   }
   async function save(action,host){
    if(blocked()||!row.isConnected)return;
