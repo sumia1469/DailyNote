@@ -57,7 +57,7 @@
     opener.setAttribute('aria-haspopup','menu');opener.setAttribute('aria-controls',menu.id);opener.setAttribute('aria-expanded','true');
     menu.hidden=false;
     if(menu instanceof HTMLDialogElement)menu.show();
-    currentMenu={menu,opener,openedAt:performance.now()};
+    currentMenu={menu,opener,openedAt:Date.now()};
     const viewport=window.visualViewport, left=viewport?.offsetLeft||0,top=viewport?.offsetTop||0;
     const width=viewport?.width||innerWidth,height=viewport?.height||innerHeight;
     menu.style.maxHeight=Math.max(44,height-24)+'px';
@@ -83,7 +83,7 @@
     if(next!==null){event.preventDefault();event.stopImmediatePropagation();nodes[next]?.focus();}
   },true);
   window.addEventListener('resize',()=>closeDropdown());
-  document.addEventListener('scroll',event=>{if(!currentMenu||currentMenu.menu.contains(event.target))return;const autoScrollGrace=currentMenu.menu.id==='todo-item-menu'&&event.isTrusted&&performance.now()-currentMenu.openedAt<350;if(!autoScrollGrace)closeDropdown();},true);
+  document.addEventListener('scroll',event=>{if(!currentMenu||currentMenu.menu.contains(event.target))return;const autoScrollGrace=currentMenu.menu.id==='todo-item-menu'&&event.isTrusted&&Date.now()-currentMenu.openedAt<350;if(!autoScrollGrace)closeDropdown();},true);
   window.addEventListener('hashchange',()=>closeDropdown());
   }
   window.UIShell={title,actions,drawer,dialogs,searchDialog,settingsMenu,actionMenu:openDropdown,dropdown:{open:openDropdown,close:closeDropdown}};
