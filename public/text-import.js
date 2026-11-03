@@ -153,7 +153,7 @@
     ocr = worker;
     try {
       const layout=$('ocr-layout').value, psm=layout==='column'?'4':layout==='sparse'?'11':'3';
-      await worker.setParameters({tessedit_pageseg_mode:psm,user_defined_dpi:'300'});
+      await worker.setParameters({tessedit_pageseg_mode:psm,user_defined_dpi:'300',preserve_interword_spaces:'1'});
       if(token!==job)return {};
       let best=(await worker.recognize(canvas,{rotateAuto:true})).data;
       if(token!==job)return {};
@@ -164,6 +164,26 @@
         if(token!==job)return {};
         const retry=(await worker.recognize(canvas,{rotateAuto:true})).data;
         if(retry.text.trim()&&(!best.text.trim()||retry.confidence>best.confidence))best=retry;
+      }
+      // Mixed Korean/English models may mistake XML tags, paths and identifiers.
+      // Compare a second English-only pass only for predominantly Latin/code-like photos.
+      const latin=(best.text.match(/[A-Za-z]/g)||[]).length;
+      const korean=(best.text.match(/[가-힣]/g)||[]).length;
+      if($('ocr-language').value==='kor+eng'&&latin>25&&latin>korean*2){
+        $('status').textContent='영문·코드 글자를 한 번 더 확인하는 중…';
+        try{
+          await worker.reinitialize('eng');
+          await worker.setParameters({tessedit_pageseg_mode:psm,user_defined_dpi:'300',preserve_interword_spaces:'1'});
+          if(token!==job)return {};
+          const english=(await worker.recognize(canvas,{rotateAuto:true})).data;
+          if(token!==job)return {};
+          const englishLatin=(english.text.match(/[A-Za-z]/g)||[]).length;
+          if(english.text.trim()&&englishLatin>=latin*.85&&
+             Number.isFinite(english.confidence)&&
+             (!Number.isFinite(best.confidence)||english.confidence>best.confidence+3)){
+            best=english;
+          }
+        }catch(_error){/* Original OCR result remains available when alternate mode fails. */}
       }
       return {text:best.text,lowConfidence:!Number.isFinite(best.confidence)||best.confidence<65};
     }
