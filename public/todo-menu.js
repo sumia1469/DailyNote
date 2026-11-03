@@ -18,7 +18,8 @@
    choice('복제','copy',()=>save('duplicate',menu));
    choice('삭제','trash',confirmDelete,true);
    window.AppIcons?.render(menu);
-   UIShell.dropdown.open(menu,trigger);
+   // Let click-triggered auto scrolling settle before anchoring the menu.
+   requestAnimationFrame(()=>{if(row.isConnected&&!blocked())UIShell.dropdown.open(menu,trigger);});
   }
   async function save(action,host){
    if(blocked()||!row.isConnected)return;
