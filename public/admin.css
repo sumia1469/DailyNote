@@ -57,3 +57,9 @@
 .file-admin-rename{margin-top:14px}
 .file-admin-rename input{box-sizing:border-box;font-size:max(16px,var(--app-font-size,16px))}
 .file-admin-rename .dialog-error{margin-bottom:0}
+
+/* File drop areas remain usable without drag-and-drop support. */
+.file-dropzone{border:2px dashed var(--border,#b6bdc9);border-radius:14px;padding:16px;transition:border-color .15s,background-color .15s;min-width:0}
+.file-dropzone.is-drag-over{border-color:var(--primary,#2563eb);background:rgba(37,99,235,.08)}
+.file-dropzone input[type=file]{max-width:100%;width:100%}
+.file-dropzone small{display:block;margin-top:8px;overflow-wrap:anywhere}
