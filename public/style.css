@@ -1167,3 +1167,9 @@ mark.search-current { background:#ffc04a; outline:2px solid #9b5a00; }
 .todo-item-menu.ui-dropdown > button { display:flex; justify-content:flex-start; align-items:center; gap:10px; width:100%; text-align:left; }
 .todo-item-menu.ui-dropdown > button > .app-icon { flex:0 0 20px; width:20px; height:20px; margin:0; }
 .todo-item-menu.ui-dropdown { width:min(220px,calc(100vw - 24px)) !important; }
+
+/* File drop areas remain usable without drag-and-drop support. */
+.file-dropzone{border:2px dashed var(--border,#b6bdc9);border-radius:14px;padding:16px;transition:border-color .15s,background-color .15s;min-width:0}
+.file-dropzone.is-drag-over{border-color:var(--primary,#2563eb);background:rgba(37,99,235,.08)}
+.file-dropzone input[type=file]{max-width:100%;width:100%}
+.file-dropzone small{display:block;margin-top:8px;overflow-wrap:anywhere}
