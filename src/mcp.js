@@ -9,6 +9,8 @@ const integer=(description)=>({type:'integer',description,minimum:1});
 const date=()=>({type:'string',description:'YYYY-MM-DD',pattern:'^\\d{4}-\\d{2}-\\d{2}$'});
 const tools={
  system_whoami:{...spec('현재 로그인 계정과 사용 가능한 권한 확인'),method:'GET',path:'/api/auth/me'},
+ system_test_health:{...spec('운영 데이터를 변경하지 않고 로그인 API와 라이선스 상태를 점검'),method:'GET',path:'/api/license',diagnostic:'health'},
+ system_test_permissions:{...spec('현재 계정의 MCP 도구별 허용 상태를 점검. 다른 사용자의 데이터를 조회하지 않음'),method:'GET',path:'/api/auth/me',diagnostic:'permissions'},
  worklog_list:{...spec('내 업무일지 검색. workDate는 선택.',{workDate:date()}),right:'worklogRead',method:'GET',path:a=>'/api/worklogs'+(a.workDate?'?date='+encodeURIComponent(a.workDate):'')},
  worklog_create:{...spec('내 업무일지 생성',{workDate:date(),todo:{type:'array',description:'TODO 항목 (task, checked, children)',items:{type:'object'}},nextDayPlan:{type:'array',items:{type:'object'}},remarks:string('비고',10000),memo:string('메모',10000)},['workDate','todo']),right:'worklogCreate',method:'POST',path:'/api/worklogs',body:a=>({workDate:a.workDate,todo:a.todo,nextDayPlan:a.nextDayPlan||[],remarks:a.remarks||'',memo:a.memo||''})},
  worklog_update:{...spec('내 업무일지 수정. 기존 값 덮어쓰기 주의.',{id:integer('업무일지 ID'),todo:{type:'array',items:{type:'object'}},nextDayPlan:{type:'array',items:{type:'object'}},remarks:string('비고',10000),memo:string('메모',10000)},['id']),right:'worklogEdit',method:'PUT',path:a=>'/api/worklogs/'+a.id,body:a=>Object.fromEntries(['todo','nextDayPlan','remarks','memo'].filter(k=>a[k]!==undefined).map(k=>[k,a[k]]))},
@@ -86,7 +88,12 @@ async function mcpRouter(req,res,auth,dispatch){
   const body=tool.body?tool.body(args):undefined;
   if(tool.method!=='GET'&&body&&Object.keys(body).length===0&&name==='worklog_update')throw Error('No updates supplied');
   req.auditInfo={mcpTool:name,targetId:args.id||null};
-  const data=compact(await invokeApi({method:tool.method,path,body},req.headers.authorization,dispatch));
+  const result=await invokeApi({method:tool.method,path,body},req.headers.authorization,dispatch);
+  const data=compact(tool.diagnostic==='health'
+   ?{ok:true,checkedAt:new Date().toISOString(),license:{atLimit:result.atLimit,overLimit:result.overLimit,activeUserCount:result.activeUserCount}}
+   :tool.diagnostic==='permissions'
+    ?{userId:auth.userId,role:auth.role,allowedTools:Object.entries(tools).filter(([,entry])=>allowed(entry,auth)).map(([toolName])=>toolName)}
+    :result);
   return response(res,200,rpc(id,{content:[{type:'text',text:JSON.stringify(data)}]}));
  }catch(error){return response(res,200,rpc(id,{isError:true,content:[{type:'text',text:error.message||'Tool execution failed'}]}));}
 }
