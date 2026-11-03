@@ -1,6 +1,12 @@
 'use strict';
 // Stateless MCP-over-HTTP adapter. Uses the existing authenticated API router.
-const {parseJsonBody,sendJson}=require('./utils');
+const {sendJson}=require('./utils');
+const MAX_REQUEST_BYTES=256*1024;
+async function readJsonRequest(req){
+ if(req.body!==undefined){const raw=typeof req.body==='string'?req.body:JSON.stringify(req.body);if(Buffer.byteLength(raw)>MAX_REQUEST_BYTES)throw Error('MCP request too large');return JSON.parse(raw);}
+ const chunks=[];let size=0;for await(const chunk of req){size+=Buffer.byteLength(chunk);if(size>MAX_REQUEST_BYTES)throw Error('MCP request too large');chunks.push(Buffer.from(chunk));}
+ return JSON.parse(Buffer.concat(chunks).toString('utf8')||'{}');
+}
 const {verifyToken}=require('./auth');
 const VERSION='2025-11-25';
 const spec=(description,properties={},required=[],extra={})=>({description,inputSchema:{type:'object',properties,required,additionalProperties:false},...extra});
@@ -62,13 +68,14 @@ async function mcpRouter(req,res,auth,dispatch){
  if(!auth) return response(res,401,{error:'Authentication required'});
  if(auth.mustChangePassword)return response(res,403,{error:'Password change required'});
  if(req.headers.origin){
-  const origin=new URL(req.headers.origin);const host=req.headers.host;
+  let origin;try{origin=new URL(req.headers.origin);}catch{return response(res,403,{error:'Invalid Origin'});}
+  const host=req.headers.host;
   if(!host||origin.host!==host)return response(res,403,{error:'Cross-origin requests are not allowed'});
  }
  if(req.method!=='POST'){res.setHeader('Allow','POST');return response(res,405,{error:'Use POST'});}
  if(!String(req.headers['content-type']||'').includes('application/json'))return response(res,415,{error:'Content-Type application/json required'});
  let input;
- try{input=await parseJsonBody(req);}catch{return response(res,400,failure(null,-32700,'Invalid JSON'));}
+ try{input=await readJsonRequest(req);}catch{return response(res,400,failure(null,-32700,'Invalid JSON'));}
  if(!input||input.jsonrpc!=='2.0'||typeof input.method!=='string'||Array.isArray(input))return response(res,400,failure(input?.id??null,-32600,'Invalid JSON-RPC request'));
  if(input.method==='notifications/initialized')return res.writeHead(202).end();
  const id=input.id;
