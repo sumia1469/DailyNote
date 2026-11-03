@@ -234,31 +234,59 @@ window.NotificationPage = (function(){
   }};
 })();
 
-/* 파일 업로드 — 원본을 작은 조각으로 전송 */
-document.getElementById('upload-form').addEventListener('submit', async e => {
-  e.preventDefault();
-  const file = document.getElementById('file-input').files[0];
-  if (!file) return;
-  const button = e.target.querySelector('button[type="submit"]');
-  if (button.disabled) return;
-  const buttonText=button.textContent;
-  document.getElementById('file-upload-status').textContent='';
-  button.disabled = true;
-  try {
-    await withLoading('파일을 업로드하고 있습니다…', async () => {
-      const send=async payload=>{const res=await authFetch('/api/upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});const data=await res.json();if(!res.ok)throw new Error(data.message||'파일을 업로드하지 못했습니다.');return data;};
-      await FileTransfer.upload(file,send,percent=>{button.textContent='업로드 '+percent+'%';});
-      document.getElementById('file-input').value = '';
-      document.getElementById('upload-dialog').close();
-      await loadFiles();
-    });
-  } catch (error) {
-    document.getElementById('file-upload-status').textContent='업로드 실패: '+error.message;
-  } finally {
-    button.disabled = false;
-    button.textContent=buttonText;
+/* 파일 업로드 — 여러 파일을 순서대로 전송하고, 실패 시 이미 등록된 파일은 보존 */
+{
+ const form=document.getElementById('upload-form');
+ const input=document.getElementById('file-input');
+ const zone=document.getElementById('file-dropzone');
+ const selection=document.getElementById('file-selection-status');
+ const uploadStatus=document.getElementById('file-upload-status');
+ let droppedFiles=null;
+ let uploading=false;
+ function selected(){return droppedFiles||Array.from(input.files||[]);}
+ function showSelected(){
+  const files=selected();
+  selection.textContent=files.length?files.length+'개 파일 선택: '+files.map(f=>f.name).join(', '):'여러 파일을 한 번에 선택할 수 있습니다.';
+ }
+ input.addEventListener('change',()=>{droppedFiles=null;showSelected();});
+ ['dragenter','dragover'].forEach(type=>zone.addEventListener(type,event=>{
+  if(!event.dataTransfer?.types?.includes('Files'))return;
+  event.preventDefault();if(uploading)return;zone.classList.add('is-drag-over');
+  event.dataTransfer.dropEffect='copy';
+ }));
+ ['dragleave','drop'].forEach(type=>zone.addEventListener(type,event=>{
+  event.preventDefault();zone.classList.remove('is-drag-over');
+  if(type==='drop'&&!uploading){
+   droppedFiles=Array.from(event.dataTransfer?.files||[]);
+   input.required=!droppedFiles.length;showSelected();
   }
-});
+ }));
+ form.addEventListener('submit',async event=>{
+  event.preventDefault();if(uploading)return;
+  const files=selected();
+  if(!files.length){uploadStatus.textContent='등록할 파일을 선택하거나 끌어다 놓으세요.';return;}
+  const button=form.querySelector('button[type="submit"]'),buttonText=button.textContent;
+  uploading=true;button.disabled=true;input.disabled=true;uploadStatus.textContent='';
+  try{
+   await withLoading('파일을 업로드하고 있습니다…',async()=>{
+    const send=async payload=>{
+     const response=await authFetch('/api/upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+     const data=await response.json();if(!response.ok)throw Error(data.message||'파일을 업로드하지 못했습니다.');return data;
+    };
+    await FileTransfer.uploadMany(files,send,({index,total,file,percent})=>{
+     button.textContent='업로드 '+(index+1)+'/'+total+' · '+percent+'%';
+     uploadStatus.textContent=file.name+' 업로드 중 ('+(index+1)+'/'+total+')';
+    });
+    droppedFiles=null;input.value='';input.required=true;showSelected();
+    document.getElementById('upload-dialog').close();await loadFiles();
+   });
+  }catch(error){
+   const completed=error.completed?.length||0;
+   uploadStatus.textContent='업로드 실패 ('+(completed+1)+'번째 파일): '+error.message+(completed?' · 앞의 '+completed+'개 파일은 등록되었습니다.':'');
+   if(completed)await loadFiles().catch(()=>{});
+  }finally{uploading=false;button.disabled=false;input.disabled=false;button.textContent=buttonText;}
+ });
+}
 
 /* 파일 목록 — GET /api/files */
 let backupFileRecords=[];
@@ -582,7 +610,7 @@ function createTodoItem(worklog, todo) {
   text.tabIndex=0;
   text.className='todo-text-btn';
   References.render(text,todo.task || '');
-  if(canUse('worklogEdit'))TodoInline.attach(label,text,todo,async (value,changes) => {
+  const editTodo=canUse('worklogEdit')?TodoInline.attach(label,text,todo,async (value,changes) => {
     const copy=JSON.parse(JSON.stringify(worklog.todo));
     const position=flattenTodoItems(worklog.todo).indexOf(todo);
     const target=flattenTodoItems(copy)[position];target.task=value;
@@ -593,7 +621,7 @@ function createTodoItem(worklog, todo) {
     if(!response.ok){const result=await response.json().catch(()=>({}));throw new Error(result.message||'TODO 내용을 저장하지 못했습니다.');}
     worklog.todo=copy;
     renderWorklogs(currentWorklogs);
-  },worklog.todo);
+  },worklog.todo):null;
   checkbox.addEventListener('change', async () => {
     const affected = flattenTodoItems([todo]);
     const previousStates = affected.map(item => ({item, checked: Boolean(item.checked)}));
@@ -628,6 +656,11 @@ function createTodoItem(worklog, todo) {
   });
   label.appendChild(checkbox);
   label.appendChild(text);
+  if(editTodo)TodoMenu.attach(label,text,todo,worklog,async copy=>{
+    const response=await authFetch(`/api/worklogs/${worklog.id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({todo:copy})});
+    if(!response.ok){const result=await response.json().catch(()=>({}));throw Error(result.message||'TODO 항목을 저장하지 못했습니다.');}
+    worklog.todo=copy;renderWorklogs(currentWorklogs);
+  },editTodo,'TODO',true);
   if(canUse('worklogEdit'))TodoDrag.attach(label,todo,worklog,async copy=>{
     const response=await authFetch(`/api/worklogs/${worklog.id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({todo:copy})});
     if(!response.ok){const result=await response.json().catch(()=>({}));throw new Error(result.message||'항목 위치를 저장하지 못했습니다.');}

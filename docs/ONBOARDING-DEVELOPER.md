@@ -371,3 +371,11 @@ Node.js 설치 없이 포함된 runtime/node.exe를 사용하는 Windows x64 압
 ## 모바일 입력 글꼴
 
 `mobile-inputs.css`는 모든 HTML의 마지막 스타일시트입니다. 좁은 화면 및 터치 중심 기기의 입력에 16px 하한을 적용하고 사용자 글꼴 및 제목/본문의 큰 크기를 유지합니다. 새 입력 컴포넌트를 추가할 때 기본 하한을 회피하지 말고, 큰 타이포그래피는 `--focus-font-size`로 선언하세요. viewport 확대 금지나 강제 scale 재설정은 사용하지 않습니다. `/mobile-input-harness.html`은 API 없는 예시이며 실제 iOS 포커스 검증을 보조합니다.
+
+
+## 2026-11-03 파일·TODO·OCR 변경
+
+- `FileTransfer.uploadMany(files, send, progress)`는 단건 `upload`를 순서대로 호출하며 파일별 진행 상황과 완료된 `{file,id}` 항목을 전달합니다. 실패 시 `error.completed`, `error.fileName`을 확인해 부분 성공을 표시합니다.
+- 사용자 `public/script.js`, 관리자 `public/admin.js` 업로드 폼은 네이티브 `input[multiple]`과 드롭 파일 목록을 별도로 관리합니다. 서버의 기존 소유권·권한 검증은 그대로 사용합니다.
+- `TodoInline.attach`는 편집 함수 반환 외에 행별 빠른 추가 버튼을 등록합니다. `TodoMenu.attach`를 일일업무 렌더러에서 연결해 저장 시 기존 PUT API를 사용합니다.
+- 참조 검색은 각 형식의 `updatedAt/uploadedAt/createdAt/workDate`를 기준으로 통합 정렬합니다. OCR 영어 보조 패스는 기존 로컬 `eng.traineddata.gz`를 사용합니다.

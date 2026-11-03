@@ -61,7 +61,7 @@
   }
   function flatten(items){return (Array.isArray(items)?items:[]).filter(Boolean).flatMap(item=>typeof item==='string'?[item]:[item.task||'',...flatten(item.children)]);}
   function describe(kind,item){const title=kind==='files'?(item.originalName||item.filename||'파일'):kind==='memos'?(item.title||'제목 없는 메모'):(item.workDate+' · '+ReferenceCore.plain(flatten(item.todo)[0]||'업무일지'));
-    return {kind,id:item.id,title,search:ReferenceCore.plain(title+' '+(kind==='memos'?item.text||'':kind==='worklogs'?[...flatten(item.todo),...flatten(item.nextDayPlan),item.memo||'',item.remarks||''].join(' '):''))};}
+    return {kind,id:item.id,title,updatedAt:Date.parse(item.updatedAt||item.uploadedAt||item.createdAt||item.workDate||'')||0,search:ReferenceCore.plain(title+' '+(kind==='memos'?item.text||'':kind==='worklogs'?[...flatten(item.todo),...flatten(item.nextDayPlan),item.memo||'',item.remarks||''].join(' '):''))};}
   function render(node,text){
     node.dataset.referenceSource=String(text||'');node.replaceChildren();for(const part of ReferenceCore.parts(text)){
       if(!part.href){node.append(document.createTextNode(part.text));continue;}
@@ -71,7 +71,7 @@
     }
   }
   function choose(index){active=index;const buttons=[...$('results').children];buttons.forEach((b,i)=>b.setAttribute('aria-selected',String(i===index)));buttons[index]?.scrollIntoView({block:'nearest'});}
-  function filtered(){const query=$('query').value.toLocaleLowerCase(),type=$('type').value;return records.filter(item=>(type==='all'||type===item.kind)&&item.search.toLocaleLowerCase().includes(query));}
+  function filtered(){const query=$('query').value.toLocaleLowerCase(),type=$('type').value;return records.filter(item=>(type==='all'||type===item.kind)&&item.search.toLocaleLowerCase().includes(query)).sort((a,b)=>b.updatedAt-a.updatedAt||b.id-a.id);}
   function list(){const found=filtered();$('results').replaceChildren();active=0;for(const item of found.slice(0,100)){const button=document.createElement('button');button.type='button';button.className='reference-result';button.setAttribute('role','option');button.setAttribute('aria-selected','false');const title=document.createElement('span');title.textContent=item.title;const meta=document.createElement('small');meta.textContent=types[item.kind].name;button.append(title,meta);button.addEventListener('focus',()=>choose([...$('results').children].indexOf(button)));button.addEventListener('click',()=>insert(ReferenceCore.internal(item.kind,item.id,item.title)));$('results').append(button);}choose(0);
     $('status').textContent=(found.length?`${found.length}개 결과${found.length>100?' · 처음 100개 표시, 검색어로 좁혀 주세요.':''}`:'검색 결과가 없습니다.')+(edit?.searchErrors||'');
   }

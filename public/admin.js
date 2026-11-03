@@ -183,7 +183,40 @@ $('notification-form').addEventListener('submit',e=>{e.preventDefault();submitDi
 $('user-form').addEventListener('submit',e=>{e.preventDefault();const form=e.target,f=form.elements;submitDialog(form,$('user-dialog'),'user-form-error',async()=>{if(!f.id.value&&!f.password.value)throw new Error('새 사용자 비밀번호를 입력하세요.');await api('/api/admin/users'+(f.id.value?'/'+f.id.value:''),f.id.value?'PUT':'POST',{username:f.username.value,password:f.password.value,active:f.active.value==='true'});form.reset();f.id.value='';await refresh();status('사용자를 저장했습니다.');});});
 $('permission-user').addEventListener('change',setPermissionForm);$('permission-role').addEventListener('change',updatePermissionRole);
 $('permission-form').addEventListener('submit',e=>{e.preventDefault();run(async()=>{const f=e.target.elements;const permissions=Object.fromEntries(permissionKeys.map(key=>[key,f.namedItem(key).checked]));await api('/api/admin/permissions/'+f.userId.value,'PUT',{role:f.role.value,permissions});await refresh();if(rights.some(key=>me.permissions[key]))status('권한을 저장했습니다.');});});
-$('admin-upload-form').addEventListener('submit',e=>{e.preventDefault();submitDialog(e.target,$('admin-upload-dialog'),'admin-upload-error',async()=>{const file=$('admin-file').files[0];if(!file)return;await FileTransfer.upload(file,payload=>api('/api/upload','POST',payload),percent=>{$('admin-upload-error').textContent='업로드 '+percent+'%';});$('admin-upload-error').textContent='';e.target.reset();await refresh();status('파일을 업로드했습니다.');});});
+{
+ const form=$('admin-upload-form'),input=$('admin-file'),zone=$('admin-file-dropzone'),hint=$('admin-file-help');
+ let droppedFiles=null;
+ const selected=()=>droppedFiles||Array.from(input.files||[]);
+ const show=()=>{const files=selected();hint.textContent=files.length?files.length+'개 파일 선택: '+files.map(file=>file.name).join(', '):'여러 파일을 선택하거나 끌어다 놓으세요.';};
+ input.addEventListener('change',()=>{droppedFiles=null;input.required=true;show();});
+ ['dragenter','dragover'].forEach(type=>zone.addEventListener(type,event=>{
+  if(!event.dataTransfer?.types?.includes('Files'))return;
+  event.preventDefault();zone.classList.add('is-drag-over');event.dataTransfer.dropEffect='copy';
+ }));
+ ['dragleave','drop'].forEach(type=>zone.addEventListener(type,event=>{
+  event.preventDefault();zone.classList.remove('is-drag-over');
+  if(type==='drop'&&!form.querySelector('[type=submit]').disabled){
+   droppedFiles=Array.from(event.dataTransfer?.files||[]);input.required=!droppedFiles.length;show();
+  }
+ }));
+ form.addEventListener('submit',event=>{
+  event.preventDefault();
+  const files=selected();
+  if(!files.length){$('admin-upload-error').textContent='등록할 파일을 선택하세요.';return;}
+  submitDialog(form,$('admin-upload-dialog'),'admin-upload-error',async()=>{
+   try{
+    await FileTransfer.uploadMany(files,payload=>api('/api/upload','POST',payload),({index,total,file,percent})=>{
+     $('admin-upload-error').textContent=file.name+' 업로드 '+(index+1)+'/'+total+' · '+percent+'%';
+    });
+   }catch(error){
+    if(error.completed?.length)await refresh();
+    throw Error(error.message+(error.completed?.length?' · 앞의 '+error.completed.length+'개 파일은 등록되었습니다.':''));
+   }
+   droppedFiles=null;form.reset();input.required=true;show();await refresh();
+   status(files.length+'개 파일을 업로드했습니다.');
+  });
+ });
+}
 $('appearance-form').addEventListener('change',e=>{if(e.target.id!=='background-file')preview();});
 $('background-file').addEventListener('change',()=>run(async()=>{const file=$('background-file').files[0];if(!file)return;if(file.size>1024*1024)throw new Error('배경 이미지는 최대 1MB입니다.');if(!['image/png','image/jpeg','image/webp'].includes(file.type))throw new Error('PNG·JPG·WebP 이미지를 선택하세요.');backgroundData=await fileData(file);$('screen-background').value='custom';preview();}));
 $('appearance-default').addEventListener('click',()=>{refreshDirty.add('appearance');backgroundData=null;$('background-file').value='';setAppearance({fontFamily:'system',fontSize:16,spacing:'normal',theme:'light',background:'autumn',loadingMotion:'petal',backgroundUrl:appearance.backgroundUrl});status('기본값을 미리 보고 있습니다. 적용하려면 설정 저장을 누르세요.');});
