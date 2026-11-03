@@ -13,11 +13,29 @@ async function upload(file,send,progress=()=>{}){
   return info.id;
  }catch(error){await send({phase:'cancel',id:info.id}).catch(()=>{});throw error;}
 }
+async function uploadMany(files,send,progress=()=>{}){
+ const selected=Array.from(files||[]);
+ if(!selected.length)throw Error('등록할 파일을 선택하세요.');
+ const completed=[];
+ for(let i=0;i<selected.length;i++){
+  const file=selected[i];
+  try{
+   const id=await upload(file,send,percent=>progress({index:i,total:selected.length,file,percent}));
+   completed.push({file,id});
+   progress({index:i,total:selected.length,file,percent:100,completed:true});
+  }catch(error){
+   error.completed=completed;
+   error.fileName=file.name;
+   throw error;
+  }
+ }
+ return completed;
+}
 async function download(file,read){
  const parts=[];
  if(file.chunkCount){for(let i=0;i<file.chunkCount;i++)parts.push(await read('?part='+i));}
  else parts.push(await read(''));
  return new Blob(parts,{type:file.mimeType||'application/octet-stream'});
 }
-window.FileTransfer={upload,download};
+window.FileTransfer={upload,uploadMany,download};
 })();
