@@ -685,7 +685,7 @@
   },
   {
     "id": "2026-11-04-02",
-    "publishedAt": "2026-11-04T09:00:00+09:00",
+    "publishedAt": "2026-11-04T08:53:40+09:00",
     "message": "2026년 11월 4일 MCP 로컬 연결·격리 테스트 업데이트\n\n[로컬 AI 연결]\n• 폐쇄망 PC에서 Claude Code 등 stdio MCP 클라이언트로 DailyNote 호출하는 Node.js 연결기 추가\n• 로컬호스트 기본 연결, 원격 연결은 HTTPS 및 별도 활성화 필요\n• 로그인 세션은 환경변수로 전달하고 일반 출력에는 표시하지 않음\n\n[테스트 MCP]\n• 개발용 로컬 JSON 환경에서만 MCP·UI 계약 회귀 테스트 도구 제공\n• Redis/Vercel/운영 환경에서는 테스트 도구 숨김\n• 임시 데이터 경로에서 실행하고 완료 후 정리\n\nChatGPT·Claude 원격 계정 연결용 OAuth 로그인 및 동의 기능은 후속 단계입니다.",
     "sourceCommits": [
       "2c57049b88d0a47b26d68442021c5da7b6f18b2a",
