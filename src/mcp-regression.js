@@ -17,11 +17,15 @@ function available(){
   && !process.env.UPSTASH_REDIS_REST_URL
   && process.env.NODE_ENV!=='production';
 }
+let running=false,lastRun=0;
 async function run(suite){
+ if(running||Date.now()-lastRun<30000)throw Error('Regression test is busy or cooling down');
  if(!available())throw Error('Regression tests require an isolated local test environment');
  const files=SUITES[suite];
  if(!files)throw Error('Unknown test suite');
- const dir=await mkdtemp(join(tmpdir(),'dailynote-mcp-regression-'));
+ running=true;lastRun=Date.now();
+ let dir;
+ try{dir=await mkdtemp(join(tmpdir(),'dailynote-mcp-regression-'));}catch(error){running=false;throw error;}
  try{
   const env={...process.env,DATA_DIR:dir,UPLOAD_DIR:join(dir,'uploads'),DAILYNOTE_MCP_ADMIN_WRITES:'0',DAILYNOTE_MCP_TEST_MODE:'0'};
   for(const key of ['REDIS_URL','UPSTASH_REDIS_REST_URL','UPSTASH_REDIS_REST_TOKEN','VERCEL','ADMIN_PASSWORD','DAILYNOTE_MCP_TOKEN'])delete env[key];
@@ -33,6 +37,6 @@ async function run(suite){
   }catch(error){
    return {ok:false,suite,elapsedMs:Date.now()-started,message:error.killed?'Test timed out':'Test failed',summary:String(error.stdout||'').match(/# (?:tests|pass|fail|duration_ms) [^\r\n]+/g)?.slice(-5)||[]};
   }
- }finally{await rm(dir,{recursive:true,force:true});}
+ }finally{running=false;await rm(dir,{recursive:true,force:true});}
 }
 module.exports={available,run,SUITES};
