@@ -1,0 +1,40 @@
+name: Verify worklog improvements
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'public/script.js'
+      - 'public/todo-inline.js'
+      - 'public/todo-menu.js'
+      - 'public/file-transfer.js'
+      - 'public/text-import.js'
+      - 'public/references.js'
+      - 'public/index.html'
+      - 'public/admin.html'
+      - 'public/admin.js'
+      - 'public/*.css'
+      - 'test/**'
+      - '.github/workflows/worklog-improvements.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm ci
+      - run: npm test
+      - run: npm run test:ui
+      - name: Syntax checks
+        run: |
+          node --check public/script.js
+          node --check public/admin.js
+          node --check public/file-transfer.js
+          node --check public/text-import.js
+          node --check public/todo-inline.js
+          node --check public/references.js
