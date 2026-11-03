@@ -390,3 +390,7 @@ Node.js 설치 없이 포함된 runtime/node.exe를 사용하는 Windows x64 압
 - 관리자 변경: `adminWrite`는 기본 OFF. 사용자 승인 확인을 단순 bool로 대체하면 안 되며 실제 클라이언트 승인 정책이 추가로 필요합니다.
 - 자동 검증: `test/mcp.test.js`, `test/mcp-integration.test.js`, `npm test`, `npm run test:ui`, `.github/workflows/mcp-tests.yml`.
 - 운영 접속을 위해 기존 토큰을 문서나 GitHub 로그에 넣지 마세요. OAuth 및 망분리용 로컬 transport는 [MCP 계획](MCP-PLAN.md)의 후속 단계입니다.
+
+## MCP 로컬 연결·테스트 2단계 (2026-11-04)
+
+폐쇄망 로컬 PC에서 stdio MCP 연결기를 통해 기존 사용자 권한의 API 도구를 호출할 수 있습니다. 개발 환경에서만 격리형 `system_test_regression`을 노출하며 운영 데이터·Redis는 테스트하지 않습니다. 설치·환경 변수·보안 주의사항은 [MCP 로컬 가이드](MCP-LOCAL.md)를 참고하세요. 외부 ChatGPT/Claude OAuth 계정 연결은 아직 구현되지 않았습니다.

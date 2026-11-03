@@ -392,3 +392,7 @@ TODO 및 익일 계획·비고·메모 항목 오른쪽 … 또는 항목 우클
 - `system_test_health`, `system_test_permissions`는 운영 데이터를 변경하지 않고 상태·권한을 점검합니다. CRUD 회귀 테스트는 격리된 CI에서 수행합니다.
 - ChatGPT 플러그인으로 사용자에게 배포하려면 OAuth 연결 및 사용자 승인 UI가 더 필요합니다. 이 버전은 기본 MCP 서버 단계이며 ChatGPT 플러그인 설치 완료가 아닙니다.
 - 전체 설계와 보안·테스트 범위: [MCP 계획](docs/MCP-PLAN.md).
+
+## MCP 로컬 연결·테스트 2단계 (2026-11-04)
+
+폐쇄망 로컬 PC에서 stdio MCP 연결기를 통해 기존 사용자 권한의 API 도구를 호출할 수 있습니다. 개발 환경에서만 격리형 `system_test_regression`을 노출하며 운영 데이터·Redis는 테스트하지 않습니다. 설치·환경 변수·보안 주의사항은 [MCP 로컬 가이드](docs/MCP-LOCAL.md)를 참고하세요. 외부 ChatGPT/Claude OAuth 계정 연결은 아직 구현되지 않았습니다.
