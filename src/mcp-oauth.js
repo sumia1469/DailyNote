@@ -51,7 +51,20 @@ function validateRequest(conf,p){
  if(state.length>512)return null;
  return {clientId,redirect,resource,challenge,state};
 }
-const pending=new Map(),redeemed=new Set();
+const pending=new Map(),redeemed=new Set(),loginAttempts=new Map();
+async function loginAllowed(username){
+ const key=digest(String(username).toLowerCase());
+ if(process.env.REDIS_URL||process.env.UPSTASH_REDIS_REST_URL){
+  const store=require('./redis-store');const redisKey='dailyNote:oauth:attempt:'+key;
+  const count=Number(await store.command('INCR',redisKey));
+  if(count===1)await store.command('EXPIRE',redisKey,600);
+  return count<=10;
+ }
+ const now=Date.now(),old=loginAttempts.get(key);
+ const item=old&&old.expiresAt>now?old:{count:0,expiresAt:now+600000};item.count++;
+ loginAttempts.set(key,item);if(loginAttempts.size>3000)loginAttempts.clear();
+ return item.count<=10;
+}
 function clean(){for(const [key,val]of pending)if(val.expiresAt<Date.now())pending.delete(key);}
 async function account(username,password){
  const user=await ds.findOne('users',u=>u.username===username);
@@ -101,6 +114,7 @@ async function authorize(req,res,conf){
  }
  const username=body.get('username')||'',password=body.get('password')||'';
  if(username.length>40||password.length>128)return page(res,'<h1>인증 오류</h1><p>로그인 입력값을 확인해 주세요.</p>',401);
+ if(!await loginAllowed(username))return page(res,'<h1>시도 제한</h1><p>인증 시도가 너무 많습니다. 10분 후 다시 시도하세요.</p>',429);
  const user=await account(username,password);
  if(!user)return page(res,'<h1>인증 실패</h1><p>계정 또는 비밀번호가 올바르지 않거나 계정이 비활성화되었습니다. 연결을 다시 시작하세요.</p>',401);
  const code=await issueAuthCode(record,user);
