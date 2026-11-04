@@ -84,6 +84,7 @@ async function handler(req, res) {
    req.url = incoming.pathname + incoming.search;
   }
   const parsed = url.parse(req.url);
+  if (parsed.pathname.startsWith('/.well-known/oauth-') && req.method==='GET') {const meta=require('./mcp-oauth').metadata(parsed.pathname);return meta?sendJson(res,200,meta):sendJson(res,404,{message:'OAuth not configured'});}
   if (!parsed.pathname.startsWith('/api/')) return serveStatic(req, res);
   if (process.env.VERCEL && !(process.env.REDIS_URL || process.env.UPSTASH_REDIS_REST_URL)) return sendJson(res, 503, {message: '데이터 저장소가 연결되지 않았습니다. Vercel에서 Redis 환경 변수를 설정해 주세요.'});
   if ((process.env.REDIS_URL || process.env.UPSTASH_REDIS_REST_URL)) await require('./redis-store').initialize();
