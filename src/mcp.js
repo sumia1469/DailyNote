@@ -26,6 +26,10 @@ const tools={
  memo_get:{...spec('내 메모 상세 조회',{id:integer('메모 ID')},['id']),right:'memoRead',method:'GET',path:a=>'/api/memos/'+a.id},
  memo_create:{...spec('텍스트 메모 작성',{title:string('제목',200),text:string('본문',100000),folder:string('폴더',80)},['title','text']),right:'memoCreate',method:'POST',path:'/api/memos',body:a=>({title:a.title,text:a.text,html:'',folder:a.folder||'',font:'sans-serif',color:'white',starred:false,pinned:false,attachments:[]})},
  calendar_list:{...spec('내 캘린더 일정 및 일지 조회 (최대 370일)',{start:date(),end:date()},['start','end']),right:'calendarRead',method:'GET',path:a=>'/api/calendar?start='+a.start+'&end='+a.end},
+ calendar_create:{...spec('내 캘린더 일정 등록. 종일 일정의 end는 마지막 날짜를 포함합니다.',{title:string('일정 제목',200),description:string('일정 내용',5000),allDay:{type:'boolean'},start:string('시작일 YYYY-MM-DD 또는 ISO 시간',40),end:string('종료일 YYYY-MM-DD 또는 ISO 시간',40),kind:{type:'string',enum:['schedule','dayoff']},color:{type:'string',enum:['blue','green','orange','purple','red']},reminderMinutes:{type:'integer',minimum:0}},['title','allDay','start','end']),right:'calendarCreate',method:'POST',path:'/api/calendar',body:a=>({title:a.title,description:a.description||'',allDay:a.allDay,start:a.start,end:a.end,kind:a.kind||'schedule',color:a.color||'blue',reminderMinutes:a.reminderMinutes??null})},
+ calendar_update:{...spec('내 캘린더 일정 수정. 모든 필드를 전달하여 해당 일정을 갱신합니다.',{id:integer('일정 ID'),title:string('일정 제목',200),description:string('일정 내용',5000),allDay:{type:'boolean'},start:string('시작일',40),end:string('종료일',40),kind:{type:'string',enum:['schedule','dayoff']},color:{type:'string',enum:['blue','green','orange','purple','red']},reminderMinutes:{type:'integer',minimum:0}},['id','title','allDay','start','end']),right:'calendarEdit',method:'PUT',path:a=>'/api/calendar/'+a.id,body:a=>({title:a.title,description:a.description||'',allDay:a.allDay,start:a.start,end:a.end,kind:a.kind||'schedule',color:a.color||'blue',reminderMinutes:a.reminderMinutes??null})},
+ calendar_delete:{...spec('내 캘린더 일정 삭제. 삭제 전 사용자의 명시적 확인이 필요합니다.',{id:integer('삭제할 일정 ID'),confirm:{type:'boolean',description:'사용자가 삭제를 명시적으로 승인했음'}},['id','confirm']),right:'calendarDelete',method:'DELETE',path:a=>'/api/calendar/'+a.id,confirmWrite:true},
+
  file_list:{...spec('내 파일 목록 조회. 다운로드 파일 본문은 반환하지 않습니다.'),right:'fileRead',method:'GET',path:'/api/files'},
  notification_list:{...spec('내 공지 목록 조회'),right:'notificationRead',method:'GET',path:'/api/notifications'},
  admin_users_list:{...spec('관리자 사용자 및 권한 목록 조회'),right:'users',method:'GET',path:'/api/admin/users'},
@@ -46,7 +50,7 @@ function validate(schema,value){
   if(rule.type==='array'&&(!Array.isArray(val)||val.length>500))throw Error('Invalid argument: '+key);
  }
 }
-function allowed(tool,auth){return (!auth.mcpOnly||(auth.scope==='mcp:read'&&tool.method==='GET'&&!tool.localTest&&!['users','files','notifications','logs'].includes(tool.right)))&&(!tool.right||auth.permissions[tool.right]===true)&&(!tool.adminWrite||process.env.DAILYNOTE_MCP_ADMIN_WRITES==='1')&&(!tool.localTest||(auth.role==='admin'&&regression.available()));}
+function allowed(tool,auth){const scopes=String(auth.scope||'').split(/\s+/);const oauthAllowed=!auth.mcpOnly||(scopes.includes('mcp:read')&&(tool.method==='GET'||scopes.includes('mcp:write'))&&!tool.localTest&&!tool.adminWrite&&!['users','files','notifications','logs'].includes(tool.right));return oauthAllowed&&(!tool.right||auth.permissions[tool.right]===true)&&(!tool.adminWrite||process.env.DAILYNOTE_MCP_ADMIN_WRITES==='1')&&(!tool.localTest||(auth.role==='admin'&&regression.available()));}
 function publicTool(name,tool){const {description,inputSchema}=tool;return {name,description,inputSchema,annotations:{readOnlyHint:tool.method==='GET',destructiveHint:false,idempotentHint:tool.method==='GET'}};}
 function rpc(id,result){return {jsonrpc:'2.0',id,result};}
 function failure(id,code,message){return {jsonrpc:'2.0',id,error:{code,message}};}
@@ -92,7 +96,7 @@ async function mcpRouter(req,res,auth,dispatch){
  try{
   const args=input.params?.arguments||{};
   validate(tool.inputSchema,args);
-  if(tool.adminWrite&&args.confirm!==true)throw Error('Administrator approval is required: confirm=true');
+  if((tool.adminWrite||tool.confirmWrite)&&args.confirm!==true)throw Error('이 작업을 실행하려면 confirm=true로 명시적인 확인이 필요합니다.');
   const path=typeof tool.path==='function'?tool.path(args):tool.path;
   const body=tool.body?tool.body(args):undefined;
   if(tool.method!=='GET'&&body&&Object.keys(body).length===0&&name==='worklog_update')throw Error('No updates supplied');
