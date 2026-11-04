@@ -917,7 +917,8 @@ async function loadList(date = '',strict=false) {
     const records = await response.json();
     if(stale())return;
     currentWorklogs = records;
-    renderWorklogs(currentWorklogs)
+    renderWorklogs(currentWorklogs);
+    window.CalendarWorklogBridge?.refresh(date,records);
   } catch (error) {
     if(stale())return;
     if(strict===true)throw error;
