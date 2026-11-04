@@ -270,7 +270,7 @@ window.NotificationPage = (function(){
   try{
    await withLoading('파일을 업로드하고 있습니다…',async()=>{
     const send=async payload=>{
-     const response=await authFetch('/api/upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+     const response=await authFetch('/api/upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),signal:AbortSignal.timeout(45000)});
      const data=await response.json();if(!response.ok)throw Error(data.message||'파일을 업로드하지 못했습니다.');return data;
     };
     await FileTransfer.uploadMany(files,send,({index,total,file,percent})=>{
@@ -278,7 +278,7 @@ window.NotificationPage = (function(){
      uploadStatus.textContent=file.name+' 업로드 중 ('+(index+1)+'/'+total+')';
     });
     droppedFiles=null;input.value='';input.required=true;showSelected();
-    document.getElementById('upload-dialog').close();await loadFiles();
+    document.getElementById('upload-dialog').close();await loadFiles().catch(error=>{console.warn('업로드 후 목록 갱신 실패',error);});
    });
   }catch(error){
    const completed=error.completed?.length||0;
@@ -327,27 +327,30 @@ async function loadFiles(strict=false) {
       const link = document.createElement(canUse('fileDownload')?'a':'span');
       if(canUse('fileDownload'))link.href = '#';
       link.textContent = file.originalName || file.filename || '파일 다운로드';
-      link.addEventListener('click', async e => {
+      const downloadFile=async()=>{
+        const blob=await FileTransfer.download(file,async suffix=>{
+          const response=await authFetch('/api/upload/'+file.id+suffix,{headers:{Authorization:'Bearer '+localStorage.getItem('token')},signal:AbortSignal.timeout(30000)});
+          if(!response.ok)throw new Error('파일을 읽지 못했습니다 ('+response.status+')');
+          return response.blob();
+        });
+        return blob;
+      };
+      link.addEventListener('click',async e=>{
         e.preventDefault();
-        if(!canUse('fileDownload'))return;
-        try {
-          const headers={Authorization:`Bearer ${localStorage.getItem('token')}`};
-          const blob=await FileTransfer.download(file,async suffix=>{const response=await loadingFetch(`/api/upload/${file.id}${suffix}`,{headers});if(!response.ok)throw new Error(`다운로드 실패: ${response.status}`);return response.blob();});
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = file.originalName || file.filename || 'download';
-          document.body.appendChild(a);
-          a.click();
-          a.remove();
-          URL.revokeObjectURL(url);
-        } catch (error) {
-          console.error('파일 다운로드 에러', error);
-          alert('파일 다운로드에 실패했습니다.');
-        }
+        try { await FilePreview.open(file,downloadFile); }
+        catch(error){alert('미리보기 실패: '+error.message);}
       });
-      // link.target = '_blank';
-      // link.rel = 'noopener noreferrer';
+      const preview=document.createElement('button');
+      preview.type='button';preview.className='file-preview-thumb';preview.setAttribute('aria-label',file.originalName+' 미리보기');
+      const kind=(file.mimeType||'').split('/')[0];
+      preview.textContent=kind==='image'?'▧':kind==='video'?'▶':kind==='audio'?'♫':/pdf/i.test(file.mimeType||'')?'PDF':'📄';
+      preview.style.cssText='width:52px;height:52px;flex:none;border-radius:12px;border:1px solid var(--border-color,#ddd);background:var(--card-bg,#f7f7f7);font-size:20px;cursor:pointer;object-fit:cover';
+      preview.addEventListener('click',()=>link.click());
+      item.appendChild(preview);
+      if(kind==='image') FilePreview.thumbnail(file,downloadFile,preview);
+      const save=document.createElement('button');save.type='button';save.textContent='다운로드';save.className='secondary-btn';save.hidden=!canUse('fileDownload');
+      save.addEventListener('click',async()=>{try{const blob=await downloadFile();const u=URL.createObjectURL(blob);const a=document.createElement('a');a.href=u;a.download=file.originalName||'download';a.click();setTimeout(()=>URL.revokeObjectURL(u),1000);}catch(error){alert(error.message);}});
+      fileInfo.appendChild(save);
       fileInfo.appendChild(link);
       const date = document.createElement('time');
       date.className = 'file-registration-date';
