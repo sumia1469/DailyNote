@@ -66,7 +66,7 @@
     try { url = new URL(typeof input === 'string' || input instanceof URL ? input : input.url, location.href); } catch { return nativeFetch(input, options); }
     const method = String(options.method || input?.method || 'GET').toUpperCase();
     // Polling and editor autosaves keep their existing inline status indicators.
-    if (url.origin !== location.origin || !url.pathname.startsWith('/api/') || url.searchParams.get('reminders') === '1' || (url.pathname.startsWith('/api/memos') && ['POST','PUT','PATCH'].includes(method))) return nativeFetch(input, options);
+    if (url.origin !== location.origin || !url.pathname.startsWith('/api/') || (url.pathname === '/api/upload' && method === 'POST') || url.searchParams.get('reminders') === '1' || (url.pathname.startsWith('/api/memos') && ['POST','PUT','PATCH'].includes(method))) return nativeFetch(input, options);
     const requestEpoch = epoch, message = messageFor(url.pathname, method);
     const start = method === 'GET' && window.PullRefresh?.refreshing ? beginBackground : begin;
     const finish = start(message);
