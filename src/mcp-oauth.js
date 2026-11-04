@@ -46,10 +46,12 @@ function validateRequest(conf,p){
  if(!clientId||!redirect||!clientFor(conf,clientId,redirect))return null;
  if(p.get('response_type')!=='code'||method!=='S256'||!challenge||!/^[A-Za-z0-9_-]{43,128}$/.test(challenge))return null;
  if(resource!==conf.base+'/api/mcp')return null;
- if((p.get('scope')||'mcp:read')!=='mcp:read')return null;
+ const scope=p.get('scope')||'mcp:read';
+ if(!['mcp:read','mcp:read mcp:write'].includes(scope))return null;
+ if(scope.includes('mcp:write')&&conf.clients[clientId]?.allowWrite!==true)return null;
  const state=p.get('state')||'';
  if(state.length>512)return null;
- return {clientId,redirect,resource,challenge,state};
+ return {clientId,redirect,resource,challenge,state,scope};
 }
 const pending=new Map(),redeemed=new Set(),loginAttempts=new Map();
 async function loginAllowed(username){
@@ -103,7 +105,7 @@ async function authorize(req,res,conf){
   const p=params(req),record=validateRequest(conf,p);
   if(!record)return page(res,'<h1>연결 요청 오류</h1><p>허용되지 않은 클라이언트 또는 인증 요청입니다.</p>',400);
   const query=p.toString();
-  return page(res,'<h1>DailyNote AI 연결</h1><p><b>'+escape(record.clientId)+'</b>에서 내 DailyNote 업무일지·메모·일정·파일의 읽기 기능에 접근하려고 합니다.</p><p>기존 DailyNote 계정으로 로그인하고 <b>연결 승인</b>을 선택해 주세요. 연결을 거부해도 됩니다.</p><form method="post" action="/api/oauth/authorize?'+escape(query)+'"><label for="username">DailyNote 아이디</label><input id="username" name="username" required autocomplete="username" maxlength="40"><label for="password">비밀번호</label><input id="password" name="password" type="password" required autocomplete="current-password"><button name="decision" value="approve">연결 승인</button> <button name="decision" value="deny" style="background:#777">거부</button></form><small>인증 후 발급되는 토큰은 MCP에서만 유효하며, 일반 웹사이트 로그인 세션을 외부에 전달하지 않습니다.</small>');
+  return page(res,'<h1>DailyNote AI 연결</h1><p><b>'+escape(record.clientId)+'</b>에서 내 DailyNote 데이터에 '+(record.scope.includes('mcp:write')?'<b>조회·등록·수정·삭제</b>':'<b>조회</b>')+' 권한을 요청합니다.</p><p>기존 DailyNote 계정으로 로그인하고 <b>연결 승인</b>을 선택해 주세요. 연결을 거부해도 됩니다.</p><form method="post" action="/api/oauth/authorize?'+escape(query)+'"><label for="username">DailyNote 아이디</label><input id="username" name="username" required autocomplete="username" maxlength="40"><label for="password">비밀번호</label><input id="password" name="password" type="password" required autocomplete="current-password"><button name="decision" value="approve">연결 승인</button> <button name="decision" value="deny" style="background:#777">거부</button></form><small>인증 후 발급되는 토큰은 MCP에서만 유효하며, 일반 웹사이트 로그인 세션을 외부에 전달하지 않습니다.</small>');
  }
  if(req.method!=='POST')return bad(res,'invalid_request',405);
  const record=validateRequest(conf,params(req));
@@ -131,8 +133,8 @@ async function token(req,res,conf){
  const user=await ds.findOne('users',u=>u.id===record.userId);
  if(!user||user.active===false||(user.approval&&user.approval!=='approved')||user.mustChangePassword)return bad(res,'invalid_grant');
  const access=random(),issued=Date.now();
- await ds.insertSession({token:access,userId:user.id,username:user.username,expiresAt:new Date(issued+TTL_ACCESS).toISOString(),createdAt:new Date(Math.max(issued,(Date.parse(user.passwordResetAt)||0)+1)).toISOString(),mcpOnly:true,oauthClientId:id,oauthResource:resource,scope:'mcp:read'});
- noCache(res);return sendJson(res,200,{access_token:access,token_type:'Bearer',expires_in:TTL_ACCESS/1000,scope:'mcp:read'});
+ await ds.insertSession({token:access,userId:user.id,username:user.username,expiresAt:new Date(issued+TTL_ACCESS).toISOString(),createdAt:new Date(Math.max(issued,(Date.parse(user.passwordResetAt)||0)+1)).toISOString(),mcpOnly:true,oauthClientId:id,oauthResource:resource,scope:record.scope});
+ noCache(res);return sendJson(res,200,{access_token:access,token_type:'Bearer',expires_in:TTL_ACCESS/1000,scope:record.scope});
 }
 async function oauthRouter(req,res){
  const conf=config();
@@ -144,8 +146,8 @@ async function oauthRouter(req,res){
 }
 function metadata(path){
  const conf=config();if(!conf)return null;
- if(path==='/api/.well-known/oauth-protected-resource'||path==='/.well-known/oauth-protected-resource')return {resource:conf.base+'/api/mcp',authorization_servers:[conf.base],scopes_supported:['mcp:read']};
- if(path==='/api/.well-known/oauth-authorization-server'||path==='/.well-known/oauth-authorization-server')return {issuer:conf.base,authorization_endpoint:conf.base+'/api/oauth/authorize',token_endpoint:conf.base+'/api/oauth/token',response_types_supported:['code'],grant_types_supported:['authorization_code'],code_challenge_methods_supported:['S256'],token_endpoint_auth_methods_supported:['none'],scopes_supported:['mcp:read'],authorization_response_iss_parameter_supported:true};
+ if(path==='/api/.well-known/oauth-protected-resource'||path==='/.well-known/oauth-protected-resource')return {resource:conf.base+'/api/mcp',authorization_servers:[conf.base],scopes_supported:['mcp:read','mcp:write']};
+ if(path==='/api/.well-known/oauth-authorization-server'||path==='/.well-known/oauth-authorization-server')return {issuer:conf.base,authorization_endpoint:conf.base+'/api/oauth/authorize',token_endpoint:conf.base+'/api/oauth/token',response_types_supported:['code'],grant_types_supported:['authorization_code'],code_challenge_methods_supported:['S256'],token_endpoint_auth_methods_supported:['none'],scopes_supported:['mcp:read','mcp:write'],authorization_response_iss_parameter_supported:true};
  return null;
 }
 module.exports={oauthRouter,metadata,config,validateRequest};
