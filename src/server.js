@@ -34,8 +34,11 @@ async function handleApi(req, res) {
   if (pathname === '/api/auth/login' && req.method === 'POST') return loginHandler(req, res);
   if (pathname === '/api/auth/register' && req.method === 'POST') return registerHandler(req,res);
   if (req.method === 'GET' && (pathname === '/api/settings' || pathname === '/api/background/1')) return settingsHandler(req, res);
+  if (pathname.startsWith('/api/oauth/')) return require('./mcp-oauth').oauthRouter(req,res);
+  if (pathname.startsWith('/api/.well-known/oauth-') && req.method==='GET') { const meta=require('./mcp-oauth').metadata(pathname); return meta?sendJson(res,200,meta):sendJson(res,404,{message:'OAuth not configured'}); }
   const authInfo = await verifyToken(req);req.auditAuth=authInfo;
-  if (!authInfo) return sendJson(res, 401, {message: 'Invalid or missing token'});
+  if (!authInfo) {if(pathname==='/api/mcp'&&require('./mcp-oauth').config()){const base=require('./mcp-oauth').config().base;res.setHeader('WWW-Authenticate','Bearer resource_metadata="'+base+'/api/.well-known/oauth-protected-resource"');}return sendJson(res, 401, {message: 'Invalid or missing token'});}
+  if (authInfo.mcpOnly && pathname!=='/api/mcp' && req.mcpInternal!==true) return sendJson(res,403,{message:'MCP token cannot access regular APIs'});
   if (pathname === '/api/license' && req.method === 'GET') return sendJson(res,200,await require('./license').status());
   if (pathname === '/api/auth/me' && req.method === 'GET') return sendJson(res, 200, authInfo);
   if (pathname === '/api/auth/change-password' && req.method === 'POST') return changePasswordHandler(req,res,authInfo);
