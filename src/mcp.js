@@ -46,13 +46,13 @@ function validate(schema,value){
   if(rule.type==='array'&&(!Array.isArray(val)||val.length>500))throw Error('Invalid argument: '+key);
  }
 }
-function allowed(tool,auth){return (!tool.right||auth.permissions[tool.right]===true)&&(!tool.adminWrite||process.env.DAILYNOTE_MCP_ADMIN_WRITES==='1')&&(!tool.localTest||(auth.role==='admin'&&regression.available()));}
+function allowed(tool,auth){return (!auth.mcpOnly||(auth.scope==='mcp:read'&&tool.method==='GET'&&!tool.localTest))&&(!tool.right||auth.permissions[tool.right]===true)&&(!tool.adminWrite||process.env.DAILYNOTE_MCP_ADMIN_WRITES==='1')&&(!tool.localTest||(auth.role==='admin'&&regression.available()));}
 function publicTool(name,tool){const {description,inputSchema}=tool;return {name,description,inputSchema,annotations:{readOnlyHint:tool.method==='GET',destructiveHint:false,idempotentHint:tool.method==='GET'}};}
 function rpc(id,result){return {jsonrpc:'2.0',id,result};}
 function failure(id,code,message){return {jsonrpc:'2.0',id,error:{code,message}};}
 function response(res,status,obj){res.setHeader('Cache-Control','no-store');return sendJson(res,status,obj);}
 async function invokeApi(route,authHeader,dispatch){
- const input={method:route.method,url:route.path,headers:{authorization:authHeader},body:route.body};
+ const input={method:route.method,url:route.path,headers:{authorization:authHeader},body:route.body,mcpInternal:true};
  let status=500,raw='';
  const output={headersSent:false,writeHead(code){status=code;this.headersSent=true;return this;},setHeader(){},end(value=''){raw+=value||'';this.headersSent=true;},write(value){raw+=value||'';}};
  await dispatch(input,output);
