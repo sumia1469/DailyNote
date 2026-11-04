@@ -5,7 +5,6 @@
 const crypto=require('node:crypto');
 const ds=require('./datastore');
 const {sendJson}=require('./utils');
-const {makeUserRecord}=require('./auth');
 const TTL_CODE=5*60*1000,TTL_ACCESS=60*60*1000,TTL_REFRESH=30*86400000;
 const digest=value=>crypto.createHash('sha256').update(value).digest('hex');
 const random=()=>crypto.randomBytes(32).toString('base64url');
@@ -98,7 +97,7 @@ async function authorize(req,res,conf){
  if(!record)return bad(res,'invalid_request');
  const body=await form(req);
  if(body.get('decision')==='deny'){
-  const url=new URL(record.redirect);url.searchParams.set('error','access_denied');if(record.state)url.searchParams.set('state',record.state);res.writeHead(302,{Location:url.toString(),'Cache-Control':'no-store'});return res.end();
+  const url=new URL(record.redirect);url.searchParams.set('error','access_denied');url.searchParams.set('iss',conf.base);if(record.state)url.searchParams.set('state',record.state);res.writeHead(302,{Location:url.toString(),'Cache-Control':'no-store'});return res.end();
  }
  const username=body.get('username')||'',password=body.get('password')||'';
  if(username.length>40||password.length>128)return page(res,'<h1>인증 오류</h1><p>로그인 입력값을 확인해 주세요.</p>',401);
