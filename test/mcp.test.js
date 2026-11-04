@@ -60,3 +60,31 @@ test('MCP test_health returns sanitized data, no internal records',async()=>{
  assert.equal(info.license.activeUserCount,3);
  assert.equal(JSON.stringify(info).includes('secret'),false);
 });
+
+test('calendar writes use user permission and calendar API routes',async()=>{
+ const user={...auth,permissions:{...auth.permissions,calendarRead:true,calendarCreate:true,calendarEdit:true,calendarDelete:true}};
+ let seen;
+ const args={title:'연계 테스트',allDay:true,start:'2026-11-02',end:'2026-11-06'};
+ const created=await call('tools/call',{name:'calendar_create',arguments:args},user,{onDispatch:x=>seen=x});
+ assert.equal(created.data.result.isError,undefined);
+ assert.equal(seen.url,'/api/calendar');assert.equal(seen.method,'POST');
+ assert.equal(seen.body.end,'2026-11-06');
+ const updated=await call('tools/call',{name:'calendar_update',arguments:{...args,id:5}},user,{onDispatch:x=>seen=x});
+ assert.equal(updated.data.result.isError,undefined);assert.equal(seen.url,'/api/calendar/5');assert.equal(seen.method,'PUT');
+ const denied=await call('tools/call',{name:'calendar_delete',arguments:{id:5}},user,{onDispatch:()=>{throw Error('should not dispatch');}});
+ assert.equal(denied.data.result.isError,true);
+ const deleted=await call('tools/call',{name:'calendar_delete',arguments:{id:5,confirm:true}},user,{onDispatch:x=>seen=x});
+ assert.equal(deleted.data.result.isError,undefined);assert.equal(seen.method,'DELETE');
+});
+test('OAuth read scope cannot write; explicit write scope can, excluding admin mutations',async()=>{
+ const perms={...auth.permissions,calendarRead:true,calendarCreate:true,users:true};
+ const read={...auth,mcpOnly:true,scope:'mcp:read',permissions:perms};
+ let invoked=false;
+ const blocked=await call('tools/call',{name:'calendar_create',arguments:{title:'test',allDay:true,start:'2026-11-02',end:'2026-11-06'}},read,{onDispatch:()=>invoked=true});
+ assert.equal(blocked.data.result.isError,true);assert.equal(invoked,false);
+ const write={...read,scope:'mcp:read mcp:write'};
+ const result=await call('tools/call',{name:'calendar_create',arguments:{title:'test',allDay:true,start:'2026-11-02',end:'2026-11-06'}},write,{onDispatch:()=>invoked=true});
+ assert.equal(result.data.result.isError,undefined);assert.equal(invoked,true);
+ const admin=await call('tools/call',{name:'admin_user_approve',arguments:{id:2,confirm:true}},write);
+ assert.equal(admin.data.result.isError,true);
+});
