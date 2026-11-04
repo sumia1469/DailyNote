@@ -46,7 +46,7 @@ function validate(schema,value){
   if(rule.type==='array'&&(!Array.isArray(val)||val.length>500))throw Error('Invalid argument: '+key);
  }
 }
-function allowed(tool,auth){return (!auth.mcpOnly||(auth.scope==='mcp:read'&&tool.method==='GET'&&!tool.localTest))&&(!tool.right||auth.permissions[tool.right]===true)&&(!tool.adminWrite||process.env.DAILYNOTE_MCP_ADMIN_WRITES==='1')&&(!tool.localTest||(auth.role==='admin'&&regression.available()));}
+function allowed(tool,auth){return (!auth.mcpOnly||(auth.scope==='mcp:read'&&tool.method==='GET'&&!tool.localTest&&!['users','files','notifications','logs'].includes(tool.right)))&&(!tool.right||auth.permissions[tool.right]===true)&&(!tool.adminWrite||process.env.DAILYNOTE_MCP_ADMIN_WRITES==='1')&&(!tool.localTest||(auth.role==='admin'&&regression.available()));}
 function publicTool(name,tool){const {description,inputSchema}=tool;return {name,description,inputSchema,annotations:{readOnlyHint:tool.method==='GET',destructiveHint:false,idempotentHint:tool.method==='GET'}};}
 function rpc(id,result){return {jsonrpc:'2.0',id,result};}
 function failure(id,code,message){return {jsonrpc:'2.0',id,error:{code,message}};}
