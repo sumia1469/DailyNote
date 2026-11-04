@@ -100,6 +100,13 @@ function fileRow(file){
   const remove=button('삭제',async()=>{UIShell.dropdown.close();if(!confirm(file.originalName+' 파일을 삭제할까요?'))return;await api('/api/admin/files/'+file.id,'DELETE');await refresh();status('파일을 삭제했습니다.');},true);remove.dataset.icon='trash';remove.classList.add('menu-danger');
   menu.replaceChildren(rename,download,remove);UIShell.dropdown.open(menu,more);
  });
+ const preview=document.createElement('button');preview.type='button';preview.className='file-preview-thumb';preview.textContent=FilePreview.typeOf(file)==='image'?'▧':'📄';preview.setAttribute('aria-label',file.originalName+' 미리보기');
+ preview.style.cssText='width:48px;height:48px;border-radius:10px;border:1px solid #ddd;flex:none;cursor:pointer;overflow:hidden';
+ const getBlob=()=>FileTransfer.download(file,suffix=>api('/api/admin/files/'+file.id+suffix,'GET',undefined,true));
+ preview.addEventListener('click',()=>FilePreview.open(file,getBlob));
+ r.div.prepend(preview);
+ if(FilePreview.typeOf(file)==='image')FilePreview.thumbnail(file,getBlob,preview);
+ r.div.querySelector('strong').style.cursor='pointer';r.div.querySelector('strong').addEventListener('click',()=>preview.click());
  r.div.append(more,form);return r.div;
 }
 
