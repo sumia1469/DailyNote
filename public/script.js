@@ -249,6 +249,21 @@ window.NotificationPage = (function(){
   selection.textContent=files.length?files.length+'개 파일 선택: '+files.map(f=>f.name).join(', '):'여러 파일을 한 번에 선택할 수 있습니다.';
  }
  input.addEventListener('change',()=>{droppedFiles=null;showSelected();});
+ document.addEventListener('paste',event=>{
+  const dialog=document.getElementById('upload-dialog');
+  const inFiles=location.hash.split('/')[0]==='#files';
+  if(!inFiles&&!dialog.open)return;
+  if(uploading||!canUse('fileUpload'))return;
+  if(event.target.closest('input,textarea,[contenteditable="true"]'))return;
+  const images=Array.from(event.clipboardData?.items||[]).filter(item=>item.kind==='file'&&['image/png','image/jpeg','image/webp'].includes(item.type)).map(item=>item.getAsFile()).filter(Boolean);
+  if(!images.length)return;
+  event.preventDefault();
+  droppedFiles=images.map((file,index)=>new File([file],'캡처-'+Date.now()+'-'+(index+1)+'.'+(file.type==='image/jpeg'?'jpg':file.type.split('/')[1]),{type:file.type}));
+  input.required=false;showSelected();
+  if(!dialog.open)dialog.showModal();
+  uploadStatus.textContent='캡처 이미지 '+images.length+'개를 등록합니다…';
+  form.requestSubmit();
+ });
  ['dragenter','dragover'].forEach(type=>zone.addEventListener(type,event=>{
   if(!event.dataTransfer?.types?.includes('Files'))return;
   event.preventDefault();if(uploading)return;zone.classList.add('is-drag-over');
