@@ -72,7 +72,20 @@ $('open-memo-btn').addEventListener('click',()=>open());$('memo-close').addEvent
 
 body.addEventListener('click',e=>EditorCore.links.followEditableLink(e,body));
 body.addEventListener('blur',()=>{if(!draft||composing)return;if(EditorCore.links.linkify(body)){selection=null;checkpoint();}});
-$('memo-title').addEventListener('input',checkpoint);body.addEventListener('input',checkpoint);body.addEventListener('paste',e=>{if(body.contentEditable!=='true')return;e.preventDefault();document.execCommand('insertText',false,e.clipboardData.getData('text/plain'));checkpoint();});
+$('memo-title').addEventListener('input',checkpoint);body.addEventListener('input',checkpoint);body.addEventListener('paste',async e=>{
+ if(body.contentEditable!=='true'||!draft)return;
+ const images=Array.from(e.clipboardData?.items||[]).filter(x=>x.kind==='file'&&/^image\/(png|jpeg|webp)$/.test(x.type)).map(x=>x.getAsFile()).filter(Boolean);
+ if(images.length){
+  e.preventDefault();
+  for(const [index,image] of images.entries()){
+   const extension=image.type==='image/jpeg'?'jpg':image.type.split('/')[1];
+   const captured=new File([image],'캡처-'+Date.now()+'-'+(index+1)+'.'+extension,{type:image.type});
+   try{await attach(captured);}catch(error){status('캡처 이미지 붙여넣기 실패: '+error.message);}
+  }
+  return;
+ }
+ e.preventDefault();document.execCommand('insertText',false,e.clipboardData?.getData('text/plain')||'');checkpoint();
+});
 function undo(delta){const state=editHistory.move(delta);if(state===null)return;const meta={id:draft.id,userId:draft.userId,createdAt:draft.createdAt,updatedAt:draft.updatedAt};draft={...JSON.parse(state),...meta};paint();body.focus();scheduleSave();}
 $('memo-undo').addEventListener('click',()=>undo(-1));$('memo-redo').addEventListener('click',()=>undo(1));editor.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&['z','y'].includes(e.key.toLowerCase())){e.preventDefault();if(!saving&&!recordPending&&recorder?.state!=='recording'&&(draft.id?can('memoEdit'):can('memoCreate')))undo(e.key.toLowerCase()==='y'||e.shiftKey?1:-1);}if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='s'){e.preventDefault();save();}});
 document.addEventListener('selectionchange',()=>{const s=getSelection();if(s.rangeCount&&body.contains(s.anchorNode))selection=s.getRangeAt(0).cloneRange();});
