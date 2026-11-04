@@ -71,3 +71,27 @@ test('OAuth rejects unregistered redirect and bad code challenge',async()=>{
  const noToken=await request('POST','/api/oauth/token','grant_type=password',{'content-type':'application/x-www-form-urlencoded'});
  assert.equal(noToken.status,400);
 });
+
+test('OAuth write scope requires client opt-in and explicit user consent',async()=>{
+ const verifier='b'.repeat(43);
+ const readUrl=authorization(verifier);
+ const writeUrl=readUrl.replace('scope=mcp%3Aread','scope=mcp%3Aread+mcp%3Awrite');
+ const refused=await request('GET',writeUrl);
+ assert.equal(refused.status,400);
+ process.env.DAILYNOTE_OAUTH_CLIENTS=JSON.stringify({'trusted-test-client':{redirectUris:['https://chat.example/callback'],allowWrite:true}});
+ const consent=await request('GET',writeUrl);
+ assert.equal(consent.status,200);
+ assert.match(consent.data,/조회·등록·수정·삭제/);
+ const form=new URLSearchParams({username:'oauth-tester',password:'password123',decision:'approve'}).toString();
+ const grant=await request('POST',writeUrl,form,{'content-type':'application/x-www-form-urlencoded'});
+ assert.equal(grant.status,302);
+ const code=new URL(grant.headers.location).searchParams.get('code');
+ const exchange=new URLSearchParams({grant_type:'authorization_code',client_id:'trusted-test-client',redirect_uri:'https://chat.example/callback',code,code_verifier:verifier,resource:'https://dailynote.example/api/mcp'}).toString();
+ const issued=await request('POST','/api/oauth/token',exchange,{'content-type':'application/x-www-form-urlencoded'});
+ assert.equal(issued.status,200);
+ assert.equal(issued.data.scope,'mcp:read mcp:write');
+ const list=await request('POST','/api/mcp',JSON.stringify({jsonrpc:'2.0',id:4,method:'tools/list',params:{}}),{'content-type':'application/json',authorization:'Bearer '+issued.data.access_token});
+ assert.equal(list.status,200);
+ assert.ok(list.data.result.tools.some(x=>x.name==='calendar_create'));
+ assert.ok(!list.data.result.tools.some(x=>x.name==='admin_user_approve'));
+});
