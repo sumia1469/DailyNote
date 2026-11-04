@@ -694,5 +694,19 @@
       "0b288bf963d10f63de5cd007c63c9937ee04368f",
       "f0446f3c41e12ecda3c94ec7b02f74902991af6e"
     ]
+  },
+  {
+    "id": "2026-11-04-03",
+    "publishedAt": "2026-11-04T09:06:51+09:00",
+    "message": "2026년 11월 4일 ChatGPT MCP OAuth 사전 연결 업데이트\n\n[연결 인증]\n• HTTPS 공개 주소와 사전 등록한 클라이언트만 사용하도록 OAuth 2.1 연결 흐름 추가\n• DailyNote 계정 로그인·동의 및 PKCE S256 인증 코드 교환\n• MCP 전용 읽기 토큰으로 일반 API·쓰기 도구 접근 차단\n• 인증 코드 1회 사용·5분 만료·접근 토큰 1시간 만료 적용\n• 계정별 인증 시도 제한 및 OAuth 메타데이터 제공\n\n[검증·안내]\n• OAuth 사용자별 권한·PKCE·코드 재사용 거부 자동 테스트 추가\n• ChatGPT 연결 설정 가이드와 개발자 문서 업데이트\n\nOAuth는 기본 비활성화이며 실제 ChatGPT 클라이언트 등록·HTTPS 연결 시험, 토큰 갱신·연결 해제 기능은 다음 단계에서 진행합니다.",
+    "sourceCommits": [
+      "7d9bae303a5c0738b177bf1b7c6a6f83b76c39fb",
+      "1f32d5ac8b52f84050b18d23e11f5c087518e469",
+      "3d18f858d865fdec73f8d874f64fdd7acc0b30ae",
+      "fc453f83d91b24dcb390048a106c7182eba38f54",
+      "e83b447b452a7cbd0f76b4a4d7020f75801b7197",
+      "9e7a564bc5adcf115f85cb5a7ddd20f38af023d5",
+      "d46dd76af6f43c98450fc8e0f1ca2b233aa68058"
+    ]
   }
 ]
